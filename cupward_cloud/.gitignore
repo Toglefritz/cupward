@@ -1,0 +1,22 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+firebase-debug.log*
+firebase-debug.*.log*
+
+# Firebase cache
+.firebase/
+
+# Dependencies
+node_modules/
+
+# Environment variables
+.env
+
+# Exported Firebase Emulator Suite state
+/emulator_data
+
+# Service account keys
+*-firebase-adminsdk-*.json
+service-account*.json
