@@ -1,10 +1,11 @@
 import 'package:material_ui/material_ui.dart';
 import 'home_controller.dart';
 
-/// Route widget for the home screen.
+/// Landing screen shown when the app first loads.
 ///
-/// Following MVC patterns, this route serves only as the entry point and delegates all logic to the HomeController
-/// through createState().
+/// [HomeController] coordinates initial setup before the UI becomes interactive: checking required permissions,
+/// inspecting device state, and performing first-run configuration. Once initialization completes, the screen presents
+/// a call-to-action button that starts a brewing session.
 class HomeRoute extends StatefulWidget {
   /// Creates the home route widget.
   const HomeRoute({super.key});
