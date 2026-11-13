@@ -8,6 +8,7 @@ import 'package:material_ui/material_ui.dart';
 
 import 'l10n/app_localizations.dart';
 import 'screens/home/home_route.dart';
+import 'theme/cupward_colors.dart';
 
 part 'theme/app_theme.dart';
 

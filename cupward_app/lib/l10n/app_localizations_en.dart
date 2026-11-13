@@ -12,10 +12,4 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get appTitle => 'Cupward';
-
-  @override
-  String get lampOff => 'OFF';
-
-  @override
-  String get lampOn => 'ON';
 }
