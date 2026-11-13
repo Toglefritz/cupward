@@ -1,57 +1,83 @@
-# Cupward
+# Cupward App
 
-A Flutter application built with MVC (Model-View-Controller) architecture following Splendid coding standards.
+**Better coffee, one cup at a time.**
 
-## Architecture
+The Cupward app is the Flutter client for Cupward, an AI-powered coffee companion. It connects to a Bluetooth coffee scale to capture how a cup was brewed, collects tasting feedback, and uses AI to explain how brewing decisions shaped the cup and what to adjust next.
 
-This project follows a strict MVC pattern for all screens:
+This document covers the app itself. For the idea behind Cupward, how it works, and its guiding principles, see the [top-level README](../README.md).
 
-### Route (Entry Point)
-- Each screen has a `*_route.dart` file containing a `StatefulWidget`
-- The route's `createState()` method returns the corresponding controller
-- Routes are responsible only for defining the screen entry point
+## Hybrid AI with Firebase AI Logic
 
-### Controller (Business Logic)
-- Controllers extend `State<RouteWidget>` and handle all business logic
-- Controllers manage state and call `setState()` to trigger UI updates
-- All event handlers and data manipulation logic belongs in controllers
+Cupward's AI features use the Firebase AI Logic Hybrid Inference SDK, which lets the app run a prompt on the device when a local model is available and fall back to the cloud when it is not.
 
-### View (Presentation)
-- Views are `StatelessWidget` classes that handle only UI presentation
-- Views receive the controller as a parameter for accessing state and methods
-- Views should be "dumb" and purely declarative
+This approach fits brewing well. Sessions are short and frequent and the data involved (a person's brewing habits and taste preferences) is personal.
+
+- **On-device first.** Where the platform provides a local model, such as Gemini Nano 4 on Android or Apple Foundation Models on iOS, Cupward runs inference on the device. Responses are fast, work offline, cost nothing to run, and keep brewing and tasting data on the phone.
+- **Cloud as the fallback.** When a device has no usable local model, or a request is too large or complex for one, the same request is handled by a cloud Gemini model through Firebase AI Logic.
+- **One code path.** The app talks to a single hybrid SDK rather than separate on-device and cloud integrations. The choice of where a prompt runs is made by the SDK, so feature code does not branch by platform or model.
+
+The AI works on the same inputs described in the top-level README: the weight, flow rate, and timing recorded by the scale during a brew, and the user's tasting feedback afterward. From these it explains likely relationships between technique and flavor and suggests adjustments for the next brew. These inputs describe a brew rather than one specific method, so the same approach applies to any brewing technique the app supports.
+
+### Protecting cloud AI access
+
+Requests that reach the cloud are protected with Firebase App Check, which verifies that they come from a genuine build of the app. App Check is initialized at startup, before any other Firebase service is used.
+
+## Platforms
+
+The app targets Android, iOS, and macOS. Firebase is configured for each of these platforms. On-device inference depends on what the platform and device provide, so the cloud fallback is what guarantees a consistent experience everywhere.
+
+## Technology
+
+- **Flutter and Dart** for the cross-platform user interface.
+- **Firebase AI Logic** for hybrid on-device and cloud inference.
+- **Firebase App Check** for protecting backend access.
+- **Bluetooth Low Energy (BLE)** for communicating with the BOOKOO Themis Ultra scale.
 
 ## Getting Started
 
-1. Install dependencies:
-   ```bash
-   flutter pub get
-   ```
+The app depends on Firebase configuration files that are generated per developer and are not committed to Git. Complete the steps in [FIREBASE_SETUP.md](FIREBASE_SETUP.md) first, then:
 
-2. Run the application:
-   ```bash
-   flutter run
-   ```
+```sh
+flutter pub get
+flutter run
+```
 
-## Project Structure
+To run against the local Firebase Emulator Suite in debug builds, start the emulators from [`cupward_cloud`](../cupward_cloud/README.md) and launch with:
+
+```sh
+flutter run --dart-define=USE_FIREBASE_EMULATOR=true
+```
+
+## Architecture
+
+Every screen follows a strict Model-View-Controller pattern.
+
+- **Route** (`*_route.dart`): a `StatefulWidget` that defines the screen's entry point and returns its controller from `createState()`.
+- **Controller** (`*_controller.dart`): extends `State` for the route and owns business logic, state, and event handlers. UI updates are triggered with `setState()`.
+- **View** (`*_view.dart`): a `StatelessWidget` that only presents UI. It receives the controller to read state and call methods.
+
+### Project structure
 
 ```
 lib/
-├── main.dart                 # Application entry point
-└── screens/
-    └── home/
-        ├── home_route.dart      # Route definition
-        ├── home_controller.dart # Business logic and state
-        └── home_view.dart       # UI presentation
+├── main.dart        # Entry point: Firebase and App Check initialization
+├── app.dart         # Root widget, themes, and localization setup
+├── firebase_options.dart  # Generated by FlutterFire (not committed)
+├── l10n/            # Localized strings
+├── screens/         # One folder per screen: route, controller, and view
+├── services/        # Integrations with Firebase and other external services
+└── theme/           # Light and dark themes, theme extensions, spacing
 ```
 
-## Development Guidelines
+### Theming
 
-- Follow the MVC pattern for all new screens
-- Use `setState()` for state management
-- Extract reusable UI components into separate widget classes
-- Use `Padding` widgets for spacing, not `SizedBox`
-- Maintain 120-character line length
-- Document all public classes and methods
+Light and dark themes are defined in `lib/theme` and attached to the app in `app.dart`. Widgets read styling through `Theme.of(context)`, or the `context.theme` shortcut, and never hardcode colors or fonts. Fixed, app-specific colors are provided by the `CupwardColors` theme extension. Headings and numeric readouts use DM Serif Display, which is declared in `pubspec.yaml`.
 
-For more detailed coding standards, refer to the project's analysis_options.yaml and linting configuration.
+## Conventions
+
+- Use `Padding` for spacing rather than `SizedBox`.
+- Keep lines to 120 characters.
+- Document all public classes and members.
+- Use `setState()` for state management.
+
+The lint rules in `analysis_options.yaml` define the remaining coding standards.

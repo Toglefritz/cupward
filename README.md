@@ -2,13 +2,13 @@
 
 **Better coffee, one cup at a time.**
 
-Cupward is an AI-powered pour-over coffee brewing companion that helps coffee enthusiasts understand, refine, and improve their brewing technique through data-driven insights and personalized recommendations.
+Cupward is an AI-powered coffee brewing companion that helps coffee enthusiasts understand, refine, and improve their brewing technique through data-driven insights and personalized recommendations.
 
 By combining real-time brewing measurements, subjective tasting feedback, and artificial intelligence, Cupward transforms each cup of coffee into an opportunity to learn. Rather than simply following a recipe, users can understand how their brewing decisions influence the resulting cup and make informed adjustments to achieve their preferred flavor.
 
 ## The Idea
 
-Brewing great pour-over coffee is an iterative process. Variables such as grind size, water temperature, coffee-to-water ratio, pouring technique, and extraction time all influence the final result. Even small adjustments can produce noticeably different flavors.
+Brewing great coffee is an iterative process. Variables such as grind size, water temperature, coffee-to-water ratio, brewing technique, and extraction time all influence the final result. Even small adjustments can produce noticeably different flavors.
 
 The challenge is understanding which adjustments to make.
 
