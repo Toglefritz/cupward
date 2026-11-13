@@ -1,5 +1,5 @@
 name: cupward
-description: "A Flutter app built with MVC architecture using Splendid standards."
+description: "The Cupward app is the Flutter client for Cupward, an AI-powered coffee companion."
 publish_to: 'none'
 version: 1.0.0+1
 
