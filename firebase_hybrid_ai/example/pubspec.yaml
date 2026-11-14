@@ -23,3 +23,14 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+
+  # The fonts are bundled so the example does not fetch anything at runtime. Each family's license is in its folder.
+  fonts:
+    - family: DM Serif Display
+      fonts:
+        - asset: assets/fonts/dm_serif_display/DMSerifDisplay-Regular.ttf
+    - family: IBM Plex Mono
+      fonts:
+        - asset: assets/fonts/ibm_plex_mono/IBMPlexMono-Regular.ttf
+        - asset: assets/fonts/ibm_plex_mono/IBMPlexMono-Medium.ttf
+          weight: 500

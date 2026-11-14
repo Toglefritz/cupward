@@ -12,6 +12,12 @@
       <excludeFolder url="file://$MODULE_DIR$/flutter_bookoo/example/.dart_tool" />
       <excludeFolder url="file://$MODULE_DIR$/flutter_bookoo/example/.pub" />
       <excludeFolder url="file://$MODULE_DIR$/flutter_bookoo/example/build" />
+      <excludeFolder url="file://$MODULE_DIR$/firebase_hybrid_ai/.dart_tool" />
+      <excludeFolder url="file://$MODULE_DIR$/firebase_hybrid_ai/.pub" />
+      <excludeFolder url="file://$MODULE_DIR$/firebase_hybrid_ai/build" />
+      <excludeFolder url="file://$MODULE_DIR$/firebase_hybrid_ai/example/.dart_tool" />
+      <excludeFolder url="file://$MODULE_DIR$/firebase_hybrid_ai/example/.pub" />
+      <excludeFolder url="file://$MODULE_DIR$/firebase_hybrid_ai/example/build" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />

@@ -1,6 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 
 import 'screens/home/home_route.dart';
+import 'theme/app_theme.dart';
 
 /// The root widget of the example app.
 class ExampleApp extends StatelessWidget {
@@ -11,7 +12,8 @@ class ExampleApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Firebase Hybrid AI',
-      theme: ThemeData(colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF1A73E8)), useMaterial3: true),
+      theme: AppTheme.light,
+      debugShowCheckedModeBanner: false,
       home: const HomeRoute(),
     );
   }

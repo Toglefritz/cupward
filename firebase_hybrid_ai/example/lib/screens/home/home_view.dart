@@ -1,35 +1,77 @@
 import 'package:material_ui/material_ui.dart';
 
-import 'components/on_device_status_card.dart';
+import 'components/activity_tile.dart';
+import 'components/header.dart';
+import 'components/check_status_row.dart';
+import 'components/model_status_section.dart';
+import 'components/section_header.dart';
 import 'home_controller.dart';
 
-/// The layout of the home screen. All behavior lives in [HomeController].
+/// Layout for the example screen. Contains no logic.
+///
+/// The screen shows the state of the status check, the on-device model's availability, supporting values, and a button
+/// to check again. The activity log follows.
 class HomeView extends StatelessWidget {
-  /// Creates the view for the given [state].
+  /// Creates the view for [state].
   const new(this.state, {super.key});
 
-  /// The controller that owns the data shown by this view.
+  /// The controller supplying data and callbacks.
   final HomeController state;
+
+  /// The widest the content column grows on large windows.
+  static const double _maxContentWidth = 560;
+
+  /// Horizontal page margin.
+  static const double _margin = 28;
 
   @override
   Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+
     return Scaffold(
-      appBar: AppBar(title: const Text('Firebase Hybrid AI')),
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: <Widget>[
-              OnDeviceStatusCard(status: state.status, errorMessage: state.errorMessage, isChecking: state.isChecking),
-              Padding(
-                padding: const EdgeInsets.only(top: 24),
-                child: FilledButton(
-                  onPressed: state.isChecking ? null : state.onCheckPressed,
-                  child: const Text('Check on-device model'),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: _maxContentWidth),
+            child: CustomScrollView(
+              slivers: <Widget>[
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(_margin, 32, _margin, 0),
+                  sliver: SliverList.list(
+                    children: <Widget>[
+                      const Header(),
+                      const Padding(padding: EdgeInsets.only(top: 24), child: Divider()),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        child: CheckStatusRow(isChecking: state.isChecking, hasFailed: state.errorMessage != null),
+                      ),
+                      ModelStatusSection(state: state),
+                      const Padding(
+                        padding: EdgeInsets.only(top: 36),
+                        child: SectionHeader(title: 'Activity'),
+                      ),
+                      if (state.activity.isEmpty)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          child: Text(
+                            'Nothing yet.',
+                            style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                          ),
+                        ),
+                    ],
+                  ),
                 ),
-              ),
-            ],
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(_margin, 0, _margin, 32),
+                  sliver: SliverList.separated(
+                    itemCount: state.activity.length,
+                    itemBuilder: (BuildContext context, int index) => ActivityTile(entry: state.activity[index]),
+                    separatorBuilder: (BuildContext context, int index) =>
+                        Divider(color: theme.colorScheme.outlineVariant),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
