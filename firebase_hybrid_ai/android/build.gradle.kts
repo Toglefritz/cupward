@@ -1,4 +1,4 @@
-group = "com.example.firebase_hybrid_ai"
+group = "com.splendidendeavors.firebase_hybrid_ai"
 version = "1.0-SNAPSHOT"
 
 buildscript {
@@ -26,7 +26,7 @@ plugins {
 }
 
 android {
-    namespace = "com.example.firebase_hybrid_ai"
+    namespace = "com.splendidendeavors.firebase_hybrid_ai"
 
     compileSdk = 36
 
@@ -45,7 +45,8 @@ android {
     }
 
     defaultConfig {
-        minSdk = 24
+        // The on-device SDK transitively includes the ML Kit Prompt API, which requires API 26.
+        minSdk = 26
     }
 
     testOptions {
@@ -72,5 +73,11 @@ kotlin {
 }
 
 dependencies {
+    // The Firebase AI Logic SDK and its on-device extension. The on-device SDK is not part of the Firebase BoM, so its
+    // version is declared here.
+    implementation("com.google.firebase:firebase-ai:18.2.0")
+    implementation("com.google.firebase:firebase-ai-ondevice:16.0.0-beta08")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2")
+
     testImplementation("org.jetbrains.kotlin:kotlin-test")
 }
