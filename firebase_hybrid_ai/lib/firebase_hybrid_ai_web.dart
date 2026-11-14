@@ -8,6 +8,9 @@ import 'src/exceptions/on_device_model_unavailable_exception.dart';
 import 'src/firebase_hybrid_ai.dart';
 import 'src/messages.g.dart';
 import 'src/platform/firebase_hybrid_ai_platform.dart';
+import 'src/schema/response_schema.dart';
+import 'src/schema/structured_generation_result.dart';
+import 'src/schema/structured_response_parser.dart';
 import 'src/web/chrome_availability.dart';
 import 'src/web/chrome_language_model.dart';
 import 'src/web/firebase_ai_js.dart';
@@ -32,6 +35,7 @@ class FirebaseHybridAiWeb extends FirebaseHybridAiPlatform {
       required InferenceMode mode,
       required String cloudModel,
       required bool initializeDeviceModel,
+      Map<String, Object?>? schema,
     })?
     generator,
     @visibleForTesting
@@ -59,6 +63,7 @@ class FirebaseHybridAiWeb extends FirebaseHybridAiPlatform {
     required InferenceMode mode,
     required String cloudModel,
     required bool initializeDeviceModel,
+    Map<String, Object?>? schema,
   })
   _generator;
 
@@ -127,6 +132,45 @@ class FirebaseHybridAiWeb extends FirebaseHybridAiPlatform {
         details: error.toString(),
       );
     }
+  }
+
+  @override
+  Future<StructuredGenerationResult> generateStructured(
+    String prompt, {
+    required ResponseSchema schema,
+    InferenceMode mode = InferenceMode.preferOnDevice,
+    OnDeviceModelCategory category = OnDeviceModelCategory.stable,
+    String cloudModel = FirebaseHybridAi.defaultCloudModel,
+  }) async {
+    final bool initializeDeviceModel = await _prepareForGeneration(mode);
+
+    final WebGenerationResponse response;
+    try {
+      // The browser SDK constrains both the on-device and the cloud model to the schema, so the response is enforced
+      // in every mode. It is still validated, so the result has the same contract as on other platforms.
+      response = await _generator(
+        prompt: prompt,
+        mode: mode,
+        cloudModel: cloudModel,
+        initializeDeviceModel: initializeDeviceModel,
+        schema: schema.toJson(),
+      );
+    } on FirebaseHybridAiException {
+      rethrow;
+    } on Object catch (error) {
+      throw FirebaseHybridAiException(
+        code: 'generation-failed',
+        message: 'The Firebase AI Logic SDK could not generate a response.',
+        details: error.toString(),
+      );
+    }
+
+    return StructuredResponseParser.parse(
+      text: response.text,
+      schema: schema,
+      source: _sourceFromSdk(response.source),
+      isSchemaEnforced: true,
+    );
   }
 
   @override

@@ -105,6 +105,20 @@ class FirebaseHybridAiPlugin :
         generateTextWithFirebaseAi(prompt, mode, category, cloudModelName)
 
     /**
+     * Generates a response that should match a JSON schema. See [generateStructuredWithFirebaseAi] for when the
+     * schema is enforced and which errors are returned.
+     */
+    override suspend fun generateStructured(
+        prompt: String,
+        instructedPrompt: String,
+        schemaJson: String,
+        mode: InferenceMode,
+        category: OnDeviceModelCategory,
+        cloudModelName: String,
+    ): StructuredTextResponse =
+        generateStructuredWithFirebaseAi(prompt, instructedPrompt, schemaJson, mode, category, cloudModelName)
+
+    /**
      * Prepares a streamed generation and returns the token that names its event channel.
      *
      * The model is created here so that a missing Firebase app is reported to the caller right away. The handler is

@@ -78,6 +78,8 @@ dependencies {
     implementation("com.google.firebase:firebase-ai:18.2.0")
     implementation("com.google.firebase:firebase-ai-ondevice:16.0.0-beta08")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2")
+    // Parses schemas sent from Dart. The version matches the one that firebase-ai brings in at run time.
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.1")
 
     testImplementation("org.jetbrains.kotlin:kotlin-test")
 }

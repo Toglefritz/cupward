@@ -54,6 +54,7 @@ void main() {
         },
         getGenerativeModel: (ai, params) => {
           window.__calls.push('getGenerativeModel:' + params.mode + ':' + params.inCloudParams.model);
+          window.__modelParams = params;
           return {
             initializeDeviceModel: async () => { window.__calls.push('initializeDeviceModel'); },
             generateContent: async (prompt) => { window.__calls.push('generateContent:' + prompt); $generateBody },
@@ -82,7 +83,8 @@ void main() {
       ..delete('firebase_core'.toJS)
       ..delete('firebase_ai'.toJS)
       ..delete('__calls'.toJS)
-      ..delete('__streamClosed'.toJS);
+      ..delete('__streamClosed'.toJS)
+      ..delete('__modelParams'.toJS);
   });
 
   group('generateWithFirebaseAiJs', () {
@@ -312,6 +314,60 @@ void main() {
         ).toList(),
         throwsA(isA<FirebaseNotInitializedException>()),
       );
+    });
+  });
+
+  group('generateWithFirebaseAiJs with a schema', () {
+    /// The SDK's hybrid guide sets the schema in two places, one for each kind of model, so both must be filled in.
+    test('passes the schema to the cloud and on-device parameters', () async {
+      // Arrange
+      installFirebase();
+      const Map<String, Object?> schema = <String, Object?>{
+        'type': 'object',
+        'properties': <String, Object?>{
+          'animal': <String, Object?>{'type': 'string'},
+        },
+        'required': <String>['animal'],
+      };
+
+      // Act
+      await generateWithFirebaseAiJs(
+        prompt: 'Fact',
+        mode: InferenceMode.preferOnDevice,
+        cloudModel: 'gemini-test',
+        initializeDeviceModel: false,
+        schema: schema,
+      );
+
+      // Assert
+      final Map<Object?, Object?> params = globalContext['__modelParams'].dartify()! as Map<Object?, Object?>;
+      final Map<Object?, Object?> inCloud = params['inCloudParams']! as Map<Object?, Object?>;
+      final Map<Object?, Object?> generationConfig = inCloud['generationConfig']! as Map<Object?, Object?>;
+      final Map<Object?, Object?> onDevice = params['onDeviceParams']! as Map<Object?, Object?>;
+      final Map<Object?, Object?> promptOptions = onDevice['promptOptions']! as Map<Object?, Object?>;
+
+      expect(generationConfig['responseMimeType'], 'application/json');
+      expect(generationConfig['responseSchema'], schema);
+      expect(promptOptions['responseConstraint'], schema);
+    });
+
+    /// A plain text request must not constrain the response, so the schema fields must be absent.
+    test('leaves the schema out of a plain text request', () async {
+      // Arrange
+      installFirebase();
+
+      // Act
+      await generateWithFirebaseAiJs(
+        prompt: 'Hi',
+        mode: InferenceMode.preferOnDevice,
+        cloudModel: 'gemini-test',
+        initializeDeviceModel: false,
+      );
+
+      // Assert
+      final Map<Object?, Object?> params = globalContext['__modelParams'].dartify()! as Map<Object?, Object?>;
+      expect((params['inCloudParams']! as Map<Object?, Object?>).containsKey('generationConfig'), isFalse);
+      expect(params.containsKey('onDeviceParams'), isFalse);
     });
   });
 }

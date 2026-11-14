@@ -7,6 +7,8 @@ import 'package:material_ui/material_ui.dart';
 import 'home_route.dart';
 import 'home_view.dart';
 import 'models/activity_entry.dart';
+import 'models/response_format.dart';
+import 'models/structured_sample.dart';
 
 /// State and behavior for [HomeRoute].
 ///
@@ -63,6 +65,15 @@ class HomeController extends State<HomeRoute> {
 
   /// A description of the last failed request, or null if the last request succeeded.
   String? generationError;
+
+  /// Whether the next prompt asks for free text or for JSON that matches a schema.
+  ResponseFormat responseFormat = ResponseFormat.text;
+
+  /// The structured sample whose schema the next structured prompt uses.
+  StructuredSample structuredSample = StructuredSample.animalFact;
+
+  /// The response to the last structured prompt, or null before the first one and after a failure.
+  StructuredGenerationResult? structuredResult;
 
   /// Whether the response is streamed, so that it grows on the screen as the model writes it.
   bool streamResponse = true;
@@ -237,6 +248,24 @@ class HomeController extends State<HomeRoute> {
     setState(() => mode = selected);
   }
 
+  /// Switches between free-text and structured prompts.
+  ///
+  /// Choosing structured prompts fills the text field with the current sample's prompt, because a schema only makes
+  /// sense with a prompt that asks for that kind of data.
+  void onResponseFormatSelected(ResponseFormat format) {
+    setState(() => responseFormat = format);
+
+    if (format == ResponseFormat.structured) {
+      promptController.text = structuredSample.prompt;
+    }
+  }
+
+  /// Chooses the structured sample, which sets both the schema and the prompt.
+  void onStructuredSampleSelected(StructuredSample sample) {
+    setState(() => structuredSample = sample);
+    promptController.text = sample.prompt;
+  }
+
   /// Chooses whether the next response is streamed or arrives all at once.
   void onStreamToggled(bool value) {
     setState(() => streamResponse = value);
@@ -256,7 +285,15 @@ class HomeController extends State<HomeRoute> {
       generationTime = null;
       firstChunkTime = null;
       generationError = null;
+      structuredResult = null;
     });
+
+    if (responseFormat == ResponseFormat.structured) {
+      _log('Sending a structured prompt: ${structuredSample.label} (${mode.name}$_categorySuffix).');
+      await _sendStructuredPrompt(prompt);
+
+      return;
+    }
 
     _log('Sending a prompt (${mode.name}$_categorySuffix${streamResponse ? ', streamed' : ''}).');
 
@@ -283,6 +320,48 @@ class HomeController extends State<HomeRoute> {
     setState(() => isGenerating = false);
 
     await subscription.cancel();
+  }
+
+  /// Sends [prompt] with the current sample's schema and shows the decoded, validated response.
+  ///
+  /// A response that does not match the schema is not an error. It is shown with its problems listed.
+  Future<void> _sendStructuredPrompt(String prompt) async {
+    final Stopwatch stopwatch = Stopwatch()..start();
+
+    try {
+      final StructuredGenerationResult result = await hybridAi.generateStructured(
+        prompt,
+        schema: structuredSample.schema,
+        mode: mode,
+        category: category,
+      );
+      stopwatch.stop();
+
+      if (!mounted) {
+        return;
+      }
+
+      final String conformance = result.conformsToSchema
+          ? 'matches the schema'
+          : 'does not match the schema (${result.violations.length} problems)';
+      final String enforcement = result.isSchemaEnforced ? 'enforced' : 'described in the prompt';
+      _log(
+        'Structured response from ${result.source.name} in ${stopwatch.elapsedMilliseconds} ms, schema $enforcement, '
+        '$conformance.',
+        isError: !result.conformsToSchema,
+      );
+
+      setState(() {
+        structuredResult = result;
+        generationTime = stopwatch.elapsed;
+      });
+    } on FirebaseHybridAiException catch (exception) {
+      _onGenerationFailed(exception);
+    } finally {
+      if (mounted) {
+        setState(() => isGenerating = false);
+      }
+    }
   }
 
   /// Sends [prompt] and shows the whole response when it arrives.

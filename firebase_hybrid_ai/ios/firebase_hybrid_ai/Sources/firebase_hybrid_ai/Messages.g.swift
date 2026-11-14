@@ -432,6 +432,60 @@ struct TextGenerationChunk: Hashable, CustomStringConvertible {
   }
 }
 
+/// The raw text of a response that was requested with a schema.
+///
+/// This is an internal message. The Dart side decodes and validates the
+/// text, and returns a `StructuredGenerationResult` to callers.
+///
+/// Generated class from Pigeon that represents data sent in messages.
+struct StructuredTextResponse: Hashable, CustomStringConvertible {
+  /// The text that the model returned.
+  var text: String
+  /// Whether the on-device model or the cloud model generated [text].
+  var source: InferenceSource
+  /// Whether the platform constrained the model's output to the schema, as
+  /// opposed to only asking for it in the prompt.
+  var isSchemaEnforced: Bool
+
+
+  // swift-format-ignore: AlwaysUseLowerCamelCase
+  static func fromList(_ pigeonVar_list: [Any?]) -> StructuredTextResponse? {
+    let text = pigeonVar_list[0] as! String
+    let source = pigeonVar_list[1] as! InferenceSource
+    let isSchemaEnforced = pigeonVar_list[2] as! Bool
+
+    return StructuredTextResponse(
+      text: text,
+      source: source,
+      isSchemaEnforced: isSchemaEnforced
+    )
+  }
+  func toList() -> [Any?] {
+    return [
+      text,
+      source,
+      isSchemaEnforced,
+    ]
+  }
+  static func == (lhs: StructuredTextResponse, rhs: StructuredTextResponse) -> Bool {
+    if Swift.type(of: lhs) != Swift.type(of: rhs) {
+      return false
+    }
+    return MessagesPigeonInternal.deepEquals(lhs.text, rhs.text) && MessagesPigeonInternal.deepEquals(lhs.source, rhs.source) && MessagesPigeonInternal.deepEquals(lhs.isSchemaEnforced, rhs.isSchemaEnforced)
+  }
+
+  func hash(into hasher: inout Hasher) {
+    hasher.combine("StructuredTextResponse")
+    MessagesPigeonInternal.deepHash(value: text, hasher: &hasher)
+    MessagesPigeonInternal.deepHash(value: source, hasher: &hasher)
+    MessagesPigeonInternal.deepHash(value: isSchemaEnforced, hasher: &hasher)
+  }
+
+  public var description: String {
+    return "StructuredTextResponse(text: \(String(describing: text)), source: \(String(describing: source)), isSchemaEnforced: \(String(describing: isSchemaEnforced)))"
+  }
+}
+
 private class MessagesPigeonCodecReader: FlutterStandardReader {
   override func readValue(ofType type: UInt8) -> Any? {
     switch type {
@@ -467,6 +521,8 @@ private class MessagesPigeonCodecReader: FlutterStandardReader {
       return TextGenerationResult.fromList(self.readValue() as! [Any?])
     case 136:
       return TextGenerationChunk.fromList(self.readValue() as! [Any?])
+    case 137:
+      return StructuredTextResponse.fromList(self.readValue() as! [Any?])
     default:
       return super.readValue(ofType: type)
     }
@@ -498,6 +554,9 @@ private class MessagesPigeonCodecWriter: FlutterStandardWriter {
       super.writeValue(value.toList())
     } else if let value = value as? TextGenerationChunk {
       super.writeByte(136)
+      super.writeValue(value.toList())
+    } else if let value = value as? StructuredTextResponse {
+      super.writeByte(137)
       super.writeValue(value.toList())
     } else {
       super.writeValue(value)
@@ -536,6 +595,15 @@ protocol FirebaseHybridAiHostApi {
   /// choice, and [cloudModelName] names the Gemini model used for cloud
   /// inference.
   func generateText(prompt: String, mode: InferenceMode, category: OnDeviceModelCategory, cloudModelName: String) async throws -> TextGenerationResult
+  /// Generates a response that should match a JSON schema.
+  ///
+  /// [schemaJson] is the schema encoded as a JSON Schema object. Where the
+  /// platform can constrain the model to a schema supplied at run time, it
+  /// sends [prompt] with the schema. Otherwise it sends [instructedPrompt],
+  /// which is [prompt] followed by instructions that describe the schema, and
+  /// reports that the schema was not enforced. The other arguments are the
+  /// same as for [generateText].
+  func generateStructured(prompt: String, instructedPrompt: String, schemaJson: String, mode: InferenceMode, category: OnDeviceModelCategory, cloudModelName: String) async throws -> StructuredTextResponse
   /// Prepares a streamed text generation and returns the token that names its
   /// event channel.
   ///
@@ -597,6 +665,36 @@ class FirebaseHybridAiHostApiSetup {
       }
     } else {
       generateTextChannel.setMessageHandler(nil)
+    }
+    /// Generates a response that should match a JSON schema.
+    ///
+    /// [schemaJson] is the schema encoded as a JSON Schema object. Where the
+    /// platform can constrain the model to a schema supplied at run time, it
+    /// sends [prompt] with the schema. Otherwise it sends [instructedPrompt],
+    /// which is [prompt] followed by instructions that describe the schema, and
+    /// reports that the schema was not enforced. The other arguments are the
+    /// same as for [generateText].
+    let generateStructuredChannel = FlutterBasicMessageChannel(name: "dev.flutter.pigeon.firebase_hybrid_ai.FirebaseHybridAiHostApi.generateStructured\(channelSuffix)", binaryMessenger: binaryMessenger, codec: codec)
+    if let api = api {
+      generateStructuredChannel.setMessageHandler { message, reply in
+        let args = message as! [Any?]
+        let promptArg = args[0] as! String
+        let instructedPromptArg = args[1] as! String
+        let schemaJsonArg = args[2] as! String
+        let modeArg = args[3] as! InferenceMode
+        let categoryArg = args[4] as! OnDeviceModelCategory
+        let cloudModelNameArg = args[5] as! String
+        Task { @MainActor in
+          do {
+            let result = try await api.generateStructured(prompt: promptArg, instructedPrompt: instructedPromptArg, schemaJson: schemaJsonArg, mode: modeArg, category: categoryArg, cloudModelName: cloudModelNameArg)
+            reply(wrapResult(result))
+          } catch {
+            reply(wrapError(error))
+          }
+        }
+      }
+    } else {
+      generateStructuredChannel.setMessageHandler(nil)
     }
     /// Prepares a streamed text generation and returns the token that names its
     /// event channel.

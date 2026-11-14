@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'dart:convert';
+
 import 'package:flutter/services.dart';
 import 'package:meta/meta.dart';
 
@@ -10,6 +12,9 @@ import '../exceptions/on_device_model_unavailable_exception.dart';
 import '../firebase_hybrid_ai.dart';
 import '../messages.g.dart';
 import '../messages.g.dart' as pigeon show downloadOnDeviceModel, streamTextGeneration;
+import '../schema/response_schema.dart';
+import '../schema/structured_generation_result.dart';
+import '../schema/structured_response_parser.dart';
 import 'firebase_hybrid_ai_platform.dart';
 
 /// The [FirebaseHybridAiPlatform] implementation for Android and iOS.
@@ -65,6 +70,40 @@ class PigeonFirebaseHybridAi extends FirebaseHybridAiPlatform {
     } on PlatformException catch (exception) {
       throw _exceptionFromPlatform(exception);
     }
+  }
+
+  @override
+  Future<StructuredGenerationResult> generateStructured(
+    String prompt, {
+    required ResponseSchema schema,
+    InferenceMode mode = InferenceMode.preferOnDevice,
+    OnDeviceModelCategory category = OnDeviceModelCategory.stable,
+    String cloudModel = FirebaseHybridAi.defaultCloudModel,
+  }) async {
+    // The host receives the schema for the requests it can constrain, and a prompt that describes the schema for the
+    // ones it cannot. It reports which of the two it used.
+    final String instructedPrompt = '$prompt\n\n${StructuredResponseParser.instructionsFor(schema)}';
+
+    final StructuredTextResponse response;
+    try {
+      response = await _hostApi.generateStructured(
+        prompt,
+        instructedPrompt,
+        jsonEncode(schema.toJson()),
+        mode,
+        category,
+        cloudModel,
+      );
+    } on PlatformException catch (exception) {
+      throw _exceptionFromPlatform(exception);
+    }
+
+    return StructuredResponseParser.parse(
+      text: response.text,
+      schema: schema,
+      source: response.source,
+      isSchemaEnforced: response.isSchemaEnforced,
+    );
   }
 
   @override

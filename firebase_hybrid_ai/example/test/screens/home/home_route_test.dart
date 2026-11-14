@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:firebase_hybrid_ai/firebase_hybrid_ai.dart';
 import 'package:firebase_hybrid_ai_example/screens/home/home_route.dart';
+import 'package:firebase_hybrid_ai_example/screens/home/models/structured_sample.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -382,6 +383,117 @@ void main() {
     });
   });
 
+  group('structured', () {
+    /// A platform that is ready, and that answers structured requests with [result].
+    _FakePlatform readyPlatform(StructuredGenerationResult result) {
+      return _FakePlatform(
+        result: OnDeviceModelStatus(availability: OnDeviceModelAvailability.available, modelName: 'nano-v4-full'),
+        structured: result,
+      );
+    }
+
+    /// A conforming result for the animal fact sample, as on-device inference without enforcement would produce it.
+    const StructuredGenerationResult animalResult = StructuredGenerationResult(
+      text: '{"animal": "Sea otter", "category": "behavior", "fact": "Sea otters hold hands while they sleep."}',
+      data: <String, Object?>{
+        'animal': 'Sea otter',
+        'category': 'behavior',
+        'fact': 'Sea otters hold hands while they sleep.',
+      },
+      source: InferenceSource.onDevice,
+      isSchemaEnforced: false,
+      violations: <String>[],
+    );
+
+    /// Choosing structured prompts must load the first sample's prompt and show its schema. Streaming does not apply.
+    testWidgets('shows the sample prompt and its schema, and hides streaming', (WidgetTester tester) async {
+      // Arrange
+      FirebaseHybridAiPlatform.instance = readyPlatform(animalResult);
+      await openHome(tester);
+
+      // Act
+      await tester.tap(find.text('Structured (JSON)'));
+      await tester.pump();
+
+      // Assert
+      expect(tester.widget<TextField>(find.byType(TextField)).controller!.text, StructuredSample.animalFact.prompt);
+      expect(find.text('Animal fact'), findsOneWidget);
+      expect(find.text('Recipe idea'), findsOneWidget);
+      expect(find.text('Review sentiment'), findsOneWidget);
+      expect(find.textContaining('"category"'), findsOneWidget);
+      expect(find.text('Stream the response'), findsNothing);
+    });
+
+    /// The selected sample's schema and the chosen routing must reach the plugin, and the result must be shown with
+    /// both of its flags: where the schema came from and whether the output matched.
+    testWidgets('sends the schema and shows the fields with both flags', (WidgetTester tester) async {
+      // Arrange
+      final _FakePlatform platform = readyPlatform(animalResult);
+      FirebaseHybridAiPlatform.instance = platform;
+      await openHome(tester);
+      await tester.tap(find.text('Structured (JSON)'));
+      await tester.pump();
+
+      // Act
+      await tester.tap(find.text('Send prompt'));
+      await tester.pumpAndSettle();
+
+      // Assert
+      expect(platform.structuredSchemas.single, same(StructuredSample.animalFact.schema));
+      expect(platform.structuredPrompts.single, StructuredSample.animalFact.prompt);
+      expect(find.text('Sea otters hold hands while they sleep.'), findsOneWidget);
+      expect(find.text('Schema described in the prompt'), findsOneWidget);
+      expect(find.text('Matches the schema'), findsOneWidget);
+      expect(find.text('On-device'), findsOneWidget);
+    });
+
+    /// A response that does not match must say so and list each problem, so the user can see what went wrong.
+    testWidgets('lists the problems of a response that does not match', (WidgetTester tester) async {
+      // Arrange
+      FirebaseHybridAiPlatform.instance = readyPlatform(
+        const StructuredGenerationResult(
+          text: '{"animal": "Sea otter", "category": "cuteness"}',
+          data: <String, Object?>{'animal': 'Sea otter', 'category': 'cuteness'},
+          source: InferenceSource.inCloud,
+          isSchemaEnforced: true,
+          violations: <String>[r'$.category must be one of habitat, diet, but is "cuteness".', r'$.fact is required.'],
+        ),
+      );
+      await openHome(tester);
+      await tester.tap(find.text('Structured (JSON)'));
+      await tester.pump();
+
+      // Act
+      await tester.tap(find.text('Send prompt'));
+      await tester.pumpAndSettle();
+
+      // Assert
+      expect(find.text('Does not match the schema'), findsOneWidget);
+      expect(find.text('Schema enforced by the platform'), findsOneWidget);
+      expect(find.text(r'$.fact is required.'), findsOneWidget);
+    });
+
+    /// Each sample pairs a prompt with a schema, so choosing another sample must change both.
+    testWidgets('sends the schema of the sample that the user chooses', (WidgetTester tester) async {
+      // Arrange
+      final _FakePlatform platform = readyPlatform(animalResult);
+      FirebaseHybridAiPlatform.instance = platform;
+      await openHome(tester);
+      await tester.tap(find.text('Structured (JSON)'));
+      await tester.pump();
+
+      // Act
+      await tester.tap(find.text('Recipe idea'));
+      await tester.pump();
+      await tester.tap(find.text('Send prompt'));
+      await tester.pumpAndSettle();
+
+      // Assert
+      expect(platform.structuredPrompts.single, StructuredSample.recipeIdea.prompt);
+      expect(platform.structuredSchemas.single, same(StructuredSample.recipeIdea.schema));
+    });
+  });
+
   group('download', () {
     /// A model that is not installed offers a download, and any other state does not.
     testWidgets('offers a download button only when the model is downloadable', (WidgetTester tester) async {
@@ -456,7 +568,14 @@ void main() {
 /// A platform implementation with a settable status and a download stream the test controls.
 class _FakePlatform extends FirebaseHybridAiPlatform {
   /// Creates a fake that returns [result], or throws [error] when one is given.
-  new({this.result, this.error, this.generation, this.generationError});
+  new({this.result, this.error, this.generation, this.generationError, this.structured});
+
+  /// The value returned by [generateStructured].
+  final StructuredGenerationResult? structured;
+
+  /// The prompt and schema of every [generateStructured] call, in order.
+  final List<String> structuredPrompts = <String>[];
+  final List<ResponseSchema> structuredSchemas = <ResponseSchema>[];
 
   /// The value returned by [checkOnDeviceStatus], when no [error] is set. Tests change it to simulate an installed
   /// model.
@@ -546,5 +665,20 @@ class _FakePlatform extends FirebaseHybridAiPlatform {
     generationCategories.add(category);
 
     return chunks.stream;
+  }
+
+  @override
+  Future<StructuredGenerationResult> generateStructured(
+    String prompt, {
+    required ResponseSchema schema,
+    InferenceMode mode = InferenceMode.preferOnDevice,
+    OnDeviceModelCategory category = OnDeviceModelCategory.stable,
+    String cloudModel = FirebaseHybridAi.defaultCloudModel,
+  }) async {
+    structuredPrompts.add(prompt);
+    structuredSchemas.add(schema);
+    modes.add(mode);
+
+    return structured!;
   }
 }

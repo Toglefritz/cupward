@@ -1,6 +1,6 @@
 # firebase_hybrid_ai_example
 
-An example app for the `firebase_hybrid_ai` plugin. It reports the state of the on-device model on the current device or browser, downloads the model, and sends prompts to the hybrid AI system. A prompt can be one of the sample prompts or text that you type. The response is streamed by default, so it appears as the model writes it and can be stopped, and a switch sends the prompt for a single, whole response instead. The response shows whether the on-device model or the cloud model answered.
+An example app for the `firebase_hybrid_ai` plugin. It reports the state of the on-device model on the current device or browser, downloads the model, and sends prompts to the hybrid AI system. A prompt can be one of the sample prompts or text that you type. The response is streamed by default, so it appears as the model writes it and can be stopped, and a switch sends the prompt for a single, whole response instead. The response shows whether the on-device model or the cloud model answered. A second format, Structured (JSON), sends one of three sample prompts with a schema (an animal fact, a recipe idea, and a review's sentiment), and shows the decoded fields, whether the platform enforced the schema, and whether the output matches it.
 
 ## Setup
 

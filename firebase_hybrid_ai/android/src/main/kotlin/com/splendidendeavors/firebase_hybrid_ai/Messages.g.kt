@@ -522,6 +522,64 @@ data class TextGenerationChunk (
     return "TextGenerationChunk(text=$text, source=$source)"
   }
 }
+
+/**
+ * The raw text of a response that was requested with a schema.
+ *
+ * This is an internal message. The Dart side decodes and validates the
+ * text, and returns a `StructuredGenerationResult` to callers.
+ *
+ * Generated class from Pigeon that represents data sent in messages.
+ */
+data class StructuredTextResponse (
+  /** The text that the model returned. */
+  val text: String,
+  /** Whether the on-device model or the cloud model generated [text]. */
+  val source: InferenceSource,
+  /**
+   * Whether the platform constrained the model's output to the schema, as
+   * opposed to only asking for it in the prompt.
+   */
+  val isSchemaEnforced: Boolean
+)
+ {
+  companion object {
+    fun fromList(pigeonVar_list: List<Any?>): StructuredTextResponse {
+      val text = pigeonVar_list[0] as String
+      val source = pigeonVar_list[1] as InferenceSource
+      val isSchemaEnforced = pigeonVar_list[2] as Boolean
+      return StructuredTextResponse(text, source, isSchemaEnforced)
+    }
+  }
+  fun toList(): List<Any?> {
+    return listOf(
+      text,
+      source,
+      isSchemaEnforced,
+    )
+  }
+  override fun equals(other: Any?): Boolean {
+    if (other == null || other.javaClass != javaClass) {
+      return false
+    }
+    if (this === other) {
+      return true
+    }
+    val other = other as StructuredTextResponse
+    return MessagesPigeonUtils.deepEquals(this.text, other.text) && MessagesPigeonUtils.deepEquals(this.source, other.source) && MessagesPigeonUtils.deepEquals(this.isSchemaEnforced, other.isSchemaEnforced)
+  }
+
+  override fun hashCode(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + MessagesPigeonUtils.deepHash(this.text)
+    result = 31 * result + MessagesPigeonUtils.deepHash(this.source)
+    result = 31 * result + MessagesPigeonUtils.deepHash(this.isSchemaEnforced)
+    return result
+  }
+  override fun toString(): String {
+    return "StructuredTextResponse(text=$text, source=$source, isSchemaEnforced=$isSchemaEnforced)"
+  }
+}
 private open class MessagesPigeonCodec : StandardMessageCodec() {
   override fun readValueOfType(type: Byte, buffer: ByteBuffer): Any? {
     return when (type) {
@@ -565,6 +623,11 @@ private open class MessagesPigeonCodec : StandardMessageCodec() {
           TextGenerationChunk.fromList(it)
         }
       }
+      137.toByte() -> {
+        (readValue(buffer) as? List<Any?>)?.let {
+          StructuredTextResponse.fromList(it)
+        }
+      }
       else -> super.readValueOfType(type, buffer)
     }
   }
@@ -602,6 +665,10 @@ private open class MessagesPigeonCodec : StandardMessageCodec() {
         stream.write(136)
         writeValue(stream, value.toList())
       }
+      is StructuredTextResponse -> {
+        stream.write(137)
+        writeValue(stream, value.toList())
+      }
       else -> super.writeValue(stream, value)
     }
   }
@@ -630,6 +697,17 @@ interface FirebaseHybridAiHostApi {
    * inference.
    */
   suspend fun generateText(prompt: String, mode: InferenceMode, category: OnDeviceModelCategory, cloudModelName: String): TextGenerationResult
+  /**
+   * Generates a response that should match a JSON schema.
+   *
+   * [schemaJson] is the schema encoded as a JSON Schema object. Where the
+   * platform can constrain the model to a schema supplied at run time, it
+   * sends [prompt] with the schema. Otherwise it sends [instructedPrompt],
+   * which is [prompt] followed by instructions that describe the schema, and
+   * reports that the schema was not enforced. The other arguments are the
+   * same as for [generateText].
+   */
+  suspend fun generateStructured(prompt: String, instructedPrompt: String, schemaJson: String, mode: InferenceMode, category: OnDeviceModelCategory, cloudModelName: String): StructuredTextResponse
   /**
    * Prepares a streamed text generation and returns the token that names its
    * event channel.
@@ -682,6 +760,30 @@ interface FirebaseHybridAiHostApi {
             CoroutineScope(Dispatchers.Main).launch {
               val wrapped: List<Any?> = try {
                 listOf(api.generateText(promptArg, modeArg, categoryArg, cloudModelNameArg))
+              } catch (exception: Throwable) {
+                MessagesPigeonUtils.wrapError(exception)
+              }
+              reply.reply(wrapped)
+            }
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.firebase_hybrid_ai.FirebaseHybridAiHostApi.generateStructured$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { message, reply ->
+            val args = message as List<Any?>
+            val promptArg = args[0] as String
+            val instructedPromptArg = args[1] as String
+            val schemaJsonArg = args[2] as String
+            val modeArg = args[3] as InferenceMode
+            val categoryArg = args[4] as OnDeviceModelCategory
+            val cloudModelNameArg = args[5] as String
+            CoroutineScope(Dispatchers.Main).launch {
+              val wrapped: List<Any?> = try {
+                listOf(api.generateStructured(promptArg, instructedPromptArg, schemaJsonArg, modeArg, categoryArg, cloudModelNameArg))
               } catch (exception: Throwable) {
                 MessagesPigeonUtils.wrapError(exception)
               }

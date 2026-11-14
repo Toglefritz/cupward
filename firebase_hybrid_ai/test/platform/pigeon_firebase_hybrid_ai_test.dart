@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:firebase_hybrid_ai/firebase_hybrid_ai.dart';
 import 'package:firebase_hybrid_ai/src/messages.g.dart';
@@ -15,6 +16,7 @@ void main() {
   _downloadTests();
   _generationTests();
   _streamingTests();
+  _structuredTests();
 
   group('checkOnDeviceStatus', () {
     /// The status from the host, including the optional model name, must reach the caller unchanged.
@@ -378,10 +380,85 @@ void _streamingTests() {
   });
 }
 
+/// Verifies how [PigeonFirebaseHybridAi] sends a schema to the host and builds the result from the host's text.
+void _structuredTests() {
+  group('generateStructured', () {
+    /// The schema used by these tests.
+    const ResponseSchema schema = ResponseSchema.object(
+      properties: <String, ResponseSchema>{'fact': ResponseSchema.string()},
+    );
+
+    /// The host needs the plain prompt and the schema for requests it can constrain, and a prompt that describes the
+    /// schema for the ones it cannot.
+    test('sends the prompt, the instructed prompt, and the schema to the host', () async {
+      // Arrange
+      final _FakeHostApi api = _FakeHostApi(
+        structured: StructuredTextResponse(
+          text: '{"fact": "x"}',
+          source: InferenceSource.inCloud,
+          isSchemaEnforced: true,
+        ),
+      );
+      final PigeonFirebaseHybridAi platform = PigeonFirebaseHybridAi(api: api);
+
+      // Act
+      await platform.generateStructured('Tell me a fact.', schema: schema, mode: InferenceMode.onlyInCloud);
+
+      // Assert
+      expect(api.lastPrompt, 'Tell me a fact.');
+      expect(api.lastInstructedPrompt, startsWith('Tell me a fact.'));
+      expect(api.lastInstructedPrompt, contains('JSON Schema'));
+      expect(jsonDecode(api.lastSchemaJson!), schema.toJson());
+      expect(api.lastMode, InferenceMode.onlyInCloud);
+    });
+
+    /// The host reports whether it enforced the schema, and the result must carry that value with the validation.
+    test('decodes and validates the host text and keeps the enforcement flag', () async {
+      // Arrange
+      final PigeonFirebaseHybridAi platform = PigeonFirebaseHybridAi(
+        api: _FakeHostApi(
+          structured: StructuredTextResponse(
+            text: '```json\n{"fact": "Otters hold hands."}\n```',
+            source: InferenceSource.onDevice,
+            isSchemaEnforced: false,
+          ),
+        ),
+      );
+
+      // Act
+      final StructuredGenerationResult result = await platform.generateStructured('Fact', schema: schema);
+
+      // Assert
+      expect(result.isSchemaEnforced, isFalse);
+      expect(result.conformsToSchema, isTrue);
+      expect(result.data, <String, Object?>{'fact': 'Otters hold hands.'});
+      expect(result.source, InferenceSource.onDevice);
+    });
+
+    /// Host failures use the same exception types as plain text generation.
+    test('translates host errors', () {
+      // Arrange
+      final PigeonFirebaseHybridAi platform = PigeonFirebaseHybridAi(
+        api: _FakeHostApi(error: PlatformException(code: 'on-device-unavailable')),
+      );
+
+      // Act and assert
+      expect(platform.generateStructured('Fact', schema: schema), throwsA(isA<OnDeviceModelUnavailableException>()));
+    });
+  });
+}
+
 /// A host API that returns a preset [status] or throws a preset [error] without using a message channel.
 class _FakeHostApi extends FirebaseHybridAiHostApi {
   /// Creates a fake that returns [status], or throws [error] when one is given.
-  new({this.status, this.error, this.generation, this.token = 'token'});
+  new({this.status, this.error, this.generation, this.token = 'token', this.structured});
+
+  /// The value returned by [generateStructured], when no [error] is set.
+  final StructuredTextResponse? structured;
+
+  /// The instructed prompt and the schema of the most recent [generateStructured] call.
+  String? lastInstructedPrompt;
+  String? lastSchemaJson;
 
   /// The token returned by [prepareTextStream], when no [error] is set.
   final String token;
@@ -450,5 +527,28 @@ class _FakeHostApi extends FirebaseHybridAiHostApi {
     }
 
     return token;
+  }
+
+  @override
+  Future<StructuredTextResponse> generateStructured(
+    String prompt,
+    String instructedPrompt,
+    String schemaJson,
+    InferenceMode mode,
+    OnDeviceModelCategory category,
+    String cloudModelName,
+  ) async {
+    lastPrompt = prompt;
+    lastInstructedPrompt = instructedPrompt;
+    lastSchemaJson = schemaJson;
+    lastMode = mode;
+    lastCategory = category;
+    lastCloudModel = cloudModelName;
+
+    if (error != null) {
+      throw error!;
+    }
+
+    return structured!;
   }
 }

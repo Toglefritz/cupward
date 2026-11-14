@@ -193,11 +193,13 @@ void main() {
               required InferenceMode mode,
               required String cloudModel,
               required bool initializeDeviceModel,
+              Map<String, Object?>? schema,
             }) async {
               calls.add(<String, Object?>{
                 'prompt': prompt,
                 'mode': mode,
                 'cloudModel': cloudModel,
+                'schema': schema,
                 'initializeDeviceModel': initializeDeviceModel,
               });
 
@@ -474,6 +476,81 @@ void main() {
       expect(received, <String>['Hel', 'lo']);
       expect(caught?.code, 'generation-failed');
       expect(caught?.details, contains('blocked'));
+    });
+  });
+
+  group('FirebaseHybridAiWeb.generateStructured', () {
+    /// The schema used by these tests: an object with a string and an enumeration.
+    const ResponseSchema factSchema = ResponseSchema.object(
+      properties: <String, ResponseSchema>{
+        'animal': ResponseSchema.string(),
+        'category': ResponseSchema.enumeration(<String>['diet', 'habitat']),
+      },
+    );
+
+    /// The schema passed to the SDK by the last request.
+    Map<String, Object?>? sentSchema;
+
+    /// Creates the web implementation with a canned SDK response.
+    FirebaseHybridAiWeb build({required String text, String availability = 'available', String source = 'ON_DEVICE'}) {
+      sentSchema = null;
+
+      return FirebaseHybridAiWeb(
+        availabilityReader: () async => availability,
+        generator:
+            ({
+              required String prompt,
+              required InferenceMode mode,
+              required String cloudModel,
+              required bool initializeDeviceModel,
+              Map<String, Object?>? schema,
+            }) async {
+              sentSchema = schema;
+
+              return WebGenerationResponse(text: text, source: source);
+            },
+      );
+    }
+
+    /// The browser constrains both models, so the schema must reach the SDK and the result must say it was enforced.
+    test('sends the schema to the SDK and reports it as enforced', () async {
+      // Arrange
+      final FirebaseHybridAiWeb web = build(text: '{"animal": "Otter", "category": "diet"}');
+
+      // Act
+      final StructuredGenerationResult result = await web.generateStructured('Fact', schema: factSchema);
+
+      // Assert
+      expect(sentSchema, factSchema.toJson());
+      expect(result.isSchemaEnforced, isTrue);
+      expect(result.conformsToSchema, isTrue);
+      expect(result.data, <String, Object?>{'animal': 'Otter', 'category': 'diet'});
+      expect(result.source, InferenceSource.onDevice);
+    });
+
+    /// Enforcement does not replace validation, so a response that does not match is still reported.
+    test('still validates the response', () async {
+      // Arrange
+      final FirebaseHybridAiWeb web = build(text: '{"animal": "Otter", "category": "color"}');
+
+      // Act
+      final StructuredGenerationResult result = await web.generateStructured('Fact', schema: factSchema);
+
+      // Assert
+      expect(result.conformsToSchema, isFalse);
+      expect(result.violations.single, contains(r'$.category'));
+    });
+
+    /// Device-only requests need the model, as for plain text, and fail before reaching the SDK.
+    test('throws OnDeviceModelUnavailableException for an only-on-device request without the model', () {
+      // Arrange
+      final FirebaseHybridAiWeb web = build(text: '{}', availability: 'downloadable');
+
+      // Act and assert
+      expect(
+        web.generateStructured('Fact', schema: factSchema, mode: InferenceMode.onlyOnDevice),
+        throwsA(isA<OnDeviceModelUnavailableException>()),
+      );
     });
   });
 }

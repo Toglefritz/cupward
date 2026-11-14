@@ -154,6 +154,28 @@ class TextGenerationChunk {
   final InferenceSource source;
 }
 
+/// The raw text of a response that was requested with a schema.
+///
+/// This is an internal message. The Dart side decodes and validates the
+/// text, and returns a `StructuredGenerationResult` to callers.
+class StructuredTextResponse {
+  StructuredTextResponse({
+    required this.text,
+    required this.source,
+    required this.isSchemaEnforced,
+  });
+
+  /// The text that the model returned.
+  final String text;
+
+  /// Whether the on-device model or the cloud model generated [text].
+  final InferenceSource source;
+
+  /// Whether the platform constrained the model's output to the schema, as
+  /// opposed to only asking for it in the prompt.
+  final bool isSchemaEnforced;
+}
+
 /// Calls from Dart into the Android and iOS host code.
 @HostApi()
 abstract class FirebaseHybridAiHostApi {
@@ -171,6 +193,24 @@ abstract class FirebaseHybridAiHostApi {
   @async
   TextGenerationResult generateText(
     String prompt,
+    InferenceMode mode,
+    OnDeviceModelCategory category,
+    String cloudModelName,
+  );
+
+  /// Generates a response that should match a JSON schema.
+  ///
+  /// [schemaJson] is the schema encoded as a JSON Schema object. Where the
+  /// platform can constrain the model to a schema supplied at run time, it
+  /// sends [prompt] with the schema. Otherwise it sends [instructedPrompt],
+  /// which is [prompt] followed by instructions that describe the schema, and
+  /// reports that the schema was not enforced. The other arguments are the
+  /// same as for [generateText].
+  @async
+  StructuredTextResponse generateStructured(
+    String prompt,
+    String instructedPrompt,
+    String schemaJson,
     InferenceMode mode,
     OnDeviceModelCategory category,
     String cloudModelName,

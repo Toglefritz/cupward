@@ -20,6 +20,21 @@ public class FirebaseHybridAiPlugin: NSObject, FlutterPlugin, FirebaseHybridAiHo
     }
   }
 
+  func generateStructured(
+    prompt: String,
+    instructedPrompt: String,
+    schemaJson: String,
+    mode: InferenceMode,
+    category: OnDeviceModelCategory,
+    cloudModelName: String
+  ) async throws -> StructuredTextResponse {
+    throw PigeonError(
+      code: "unimplemented",
+      message: "Structured generation is not implemented on iOS.",
+      details: nil
+    )
+  }
+
   func prepareTextStream(
     prompt: String,
     mode: InferenceMode,

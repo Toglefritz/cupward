@@ -6,6 +6,8 @@ import '../exceptions/hybrid_ai_not_supported_exception.dart';
 import '../exceptions/on_device_model_unavailable_exception.dart';
 import '../firebase_hybrid_ai.dart';
 import '../messages.g.dart';
+import '../schema/response_schema.dart';
+import '../schema/structured_generation_result.dart';
 import 'pigeon_firebase_hybrid_ai.dart';
 
 /// The interface that platform implementations of the plugin must extend.
@@ -71,6 +73,22 @@ abstract class FirebaseHybridAiPlatform extends PlatformInterface {
     String cloudModel = FirebaseHybridAi.defaultCloudModel,
   }) {
     throw UnimplementedError('generateText() has not been implemented.');
+  }
+
+  /// Generates a response for [prompt] that should match [schema], and returns it decoded and validated.
+  ///
+  /// The other arguments are the same as for [generateText]. Implementations constrain the model to [schema] where
+  /// the platform can, and every implementation returns the same [StructuredGenerationResult] contract, so the output
+  /// is validated on every platform. Failures throw the same exception types as [generateText]. A response that is
+  /// not valid JSON, or does not match the schema, is not a failure: it is reported through the result's violations.
+  Future<StructuredGenerationResult> generateStructured(
+    String prompt, {
+    required ResponseSchema schema,
+    InferenceMode mode = InferenceMode.preferOnDevice,
+    OnDeviceModelCategory category = OnDeviceModelCategory.stable,
+    String cloudModel = FirebaseHybridAi.defaultCloudModel,
+  }) {
+    throw UnimplementedError('generateStructured() has not been implemented.');
   }
 
   /// Generates text for [prompt] and emits it in chunks as the model produces it.

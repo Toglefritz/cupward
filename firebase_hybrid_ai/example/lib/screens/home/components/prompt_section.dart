@@ -3,13 +3,17 @@ import 'package:material_ui/material_ui.dart';
 
 import '../../../theme/insets.dart';
 import '../home_controller.dart';
+import '../models/response_format.dart';
+import '../models/structured_sample.dart';
 import 'option_chips.dart';
 import 'response_panel.dart';
 import 'sample_prompts.dart';
+import 'schema_preview.dart';
 import 'section_header.dart';
 import 'stream_toggle.dart';
+import 'structured_response_panel.dart';
 
-/// Sends a prompt to the hybrid AI system and shows the response.
+/// Sends a prompt to the hybrid AI system and shows the response, as free text or as JSON that matches a schema.
 ///
 /// The user picks a sample prompt or types one, chooses how the request is routed between the device and the cloud,
 /// and sends it.
@@ -19,6 +23,12 @@ class PromptSection extends StatelessWidget {
 
   /// The controller supplying data and callbacks.
   final HomeController state;
+
+  /// The label of each response format.
+  static const Map<ResponseFormat, String> formatLabels = <ResponseFormat, String>{
+    ResponseFormat.text: 'Text',
+    ResponseFormat.structured: 'Structured (JSON)',
+  };
 
   /// The label of each inference mode.
   static const Map<InferenceMode, String> modeLabels = <InferenceMode, String>{
@@ -56,6 +66,7 @@ class PromptSection extends StatelessWidget {
     final ThemeData theme = Theme.of(context);
     final ColorScheme colors = theme.colorScheme;
     final bool isEnabled = !state.isGenerating;
+    final bool isStructured = state.responseFormat == ResponseFormat.structured;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -66,8 +77,28 @@ class PromptSection extends StatelessWidget {
         ),
         Padding(
           padding: const EdgeInsets.only(top: Insets.small),
-          child: SamplePrompts(onSelected: isEnabled ? state.onSamplePromptSelected : null),
+          child: OptionChips<ResponseFormat>(
+            options: formatLabels,
+            selected: state.responseFormat,
+            onSelected: isEnabled ? state.onResponseFormatSelected : null,
+          ),
         ),
+        if (isStructured)
+          Padding(
+            padding: const EdgeInsets.only(top: Insets.small),
+            child: OptionChips<StructuredSample>(
+              options: <StructuredSample, String>{
+                for (final StructuredSample sample in StructuredSample.samples) sample: sample.label,
+              },
+              selected: state.structuredSample,
+              onSelected: isEnabled ? state.onStructuredSampleSelected : null,
+            ),
+          )
+        else
+          Padding(
+            padding: const EdgeInsets.only(top: Insets.small),
+            child: SamplePrompts(onSelected: isEnabled ? state.onSamplePromptSelected : null),
+          ),
         Padding(
           padding: const EdgeInsets.only(top: Insets.small),
           child: TextField(
@@ -86,6 +117,11 @@ class PromptSection extends StatelessWidget {
             ),
           ),
         ),
+        if (isStructured)
+          Padding(
+            padding: const EdgeInsets.only(top: Insets.small),
+            child: SchemaPreview(schema: state.structuredSample.schema),
+          ),
         Padding(
           padding: const EdgeInsets.only(top: Insets.small),
           child: OptionChips<InferenceMode>(
@@ -101,10 +137,12 @@ class PromptSection extends StatelessWidget {
             style: theme.textTheme.bodyMedium?.copyWith(color: colors.onSurfaceVariant),
           ),
         ),
-        Padding(
-          padding: const EdgeInsets.only(top: Insets.xSmall),
-          child: StreamToggle(value: state.streamResponse, onChanged: isEnabled ? state.onStreamToggled : null),
-        ),
+        // A structured response is only useful once it is complete, so it is never streamed.
+        if (!isStructured)
+          Padding(
+            padding: const EdgeInsets.only(top: Insets.xSmall),
+            child: StreamToggle(value: state.streamResponse, onChanged: isEnabled ? state.onStreamToggled : null),
+          ),
         Padding(
           padding: const EdgeInsets.only(top: Insets.small),
           child: FilledButton(
@@ -121,6 +159,12 @@ class PromptSection extends StatelessWidget {
               // running. Once text arrives it replaces the bar, and a streamed response keeps growing in place.
               if (state.isGenerating && state.generation == null)
                 const LinearProgressIndicator()
+              else if (isStructured)
+                StructuredResponsePanel(
+                  result: state.structuredResult,
+                  elapsed: state.generationTime,
+                  errorMessage: state.generationError,
+                )
               else
                 ResponsePanel(
                   result: state.generation,

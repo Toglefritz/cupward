@@ -77,6 +77,15 @@ Once a model is available, `OnDeviceModelStatus.modelName` holds the name that A
 - On Pixel devices, the AICore app's settings include a **Bypass quota limits** toggle for testing. It affects every app on the device that uses AICore, so turn it off afterward.
 - Only English and Korean have been validated for on-device inference, and a single request is limited to about 4,000 tokens.
 
+## Structured output
+
+`generateStructured` asks for JSON that matches a `ResponseSchema`. On Android, the Firebase AI Logic SDK constrains the on-device model only to schemas that are generated from annotated Kotlin classes when the app is compiled. A schema built in Dart at run time can only be enforced for cloud requests. So on Android:
+
+- With `InferenceMode.onlyInCloud`, the schema is passed to the SDK and enforced, and `isSchemaEnforced` is true.
+- With every other mode, the schema is described in the prompt instead, and `isSchemaEnforced` is false.
+
+The plugin validates the output against the schema in both cases. Check `conformsToSchema` before using `data` from a request that is not enforced.
+
 ## Platforms that ignore the category
 
 The `category` argument only changes behavior on Android. Chrome chooses its own model, and Apple platforms use the system model. See [Choosing the on-device model in Chrome](web-on-device-models.md).

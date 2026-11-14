@@ -19,3 +19,12 @@ export 'src/messages.g.dart'
         TextGenerationChunk,
         TextGenerationResult;
 export 'src/platform/firebase_hybrid_ai_platform.dart';
+export 'src/schema/array_schema.dart';
+export 'src/schema/boolean_schema.dart';
+export 'src/schema/enum_schema.dart';
+export 'src/schema/integer_schema.dart';
+export 'src/schema/number_schema.dart';
+export 'src/schema/object_schema.dart';
+export 'src/schema/response_schema.dart';
+export 'src/schema/string_schema.dart';
+export 'src/schema/structured_generation_result.dart';

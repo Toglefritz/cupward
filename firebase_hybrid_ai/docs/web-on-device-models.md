@@ -12,6 +12,10 @@ On the web, the on-device model is built into Chrome. Chrome downloads it, updat
 
 An `available` result means that Chrome can create a session now. It does not tell you which model would answer. Chrome does not let a page choose a model or read the version of the installed one from JavaScript.
 
+## Structured output
+
+`generateStructured` passes its schema to both models in the browser: to Chrome's on-device model as a response constraint, and to the cloud model as a JSON response schema. The schema is enforced in every mode, so `isSchemaEnforced` is true. The plugin still validates the output, so results have the same contract as on other platforms.
+
 ## How Chrome chooses a model
 
 Chrome documents this behavior in its [model management guide](https://developer.chrome.com/docs/ai/understand-built-in-model-management):

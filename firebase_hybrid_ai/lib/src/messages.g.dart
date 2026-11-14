@@ -391,6 +391,72 @@ class TextGenerationChunk {
   }
 }
 
+/// The raw text of a response that was requested with a schema.
+///
+/// This is an internal message. The Dart side decodes and validates the
+/// text, and returns a `StructuredGenerationResult` to callers.
+class StructuredTextResponse {
+  StructuredTextResponse({
+    required this.text,
+    required this.source,
+    required this.isSchemaEnforced,
+  });
+
+  /// The text that the model returned.
+  String text;
+
+  /// Whether the on-device model or the cloud model generated [text].
+  InferenceSource source;
+
+  /// Whether the platform constrained the model's output to the schema, as
+  /// opposed to only asking for it in the prompt.
+  bool isSchemaEnforced;
+
+  List<Object?> _toList() {
+    return <Object?>[
+      text,
+      source,
+      isSchemaEnforced,
+    ];
+  }
+
+  Object encode() {
+    return _toList();
+  }
+
+  static StructuredTextResponse decode(Object result) {
+    result as List<Object?>;
+    return StructuredTextResponse(
+      text: result[0]! as String,
+      source: result[1]! as InferenceSource,
+      isSchemaEnforced: result[2]! as bool,
+    );
+  }
+
+  @override
+  // ignore: avoid_equals_and_hash_code_on_mutable_classes
+  bool operator ==(Object other) {
+    if (other is! StructuredTextResponse || other.runtimeType != runtimeType) {
+      return false;
+    }
+    if (identical(this, other)) {
+      return true;
+    }
+    return _deepEquals(text, other.text) &&
+        _deepEquals(source, other.source) &&
+        _deepEquals(isSchemaEnforced, other.isSchemaEnforced);
+  }
+
+  @override
+  // ignore: avoid_equals_and_hash_code_on_mutable_classes
+  int get hashCode => _deepHash(<Object?>[runtimeType, ..._toList()]);
+
+  @override
+  String toString() {
+    return 'StructuredTextResponse(text: $text, source: $source, isSchemaEnforced: $isSchemaEnforced)';
+  }
+}
+
 class _PigeonCodec extends StandardMessageCodec {
   const _PigeonCodec();
   @override
@@ -422,6 +488,9 @@ class _PigeonCodec extends StandardMessageCodec {
     } else if (value is TextGenerationChunk) {
       buffer.putUint8(136);
       writeValue(buffer, value.encode());
+    } else if (value is StructuredTextResponse) {
+      buffer.putUint8(137);
+      writeValue(buffer, value.encode());
     } else {
       super.writeValue(buffer, value);
     }
@@ -450,6 +519,8 @@ class _PigeonCodec extends StandardMessageCodec {
         return TextGenerationResult.decode(readValue(buffer)!);
       case 136:
         return TextGenerationChunk.decode(readValue(buffer)!);
+      case 137:
+        return StructuredTextResponse.decode(readValue(buffer)!);
       default:
         return super.readValueOfType(type, buffer);
     }
@@ -526,6 +597,46 @@ class FirebaseHybridAiHostApi {
       isNullValid: false,
     );
     return pigeonVar_replyValue! as TextGenerationResult;
+  }
+
+  /// Generates a response that should match a JSON schema.
+  ///
+  /// [schemaJson] is the schema encoded as a JSON Schema object. Where the
+  /// platform can constrain the model to a schema supplied at run time, it
+  /// sends [prompt] with the schema. Otherwise it sends [instructedPrompt],
+  /// which is [prompt] followed by instructions that describe the schema, and
+  /// reports that the schema was not enforced. The other arguments are the
+  /// same as for [generateText].
+  Future<StructuredTextResponse> generateStructured(
+    String prompt,
+    String instructedPrompt,
+    String schemaJson,
+    InferenceMode mode,
+    OnDeviceModelCategory category,
+    String cloudModelName,
+  ) async {
+    final pigeonVar_channelName =
+        'dev.flutter.pigeon.firebase_hybrid_ai.FirebaseHybridAiHostApi.generateStructured$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channel = BasicMessageChannel<Object?>(
+      pigeonVar_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: pigeonVar_binaryMessenger,
+    );
+    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[
+      prompt,
+      instructedPrompt,
+      schemaJson,
+      mode,
+      category,
+      cloudModelName,
+    ]);
+    final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
+    final Object? pigeonVar_replyValue = _extractReplyValueOrThrow(
+      pigeonVar_replyList,
+      pigeonVar_channelName,
+      isNullValid: false,
+    );
+    return pigeonVar_replyValue! as StructuredTextResponse;
   }
 
   /// Prepares a streamed text generation and returns the token that names its

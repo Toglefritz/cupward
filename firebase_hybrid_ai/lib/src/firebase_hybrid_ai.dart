@@ -4,6 +4,8 @@ import 'exceptions/hybrid_ai_not_supported_exception.dart';
 import 'exceptions/on_device_model_unavailable_exception.dart';
 import 'messages.g.dart';
 import 'platform/firebase_hybrid_ai_platform.dart';
+import 'schema/response_schema.dart';
+import 'schema/structured_generation_result.dart';
 
 /// The entry point for running prompts with on-device and cloud models through Firebase AI Logic.
 ///
@@ -105,6 +107,57 @@ class FirebaseHybridAi {
     String cloudModel = defaultCloudModel,
   }) => FirebaseHybridAiPlatform.instance.generateTextStream(
     prompt,
+    mode: mode,
+    category: category,
+    cloudModel: cloudModel,
+  );
+
+  /// Sends [prompt] to the hybrid AI system and returns a response that should match [schema], decoded and checked.
+  ///
+  /// This is the structured counterpart to [generateText]: apps that want prose use [generateText] or
+  /// [generateTextStream], and apps that want data use this method. The routing arguments behave as for
+  /// [generateText].
+  ///
+  /// The result has the same contract on every platform:
+  ///
+  /// * [StructuredGenerationResult.data] holds the decoded JSON value, such as a map for an object schema.
+  /// * [StructuredGenerationResult.conformsToSchema] says whether the value matches [schema]. The plugin checks this
+  ///   on every platform, and [StructuredGenerationResult.violations] lists any problems.
+  /// * [StructuredGenerationResult.isSchemaEnforced] says whether the platform constrained the model to [schema]
+  ///   while it generated, or whether the schema was only described in the prompt.
+  ///
+  /// Where the schema is enforced depends on the platform. In a browser it is enforced in every mode. On Android it is
+  /// enforced only with [InferenceMode.onlyInCloud], because Android supports schemas supplied at run time only for
+  /// cloud requests. Other Android requests describe the schema in the prompt, so check
+  /// [StructuredGenerationResult.conformsToSchema] before using the data.
+  ///
+  /// ```dart
+  /// final StructuredGenerationResult result = await hybridAi.generateStructured(
+  ///   'Tell me a fact about an animal.',
+  ///   schema: const ResponseSchema.object(
+  ///     properties: <String, ResponseSchema>{
+  ///       'animal': ResponseSchema.string(),
+  ///       'fact': ResponseSchema.string(),
+  ///     },
+  ///   ),
+  /// );
+  ///
+  /// if (result.conformsToSchema) {
+  ///   final Map<String, Object?> fact = result.data! as Map<String, Object?>;
+  /// }
+  /// ```
+  ///
+  /// Throws the same exceptions as [generateText]. A response that does not match the schema is reported through the
+  /// result and does not throw.
+  Future<StructuredGenerationResult> generateStructured(
+    String prompt, {
+    required ResponseSchema schema,
+    InferenceMode mode = InferenceMode.preferOnDevice,
+    OnDeviceModelCategory category = OnDeviceModelCategory.stable,
+    String cloudModel = defaultCloudModel,
+  }) => FirebaseHybridAiPlatform.instance.generateStructured(
+    prompt,
+    schema: schema,
     mode: mode,
     category: category,
     cloudModel: cloudModel,

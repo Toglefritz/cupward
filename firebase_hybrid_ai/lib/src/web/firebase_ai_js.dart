@@ -34,11 +34,16 @@ String _sdkModeName(InferenceMode mode) {
 /// The SDK requires that call before on-device inference, and it must run in response to a user interaction when it
 /// has to download the model. Callers pass true only when the model is installed or when a download is intended.
 ///
+/// When [schema] is given, the model is constrained to it for both kinds of inference, as the SDK's hybrid
+/// structured output guide describes: the cloud model receives it as the `responseSchema` of a JSON response, and the
+/// on-device model receives it as the `responseConstraint` of its prompts.
+///
 /// Throws a [FirebaseNotInitializedException] if Firebase has not been initialized.
 Future<JSObject> _createModel({
   required InferenceMode mode,
   required String cloudModel,
   required bool initializeDeviceModel,
+  Map<String, Object?>? schema,
 }) async {
   final JSObject? core = globalContext[_coreGlobal] as JSObject?;
   final JSObject? ai = globalContext[_aiGlobal] as JSObject?;
@@ -69,6 +74,15 @@ Future<JSObject> _createModel({
     ..['mode'] = (ai['InferenceMode']! as JSObject)[_sdkModeName(mode)]
     ..['inCloudParams'] = inCloudParams;
 
+  if (schema != null) {
+    final JSAny jsSchema = schema.jsify()!;
+
+    inCloudParams['generationConfig'] = JSObject()
+      ..['responseMimeType'] = 'application/json'.toJS
+      ..['responseSchema'] = jsSchema;
+    modelParams['onDeviceParams'] = JSObject()..['promptOptions'] = (JSObject()..['responseConstraint'] = jsSchema);
+  }
+
   final JSObject model = ai.callMethod<JSObject>('getGenerativeModel'.toJS, aiService, modelParams);
 
   if (initializeDeviceModel) {
@@ -90,7 +104,8 @@ WebGenerationResponse _toResponse(JSObject response) {
 
 /// Sends [prompt] through the Firebase AI Logic JavaScript SDK in the given [mode] and returns the response.
 ///
-/// See [_createModel] for how the model is set up and for [initializeDeviceModel].
+/// See [_createModel] for how the model is set up, for [initializeDeviceModel], and for [schema], which constrains the
+/// response to a JSON Schema when it is given.
 ///
 /// Throws a [FirebaseNotInitializedException] if Firebase has not been initialized, and rethrows whatever the SDK
 /// throws for a failed request.
@@ -99,11 +114,13 @@ Future<WebGenerationResponse> generateWithFirebaseAiJs({
   required InferenceMode mode,
   required String cloudModel,
   required bool initializeDeviceModel,
+  Map<String, Object?>? schema,
 }) async {
   final JSObject model = await _createModel(
     mode: mode,
     cloudModel: cloudModel,
     initializeDeviceModel: initializeDeviceModel,
+    schema: schema,
   );
 
   final JSObject result = await model.callMethod<JSPromise<JSObject>>('generateContent'.toJS, prompt.toJS).toDart;

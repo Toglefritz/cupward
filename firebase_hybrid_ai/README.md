@@ -27,6 +27,7 @@ Those SDKs are written in Kotlin, Swift, and JavaScript. A Flutter app cannot ca
 - Expose the hybrid SDKs' inference modes (prefer on-device, prefer cloud, only on-device, only cloud) as Dart types.
 - Report whether the on-device model is available on the current device, and surface its download progress where the platform supports downloads.
 - Send prompts and return the response, including streamed responses, along with which source (on-device or cloud) produced it.
+- Request responses that match a JSON schema, and report for every response whether the platform enforced the schema and whether the output conforms to it.
 - Translate native errors into Dart exceptions.
 
 Anything the underlying SDKs do not support is not available through this plugin. For example, the on-device models handle a limited set of request types, and requests the on-device model cannot serve are handled according to the inference mode you choose. See the Firebase AI Logic documentation for each platform's capabilities and limits.
