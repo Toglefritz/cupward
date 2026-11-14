@@ -16,9 +16,10 @@ class FirebaseHybridAi {
   /// download. The result describes the model installed on the device, not the cloud, so it is valid offline.
   ///
   /// On Android, [category] selects which Gemini Nano model to check: the stable model, or a newer preview model
-  /// such as Gemini Nano 4. Preview models can require the AICore Developer Preview on the device, and are reported
-  /// as unavailable without it. Check and download the same [category] that your app will use. Other platforms
-  /// ignore [category].
+  /// such as Gemini Nano 4. Preview models need the AICore Developer Preview on the device. Until the device is
+  /// enrolled, the preview categories are reported as unavailable, and after enrollment they are reported as
+  /// downloadable. Read [OnDeviceModelStatus.modelName] to see which model you have. Check and download the same
+  /// [category] that your app will use. Other platforms ignore [category]. See `docs/android-on-device-models.md`.
   ///
   /// Throws a [FirebaseNotInitializedException] if Firebase has not been initialized, a
   /// [HybridAiNotSupportedException] if the platform does not provide hybrid inference, and a

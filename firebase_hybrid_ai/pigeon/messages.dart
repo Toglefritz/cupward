@@ -60,12 +60,13 @@ enum OnDeviceModelCategory {
 
   /// The latest preview model with full performance, such as Gemini Nano 4
   /// Full. It is designed for higher reasoning power and complex tasks.
-  /// Preview models may need the AICore Developer Preview on the device.
+  /// Preview models need the AICore Developer Preview on the device, and are
+  /// reported as unavailable until the device is enrolled.
   preview,
 
   /// The latest preview model that is optimized for speed and lower latency,
-  /// such as Gemini Nano 4 Fast. It may need the AICore Developer Preview on
-  /// the device.
+  /// such as Gemini Nano 4 Fast. It needs the AICore Developer Preview on the
+  /// device, and is reported as unavailable until the device is enrolled.
   previewFast,
 }
 

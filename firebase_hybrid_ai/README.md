@@ -37,6 +37,13 @@ Anything the underlying SDKs do not support is not available through this plugin
 - Firebase initialized in your app with `firebase_core`. Firebase AI Logic is protected by Firebase App Check, so your app also needs `firebase_app_check`.
 - For on-device inference, a device that supports the platform's on-device model. Devices without support use the cloud model, or receive an error if you chose an on-device-only mode.
 
+## Choosing the on-device model
+
+Which on-device model an app receives depends on the platform. These guides explain what the plugin controls and what it does not:
+
+- [Android](docs/android-on-device-models.md): choose between the stable model and the preview models, and enroll a device in the AICore Developer Preview.
+- [Web (Chrome)](docs/web-on-device-models.md): how Chrome chooses and stores its model, how to see which model is installed, and how Chrome's Gemma 4 flag fits in.
+
 ## Additional information
 
 `firebase_hybrid_ai` is an independent, community-developed plugin. It is not affiliated with, endorsed by, or sponsored by Google, Firebase, or Apple. Firebase, Gemini, Gemini Nano, Chrome, and Apple Foundation Models are trademarks of their respective owners.
