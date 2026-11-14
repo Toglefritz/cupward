@@ -40,6 +40,9 @@ class HomeController extends State<HomeRoute> {
   /// Whether a connection attempt is in progress.
   bool isConnecting = false;
 
+  /// Whether a tare command is waiting for its write to finish.
+  bool isTaring = false;
+
   /// The active scan subscription, or null when not scanning.
   StreamSubscription<ThemisUltraDevice>? _scanSubscription;
 
@@ -120,6 +123,27 @@ class HomeController extends State<HomeRoute> {
       reading = null;
       isCapturing = false;
     });
+  }
+
+  /// Sends a tare command and logs whether the write succeeded.
+  Future<void> onTarePressed() async {
+    final ThemisUltra? current = scale;
+    if (current == null || isTaring) {
+      return;
+    }
+
+    setState(() => isTaring = true);
+    final Stopwatch stopwatch = Stopwatch()..start();
+    try {
+      await current.tare();
+      _log('Tare written in ${stopwatch.elapsedMilliseconds} ms.');
+    } on ThemisException catch (error) {
+      _log('Tare failed: $error');
+    } finally {
+      if (mounted) {
+        setState(() => isTaring = false);
+      }
+    }
   }
 
   /// Toggles recording of raw frames. Starting a capture clears earlier frames.

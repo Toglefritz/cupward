@@ -9,7 +9,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  flutter_splendid_ble: ^1.7.1
+  flutter_splendid_ble: ^1.8.0
 
 dev_dependencies:
   flutter_test:

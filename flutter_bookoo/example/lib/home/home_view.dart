@@ -55,10 +55,17 @@ class HomeView extends StatelessWidget {
                 padding: const EdgeInsets.only(top: 12),
                 child: Row(
                   children: <Widget>[
-                    OutlinedButton(
-                      onPressed: state.onCaptureToggled,
-                      child: Text(
-                        state.isCapturing ? 'Stop capture' : 'Start capture',
+                    FilledButton(
+                      onPressed: state.isTaring ? null : state.onTarePressed,
+                      child: const Text('Tare'),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(left: 12),
+                      child: OutlinedButton(
+                        onPressed: state.onCaptureToggled,
+                        child: Text(
+                          state.isCapturing ? 'Stop capture' : 'Start capture',
+                        ),
                       ),
                     ),
                     Padding(

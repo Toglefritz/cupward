@@ -3,9 +3,11 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_splendid_ble/flutter_splendid_ble.dart';
 
+import 'exceptions/themis_command_exception.dart';
 import 'exceptions/themis_exception.dart';
 import 'models/bookoo_scale_reading.dart';
 import 'models/themis_ultra_device.dart';
+import 'protocol/bookoo_command.dart';
 import 'protocol/bookoo_frame_decoder.dart';
 
 /// A connected BOOKOO Themis Ultra whose GATT layout has been verified.
@@ -126,6 +128,34 @@ class ThemisUltra {
     if (subscription != null) {
       unawaited(subscription.cancel());
       weightCharacteristic.unsubscribe();
+    }
+  }
+
+  /// Zeroes the scale at its current load.
+  ///
+  /// Completes when the platform reports the GATT write to the command
+  /// characteristic as finished. The command is written with a response, so
+  /// on iOS, macOS, and Android this means the scale acknowledged it. The new
+  /// zero shows up in [readings] shortly afterward.
+  ///
+  /// Completion does not confirm that the scale tared. It ignores tare during
+  /// an automatic-mode extraction, in automatic done, and while charging.
+  ///
+  /// Throws [ThemisCommandException] when the write fails or the scale has
+  /// been disconnected.
+  Future<void> tare() => _send(BookooCommand.tare);
+
+  /// Writes [command] to [commandCharacteristic] and waits for the write to
+  /// finish.
+  Future<void> _send(BookooCommand command) async {
+    if (_disconnected) {
+      throw ThemisCommandException('Cannot send $command after disconnecting.');
+    }
+
+    try {
+      await commandCharacteristic.writeBytes(bytes: command.bytes);
+    } on Object catch (error) {
+      throw ThemisCommandException('Writing $command failed: $error');
     }
   }
 

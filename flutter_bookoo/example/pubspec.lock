@@ -85,10 +85,9 @@ packages:
   flutter_splendid_ble:
     dependency: "direct main"
     description:
-      name: flutter_splendid_ble
-      sha256: c91c4b3c32d40b998aeba98ee70dea489c78d8fd217d781f87a2ded560ecfd35
-      url: "https://pub.dev"
-    source: hosted
+      path: "../../../flutter_splendid_ble/flutter_splendid_ble"
+      relative: true
+    source: path
     version: "1.7.1"
   flutter_test:
     dependency: "direct dev"

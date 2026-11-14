@@ -6,7 +6,8 @@ import 'package:flutter_splendid_ble/flutter_splendid_ble.dart';
 /// A [FakeCentralMethodChannel] with the extra controls the connection and scan tests need.
 ///
 /// The base fake always reports an enabled adapter and always connects successfully, so this subclass adds configurable
-/// adapter status, permission status, scripted connection events, and a record of disconnect calls.
+/// adapter status, permission status, scripted connection events, scripted notifications, recorded or failing writes,
+/// and a record of disconnect calls.
 class TestCentral extends FakeCentralMethodChannel {
   /// Creates a central with optional overrides.
   ///
@@ -16,6 +17,7 @@ class TestCentral extends FakeCentralMethodChannel {
     this.adapterStatus = BluetoothStatus.enabled,
     this.permissionStatus = BluetoothPermissionStatus.granted,
     this.connectionEvents,
+    this.writeError,
   });
 
   /// The status returned by [checkBluetoothAdapterStatus].
@@ -48,6 +50,13 @@ class TestCentral extends FakeCentralMethodChannel {
       BleCharacteristicValue(deviceAddress: deviceAddress, characteristicUuid: characteristicUuid, value: bytes),
     );
   }
+
+  /// The error thrown by [writeCharacteristic], or null for writes to succeed.
+  Exception? writeError;
+
+  /// Every write passed to [writeCharacteristic], in call order.
+  final List<({String characteristicUuid, List<int> value, int? writeType})> writes =
+      <({String characteristicUuid, List<int> value, int? writeType})>[];
 
   /// Addresses passed to [disconnect], in call order.
   final List<String> disconnectedAddresses = <String>[];
@@ -82,6 +91,19 @@ class TestCentral extends FakeCentralMethodChannel {
       },
     );
     return controller.stream;
+  }
+
+  @override
+  Future<void> writeCharacteristic({
+    required BleCharacteristic characteristic,
+    required List<int> value,
+    int? writeType,
+  }) async {
+    writes.add((characteristicUuid: characteristic.uuid, value: value, writeType: writeType));
+    final Exception? error = writeError;
+    if (error != null) {
+      throw error;
+    }
   }
 
   @override
