@@ -1,4 +1,5 @@
 import 'package:flutter_bookoo_example/home/home_route.dart';
+import 'package:flutter_bookoo_example/theme/bench_theme.dart';
 import 'package:material_ui/material_ui.dart';
 
 /// The root of the example app, which exists to exercise `flutter_bookoo`.
@@ -10,7 +11,8 @@ class ExampleApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'flutter_bookoo example',
-      theme: ThemeData(colorSchemeSeed: Colors.yellow[700]),
+      theme: BenchTheme.light,
+      debugShowCheckedModeBanner: false,
       home: const HomeRoute(),
     );
   }

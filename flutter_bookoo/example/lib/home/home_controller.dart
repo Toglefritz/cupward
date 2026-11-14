@@ -6,12 +6,13 @@ import 'package:flutter_splendid_ble/flutter_splendid_ble.dart';
 import 'package:material_ui/material_ui.dart';
 
 import 'home_route.dart';
+import 'models/activity_entry.dart';
 import 'home_view.dart';
 
 /// State and actions for [HomeRoute].
 ///
-/// Owns a [ThemisUltraClient], the list of scan results, the connected scale, and a running log that is shown on screen
-/// so hardware checks can be read without a debugger.
+/// Owns a [ThemisUltraClient], the list of scan results, the connected scale, and an activity log that is shown on
+/// screen so hardware checks can be read without a debugger.
 class HomeController extends State<HomeRoute> {
   /// The client under test.
   final ThemisUltraClient client = ThemisUltraClient();
@@ -19,8 +20,8 @@ class HomeController extends State<HomeRoute> {
   /// Scan results keyed by device address, holding the latest advertisement.
   final Map<String, ThemisUltraDevice> devices = <String, ThemisUltraDevice>{};
 
-  /// Messages describing what the app and package have done, oldest first.
-  final List<String> logLines = <String>[];
+  /// Events describing what the app and package have done, newest first.
+  final List<ActivityEntry> activity = <ActivityEntry>[];
 
   /// The connected scale, or null when not connected.
   ThemisUltra? scale;
@@ -37,8 +38,11 @@ class HomeController extends State<HomeRoute> {
   /// Whether a scan is in progress.
   bool isScanning = false;
 
+  /// The address of the device being connected to, or null when no connection attempt is in progress.
+  String? connectingAddress;
+
   /// Whether a connection attempt is in progress.
-  bool isConnecting = false;
+  bool get isConnecting => connectingAddress != null;
 
   /// Whether a tare command is waiting for its write to finish.
   bool isTaring = false;
@@ -70,7 +74,7 @@ class HomeController extends State<HomeRoute> {
         setState(() => devices[device.address] = device);
       },
       onError: (Object error) {
-        _log('Scan error: $error');
+        _log('Scan error: $error', isError: true);
         setState(() => isScanning = false);
       },
       onDone: () {
@@ -89,21 +93,21 @@ class HomeController extends State<HomeRoute> {
     await _scanSubscription?.cancel();
     setState(() {
       isScanning = false;
-      isConnecting = true;
+      connectingAddress = device.address;
     });
     _log('Connecting to ${device.name}.');
 
     try {
       final ThemisUltra connected = await client.connect(device);
-      _log('Connected. GATT layout verified.');
+      _log('Connected to ${device.name}. GATT layout verified.');
       _logServices(connected.services);
       setState(() => scale = connected);
       _startListening(connected);
     } on ThemisException catch (error) {
-      _log('Connect failed: $error');
+      _log('Connect failed: $error', isError: true);
     } finally {
       if (mounted) {
-        setState(() => isConnecting = false);
+        setState(() => connectingAddress = null);
       }
     }
   }
@@ -138,7 +142,7 @@ class HomeController extends State<HomeRoute> {
       await current.tare();
       _log('Tare written in ${stopwatch.elapsedMilliseconds} ms.');
     } on ThemisException catch (error) {
-      _log('Tare failed: $error');
+      _log('Tare failed: $error', isError: true);
     } finally {
       if (mounted) {
         setState(() => isTaring = false);
@@ -172,10 +176,14 @@ class HomeController extends State<HomeRoute> {
 
   /// Starts listening to decoded readings and raw frames from [connected].
   void _startListening(ThemisUltra connected) {
-    _readingSubscription = connected.readings.listen(
-      (BookooScaleReading value) => setState(() => reading = value),
-      onError: (Object error) => _log('Reading error: $error'),
-    );
+    _readingSubscription = connected.readings.listen((
+      BookooScaleReading value,
+    ) {
+      if (reading == null) {
+        _log('Weight notifications active.');
+      }
+      setState(() => reading = value);
+    }, onError: (Object error) => _log('Reading error: $error', isError: true));
 
     _frameSubscription = connected.rawFrames.listen((List<int> frame) {
       if (isCapturing) {
@@ -207,16 +215,25 @@ class HomeController extends State<HomeRoute> {
         final String properties = characteristic.properties
             .map((BleCharacteristicProperty property) => property.name)
             .join(', ');
-        _log('  ${characteristic.uuid} [$properties]');
+        _log('Characteristic ${characteristic.uuid}: $properties');
       }
     }
   }
 
-  /// Appends [message] to the on-screen log and the debug console.
-  void _log(String message) {
+  /// Records [message] in the activity log and prints it to the debug console. Set [isError] for failures.
+  void _log(String message, {bool isError = false}) {
     debugPrint(message);
     if (mounted) {
-      setState(() => logLines.add(message));
+      setState(
+        () => activity.insert(
+          0,
+          ActivityEntry(
+            time: DateTime.now(),
+            message: message,
+            isError: isError,
+          ),
+        ),
+      );
     }
   }
 
