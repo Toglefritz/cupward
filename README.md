@@ -60,3 +60,9 @@ Cupward is not intended to replace the craft of making coffee with an algorithm.
 Instead, Cupward uses technology to make the relationship between technique and taste easier to understand.
 
 The goal is not to brew a mathematically perfect cup of coffee. It is to help each person brew a cup they enjoy more than the last one.
+
+## License
+
+Copyright 2026 Splendid Endeavors, LLC.
+
+Cupward is licensed under the [Apache License 2.0](LICENSE).

@@ -57,3 +57,9 @@ See the [`flutter_splendid_ble` documentation](https://pub.dev/packages/flutter_
 `flutter_bookoo` is an independent, community-built package. It is not affiliated with, endorsed by, or sponsored by BOOKOO. BOOKOO and Themis are trademarks of their respective owners.
 
 Report bugs and request features through the issue tracker on the package's repository.
+
+## License
+
+Copyright 2026, Splendid Endeavors LLC.
+
+`flutter_bookoo` is licensed under the [Apache License 2.0](LICENSE).
