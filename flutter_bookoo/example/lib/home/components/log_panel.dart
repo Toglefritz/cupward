@@ -25,7 +25,9 @@ class LogPanel extends StatelessWidget {
             width: double.infinity,
             child: SelectableText(
               lines.join('\n'),
-              style: theme.textTheme.bodySmall?.copyWith(fontFamily: 'monospace'),
+              style: theme.textTheme.bodySmall?.copyWith(
+                fontFamily: 'monospace',
+              ),
             ),
           ),
         ),

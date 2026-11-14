@@ -27,6 +27,28 @@ class TestCentral extends FakeCentralMethodChannel {
   /// Scripted connection events, or null to use the base fake's behavior.
   final List<BleConnectionEvent>? connectionEvents;
 
+  /// The controller feeding notification subscribers, or null when no
+  /// subscription is active.
+  StreamController<BleCharacteristicValue>? _notifications;
+
+  /// The number of times [subscribeToCharacteristic] has been called.
+  int subscribeCount = 0;
+
+  /// The number of times [unsubscribeFromCharacteristic] has been called.
+  int unsubscribeCount = 0;
+
+  /// Delivers [bytes] to the active notification subscriber as if the scale
+  /// had sent them on [characteristicUuid].
+  void emitNotification(
+    List<int> bytes, {
+    String characteristicUuid = 'FF11',
+    String deviceAddress = 'AA:BB:CC:DD:EE:01',
+  }) {
+    _notifications?.add(
+      BleCharacteristicValue(deviceAddress: deviceAddress, characteristicUuid: characteristicUuid, value: bytes),
+    );
+  }
+
   /// Addresses passed to [disconnect], in call order.
   final List<String> disconnectedAddresses = <String>[];
 
@@ -60,6 +82,21 @@ class TestCentral extends FakeCentralMethodChannel {
       },
     );
     return controller.stream;
+  }
+
+  @override
+  Future<Stream<BleCharacteristicValue>> subscribeToCharacteristic(BleCharacteristic characteristic) async {
+    subscribeCount++;
+    final StreamController<BleCharacteristicValue> controller = StreamController<BleCharacteristicValue>.broadcast();
+    _notifications = controller;
+    return controller.stream;
+  }
+
+  @override
+  Future<void> unsubscribeFromCharacteristic(BleCharacteristic characteristic) async {
+    unsubscribeCount++;
+    await _notifications?.close();
+    _notifications = null;
   }
 
   @override

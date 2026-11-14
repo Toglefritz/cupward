@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter_bookoo/flutter_bookoo.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_splendid_ble/flutter_splendid_ble.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -24,6 +25,15 @@ class HomeController extends State<HomeRoute> {
   /// The connected scale, or null when not connected.
   ThemisUltra? scale;
 
+  /// The latest reading from the connected scale, or null before the first.
+  BookooScaleReading? reading;
+
+  /// Whether raw frames are currently being recorded for fixtures.
+  bool isCapturing = false;
+
+  /// Hex-encoded raw frames recorded while [isCapturing], one per entry.
+  final List<String> capturedFrames = <String>[];
+
   /// Whether a scan is in progress.
   bool isScanning = false;
 
@@ -32,6 +42,12 @@ class HomeController extends State<HomeRoute> {
 
   /// The active scan subscription, or null when not scanning.
   StreamSubscription<ThemisUltraDevice>? _scanSubscription;
+
+  /// The subscription to decoded readings, or null when not connected.
+  StreamSubscription<BookooScaleReading>? _readingSubscription;
+
+  /// The subscription to raw frames, or null when not connected.
+  StreamSubscription<List<int>>? _frameSubscription;
 
   /// Starts a scan, replacing any previous results.
   void onScanPressed() {
@@ -79,6 +95,7 @@ class HomeController extends State<HomeRoute> {
       _log('Connected. GATT layout verified.');
       _logServices(connected.services);
       setState(() => scale = connected);
+      _startListening(connected);
     } on ThemisException catch (error) {
       _log('Connect failed: $error');
     } finally {
@@ -95,9 +112,67 @@ class HomeController extends State<HomeRoute> {
       return;
     }
 
+    await _stopListening();
     await current.disconnect();
     _log('Disconnected.');
-    setState(() => scale = null);
+    setState(() {
+      scale = null;
+      reading = null;
+      isCapturing = false;
+    });
+  }
+
+  /// Toggles recording of raw frames. Starting a capture clears earlier frames.
+  void onCaptureToggled() {
+    setState(() {
+      isCapturing = !isCapturing;
+      if (isCapturing) {
+        capturedFrames.clear();
+      }
+    });
+
+    _log(
+      isCapturing
+          ? 'Capture started.'
+          : 'Capture stopped with ${capturedFrames.length} frame(s).',
+    );
+  }
+
+  /// Copies the captured frames to the clipboard, one hex frame per line.
+  ///
+  /// This is the format read by the fixture test in `test/fixtures/frames`.
+  Future<void> onCopyFramesPressed() async {
+    await Clipboard.setData(ClipboardData(text: capturedFrames.join('\n')));
+    _log('Copied ${capturedFrames.length} frame(s) to the clipboard.');
+  }
+
+  /// Starts listening to decoded readings and raw frames from [connected].
+  void _startListening(ThemisUltra connected) {
+    _readingSubscription = connected.readings.listen(
+      (BookooScaleReading value) => setState(() => reading = value),
+      onError: (Object error) => _log('Reading error: $error'),
+    );
+
+    _frameSubscription = connected.rawFrames.listen((List<int> frame) {
+      if (isCapturing) {
+        capturedFrames.add(_toHex(frame));
+      }
+    }, onError: (Object error) => debugPrint('Raw frame error: $error'));
+  }
+
+  /// Cancels the reading and frame subscriptions.
+  Future<void> _stopListening() async {
+    await _readingSubscription?.cancel();
+    await _frameSubscription?.cancel();
+    _readingSubscription = null;
+    _frameSubscription = null;
+  }
+
+  /// Formats [bytes] as lowercase hex with no separators.
+  String _toHex(List<int> bytes) {
+    return bytes
+        .map((int byte) => byte.toRadixString(16).padLeft(2, '0'))
+        .join();
   }
 
   /// Writes every service, characteristic, and its properties to the log.
@@ -124,6 +199,7 @@ class HomeController extends State<HomeRoute> {
   @override
   void dispose() {
     unawaited(_scanSubscription?.cancel());
+    unawaited(_stopListening());
     unawaited(scale?.disconnect());
     super.dispose();
   }
