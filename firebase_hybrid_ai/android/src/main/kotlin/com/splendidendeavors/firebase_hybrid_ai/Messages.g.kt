@@ -268,6 +268,63 @@ enum class OnDeviceModelCategory(val raw: Int) {
 }
 
 /**
+ * How a request chooses between the on-device model and the cloud model.
+ *
+ * The on-device model is the one selected by [OnDeviceModelCategory] where the
+ * platform offers a choice. The cloud model is a Gemini model that the caller
+ * names for the request.
+ */
+enum class InferenceMode(val raw: Int) {
+  /**
+   * Use the on-device model if it is available and can serve the request.
+   * Otherwise, fall back to the cloud model.
+   */
+  PREFER_ON_DEVICE(0),
+  /**
+   * Use the on-device model. If it is not available, fail instead of using the
+   * cloud.
+   */
+  ONLY_ON_DEVICE(1),
+  /**
+   * Use the cloud model. If the device is offline, fall back to the on-device
+   * model. Other cloud failures are not retried on the device.
+   */
+  PREFER_IN_CLOUD(2),
+  /**
+   * Use the cloud model. If the cloud model is not available, fail instead of
+   * using the on-device model.
+   */
+  ONLY_IN_CLOUD(3);
+
+  companion object {
+    private val pigeonValues = values()
+
+    fun ofRaw(raw: Int): InferenceMode? {
+      return pigeonValues.getOrNull(raw)
+    }
+  }
+}
+
+/** Where a response was generated. */
+enum class InferenceSource(val raw: Int) {
+  /**
+   * The on-device model generated the response, so the prompt did not leave
+   * the device.
+   */
+  ON_DEVICE(0),
+  /** The cloud model generated the response. */
+  IN_CLOUD(1);
+
+  companion object {
+    private val pigeonValues = values()
+
+    fun ofRaw(raw: Int): InferenceSource? {
+      return pigeonValues.getOrNull(raw)
+    }
+  }
+}
+
+/**
  * The state of the on-device model on the current device or browser.
  *
  * Generated class from Pigeon that represents data sent in messages.
@@ -368,6 +425,53 @@ data class OnDeviceModelDownloadProgress (
     return "OnDeviceModelDownloadProgress(fraction=$fraction)"
   }
 }
+
+/**
+ * A generated text response and where it came from.
+ *
+ * Generated class from Pigeon that represents data sent in messages.
+ */
+data class TextGenerationResult (
+  /** The generated text. */
+  val text: String,
+  /** Whether the on-device model or the cloud model generated [text]. */
+  val source: InferenceSource
+)
+ {
+  companion object {
+    fun fromList(pigeonVar_list: List<Any?>): TextGenerationResult {
+      val text = pigeonVar_list[0] as String
+      val source = pigeonVar_list[1] as InferenceSource
+      return TextGenerationResult(text, source)
+    }
+  }
+  fun toList(): List<Any?> {
+    return listOf(
+      text,
+      source,
+    )
+  }
+  override fun equals(other: Any?): Boolean {
+    if (other == null || other.javaClass != javaClass) {
+      return false
+    }
+    if (this === other) {
+      return true
+    }
+    val other = other as TextGenerationResult
+    return MessagesPigeonUtils.deepEquals(this.text, other.text) && MessagesPigeonUtils.deepEquals(this.source, other.source)
+  }
+
+  override fun hashCode(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + MessagesPigeonUtils.deepHash(this.text)
+    result = 31 * result + MessagesPigeonUtils.deepHash(this.source)
+    return result
+  }
+  override fun toString(): String {
+    return "TextGenerationResult(text=$text, source=$source)"
+  }
+}
 private open class MessagesPigeonCodec : StandardMessageCodec() {
   override fun readValueOfType(type: Byte, buffer: ByteBuffer): Any? {
     return when (type) {
@@ -382,13 +486,28 @@ private open class MessagesPigeonCodec : StandardMessageCodec() {
         }
       }
       131.toByte() -> {
+        (readValue(buffer) as Long?)?.let {
+          InferenceMode.ofRaw(it.toInt())
+        }
+      }
+      132.toByte() -> {
+        (readValue(buffer) as Long?)?.let {
+          InferenceSource.ofRaw(it.toInt())
+        }
+      }
+      133.toByte() -> {
         (readValue(buffer) as? List<Any?>)?.let {
           OnDeviceModelStatus.fromList(it)
         }
       }
-      132.toByte() -> {
+      134.toByte() -> {
         (readValue(buffer) as? List<Any?>)?.let {
           OnDeviceModelDownloadProgress.fromList(it)
+        }
+      }
+      135.toByte() -> {
+        (readValue(buffer) as? List<Any?>)?.let {
+          TextGenerationResult.fromList(it)
         }
       }
       else -> super.readValueOfType(type, buffer)
@@ -404,12 +523,24 @@ private open class MessagesPigeonCodec : StandardMessageCodec() {
         stream.write(130)
         writeValue(stream, value.raw.toLong())
       }
-      is OnDeviceModelStatus -> {
+      is InferenceMode -> {
         stream.write(131)
+        writeValue(stream, value.raw.toLong())
+      }
+      is InferenceSource -> {
+        stream.write(132)
+        writeValue(stream, value.raw.toLong())
+      }
+      is OnDeviceModelStatus -> {
+        stream.write(133)
         writeValue(stream, value.toList())
       }
       is OnDeviceModelDownloadProgress -> {
-        stream.write(132)
+        stream.write(134)
+        writeValue(stream, value.toList())
+      }
+      is TextGenerationResult -> {
+        stream.write(135)
         writeValue(stream, value.toList())
       }
       else -> super.writeValue(stream, value)
@@ -431,6 +562,15 @@ interface FirebaseHybridAiHostApi {
    * [category] of model where the platform offers a choice.
    */
   suspend fun checkOnDeviceStatus(category: OnDeviceModelCategory): OnDeviceModelStatus
+  /**
+   * Generates text for [prompt] using the on-device model, the cloud model, or
+   * both, as chosen by [mode].
+   *
+   * [category] selects the on-device model where the platform offers a
+   * choice, and [cloudModelName] names the Gemini model used for cloud
+   * inference.
+   */
+  suspend fun generateText(prompt: String, mode: InferenceMode, category: OnDeviceModelCategory, cloudModelName: String): TextGenerationResult
 
   companion object {
     /** The codec used by FirebaseHybridAiHostApi. */
@@ -450,6 +590,28 @@ interface FirebaseHybridAiHostApi {
             CoroutineScope(Dispatchers.Main).launch {
               val wrapped: List<Any?> = try {
                 listOf(api.checkOnDeviceStatus(categoryArg))
+              } catch (exception: Throwable) {
+                MessagesPigeonUtils.wrapError(exception)
+              }
+              reply.reply(wrapped)
+            }
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.firebase_hybrid_ai.FirebaseHybridAiHostApi.generateText$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { message, reply ->
+            val args = message as List<Any?>
+            val promptArg = args[0] as String
+            val modeArg = args[1] as InferenceMode
+            val categoryArg = args[2] as OnDeviceModelCategory
+            val cloudModelNameArg = args[3] as String
+            CoroutineScope(Dispatchers.Main).launch {
+              val wrapped: List<Any?> = try {
+                listOf(api.generateText(promptArg, modeArg, categoryArg, cloudModelNameArg))
               } catch (exception: Throwable) {
                 MessagesPigeonUtils.wrapError(exception)
               }

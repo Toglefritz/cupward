@@ -223,6 +223,35 @@ enum OnDeviceModelCategory: Int, CaseIterable {
   case previewFast = 2
 }
 
+/// How a request chooses between the on-device model and the cloud model.
+///
+/// The on-device model is the one selected by [OnDeviceModelCategory] where the
+/// platform offers a choice. The cloud model is a Gemini model that the caller
+/// names for the request.
+enum InferenceMode: Int, CaseIterable {
+  /// Use the on-device model if it is available and can serve the request.
+  /// Otherwise, fall back to the cloud model.
+  case preferOnDevice = 0
+  /// Use the on-device model. If it is not available, fail instead of using the
+  /// cloud.
+  case onlyOnDevice = 1
+  /// Use the cloud model. If the device is offline, fall back to the on-device
+  /// model. Other cloud failures are not retried on the device.
+  case preferInCloud = 2
+  /// Use the cloud model. If the cloud model is not available, fail instead of
+  /// using the on-device model.
+  case onlyInCloud = 3
+}
+
+/// Where a response was generated.
+enum InferenceSource: Int, CaseIterable {
+  /// The on-device model generated the response, so the prompt did not leave
+  /// the device.
+  case onDevice = 0
+  /// The cloud model generated the response.
+  case inCloud = 1
+}
+
 /// The state of the on-device model on the current device or browser.
 ///
 /// Generated class from Pigeon that represents data sent in messages.
@@ -314,6 +343,50 @@ struct OnDeviceModelDownloadProgress: Hashable, CustomStringConvertible {
   }
 }
 
+/// A generated text response and where it came from.
+///
+/// Generated class from Pigeon that represents data sent in messages.
+struct TextGenerationResult: Hashable, CustomStringConvertible {
+  /// The generated text.
+  var text: String
+  /// Whether the on-device model or the cloud model generated [text].
+  var source: InferenceSource
+
+
+  // swift-format-ignore: AlwaysUseLowerCamelCase
+  static func fromList(_ pigeonVar_list: [Any?]) -> TextGenerationResult? {
+    let text = pigeonVar_list[0] as! String
+    let source = pigeonVar_list[1] as! InferenceSource
+
+    return TextGenerationResult(
+      text: text,
+      source: source
+    )
+  }
+  func toList() -> [Any?] {
+    return [
+      text,
+      source,
+    ]
+  }
+  static func == (lhs: TextGenerationResult, rhs: TextGenerationResult) -> Bool {
+    if Swift.type(of: lhs) != Swift.type(of: rhs) {
+      return false
+    }
+    return MessagesPigeonInternal.deepEquals(lhs.text, rhs.text) && MessagesPigeonInternal.deepEquals(lhs.source, rhs.source)
+  }
+
+  func hash(into hasher: inout Hasher) {
+    hasher.combine("TextGenerationResult")
+    MessagesPigeonInternal.deepHash(value: text, hasher: &hasher)
+    MessagesPigeonInternal.deepHash(value: source, hasher: &hasher)
+  }
+
+  public var description: String {
+    return "TextGenerationResult(text: \(String(describing: text)), source: \(String(describing: source)))"
+  }
+}
+
 private class MessagesPigeonCodecReader: FlutterStandardReader {
   override func readValue(ofType type: UInt8) -> Any? {
     switch type {
@@ -330,9 +403,23 @@ private class MessagesPigeonCodecReader: FlutterStandardReader {
       }
       return nil
     case 131:
-      return OnDeviceModelStatus.fromList(self.readValue() as! [Any?])
+      let enumResultAsInt: Int? = nilOrValue(self.readValue() as! Int?)
+      if let enumResultAsInt = enumResultAsInt {
+        return InferenceMode(rawValue: enumResultAsInt)
+      }
+      return nil
     case 132:
+      let enumResultAsInt: Int? = nilOrValue(self.readValue() as! Int?)
+      if let enumResultAsInt = enumResultAsInt {
+        return InferenceSource(rawValue: enumResultAsInt)
+      }
+      return nil
+    case 133:
+      return OnDeviceModelStatus.fromList(self.readValue() as! [Any?])
+    case 134:
       return OnDeviceModelDownloadProgress.fromList(self.readValue() as! [Any?])
+    case 135:
+      return TextGenerationResult.fromList(self.readValue() as! [Any?])
     default:
       return super.readValue(ofType: type)
     }
@@ -347,11 +434,20 @@ private class MessagesPigeonCodecWriter: FlutterStandardWriter {
     } else if let value = value as? OnDeviceModelCategory {
       super.writeByte(130)
       super.writeValue(value.rawValue)
-    } else if let value = value as? OnDeviceModelStatus {
+    } else if let value = value as? InferenceMode {
       super.writeByte(131)
+      super.writeValue(value.rawValue)
+    } else if let value = value as? InferenceSource {
+      super.writeByte(132)
+      super.writeValue(value.rawValue)
+    } else if let value = value as? OnDeviceModelStatus {
+      super.writeByte(133)
       super.writeValue(value.toList())
     } else if let value = value as? OnDeviceModelDownloadProgress {
-      super.writeByte(132)
+      super.writeByte(134)
+      super.writeValue(value.toList())
+    } else if let value = value as? TextGenerationResult {
+      super.writeByte(135)
       super.writeValue(value.toList())
     } else {
       super.writeValue(value)
@@ -383,6 +479,13 @@ protocol FirebaseHybridAiHostApi {
   /// Returns the state of the on-device model on this device, for the given
   /// [category] of model where the platform offers a choice.
   func checkOnDeviceStatus(category: OnDeviceModelCategory) async throws -> OnDeviceModelStatus
+  /// Generates text for [prompt] using the on-device model, the cloud model, or
+  /// both, as chosen by [mode].
+  ///
+  /// [category] selects the on-device model where the platform offers a
+  /// choice, and [cloudModelName] names the Gemini model used for cloud
+  /// inference.
+  func generateText(prompt: String, mode: InferenceMode, category: OnDeviceModelCategory, cloudModelName: String) async throws -> TextGenerationResult
 }
 
 /// Generated setup class from Pigeon to handle messages through the `binaryMessenger`.
@@ -409,6 +512,32 @@ class FirebaseHybridAiHostApiSetup {
       }
     } else {
       checkOnDeviceStatusChannel.setMessageHandler(nil)
+    }
+    /// Generates text for [prompt] using the on-device model, the cloud model, or
+    /// both, as chosen by [mode].
+    ///
+    /// [category] selects the on-device model where the platform offers a
+    /// choice, and [cloudModelName] names the Gemini model used for cloud
+    /// inference.
+    let generateTextChannel = FlutterBasicMessageChannel(name: "dev.flutter.pigeon.firebase_hybrid_ai.FirebaseHybridAiHostApi.generateText\(channelSuffix)", binaryMessenger: binaryMessenger, codec: codec)
+    if let api = api {
+      generateTextChannel.setMessageHandler { message, reply in
+        let args = message as! [Any?]
+        let promptArg = args[0] as! String
+        let modeArg = args[1] as! InferenceMode
+        let categoryArg = args[2] as! OnDeviceModelCategory
+        let cloudModelNameArg = args[3] as! String
+        Task { @MainActor in
+          do {
+            let result = try await api.generateText(prompt: promptArg, mode: modeArg, category: categoryArg, cloudModelName: cloudModelNameArg)
+            reply(wrapResult(result))
+          } catch {
+            reply(wrapError(error))
+          }
+        }
+      }
+    } else {
+      generateTextChannel.setMessageHandler(nil)
     }
   }
 }

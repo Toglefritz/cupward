@@ -1,6 +1,6 @@
 # firebase_hybrid_ai_example
 
-An example app for the `firebase_hybrid_ai` plugin. It reports the state of the on-device model on the current device or browser, using `FirebaseHybridAi.checkOnDeviceStatus()`.
+An example app for the `firebase_hybrid_ai` plugin. It reports the state of the on-device model on the current device or browser, downloads the model, and sends prompts to the hybrid AI system. A prompt can be one of the sample prompts or text that you type, and the response shows whether the on-device model or the cloud model answered.
 
 ## Setup
 

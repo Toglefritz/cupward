@@ -22,7 +22,7 @@ void main() {
 
   /// Opens the home screen on a surface tall enough to build the whole activity log, which sits below the figure.
   Future<void> openHome(WidgetTester tester) async {
-    tester.view.physicalSize = const Size(800, 2000);
+    tester.view.physicalSize = const Size(800, 3200);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
 
@@ -135,6 +135,125 @@ void main() {
     });
   });
 
+  group('prompt', () {
+    /// A platform that is ready to answer, so that these tests only vary the request and the response.
+    _FakePlatform readyPlatform({TextGenerationResult? generation, Exception? generationError}) {
+      return _FakePlatform(
+        result: OnDeviceModelStatus(availability: OnDeviceModelAvailability.available, modelName: 'nano-v4-full'),
+        generation: generation ?? TextGenerationResult(text: 'African or European?', source: InferenceSource.onDevice),
+        generationError: generationError,
+      );
+    }
+
+    /// Nothing can be sent without text, so the button must wait for the user to type or pick a sample.
+    testWidgets('disables the send button until there is a prompt', (WidgetTester tester) async {
+      // Arrange
+      FirebaseHybridAiPlatform.instance = readyPlatform();
+      await openHome(tester);
+
+      // Assert: no text yet.
+      expect(tester.widget<FilledButton>(find.widgetWithText(FilledButton, 'Send prompt')).onPressed, isNull);
+
+      // Act
+      await tester.enterText(find.byType(TextField), 'Hello');
+      await tester.pump();
+
+      // Assert
+      expect(tester.widget<FilledButton>(find.widgetWithText(FilledButton, 'Send prompt')).onPressed, isNotNull);
+    });
+
+    /// A sample prompt is a shortcut for typing, so it must land in the field where the user can still edit it.
+    testWidgets('fills the text field from a sample prompt', (WidgetTester tester) async {
+      // Arrange
+      FirebaseHybridAiPlatform.instance = readyPlatform();
+      await openHome(tester);
+
+      // Act
+      await tester.tap(find.text('What is the airspeed velocity of an unladen swallow?'));
+      await tester.pump();
+
+      // Assert
+      expect(tester.widget<TextField>(find.byType(TextField)).controller!.text, startsWith('What is the airspeed'));
+    });
+
+    /// The response and its source must both be visible, because the source says where the prompt was processed.
+    testWidgets('shows an on-device response with its source', (WidgetTester tester) async {
+      // Arrange
+      final _FakePlatform platform = readyPlatform();
+      FirebaseHybridAiPlatform.instance = platform;
+      await openHome(tester);
+
+      // Act
+      await tester.enterText(find.byType(TextField), 'What is the airspeed velocity of an unladen swallow?');
+      await tester.pump();
+      await tester.tap(find.text('Send prompt'));
+      await tester.pumpAndSettle();
+
+      // Assert
+      expect(find.text('African or European?'), findsOneWidget);
+      expect(find.text('On-device'), findsOneWidget);
+      expect(platform.prompts, <String>['What is the airspeed velocity of an unladen swallow?']);
+    });
+
+    /// A cloud response must be labeled as such, so that nobody mistakes it for a private, on-device answer.
+    testWidgets('labels a cloud response as cloud', (WidgetTester tester) async {
+      // Arrange
+      FirebaseHybridAiPlatform.instance = readyPlatform(
+        generation: TextGenerationResult(text: 'From the cloud', source: InferenceSource.inCloud),
+      );
+      await openHome(tester);
+
+      // Act
+      await tester.enterText(find.byType(TextField), 'Hello');
+      await tester.pump();
+      await tester.tap(find.text('Send prompt'));
+      await tester.pumpAndSettle();
+
+      // Assert
+      expect(find.text('Cloud'), findsOneWidget);
+      expect(find.text('From the cloud'), findsOneWidget);
+    });
+
+    /// The chosen routing mode and model release decide where the prompt goes, so both must reach the plugin.
+    testWidgets('sends the selected mode and model release', (WidgetTester tester) async {
+      // Arrange
+      final _FakePlatform platform = readyPlatform();
+      FirebaseHybridAiPlatform.instance = platform;
+      await openHome(tester);
+
+      // Act
+      await tester.tap(find.text('Cloud only'));
+      await tester.enterText(find.byType(TextField), 'Hello');
+      await tester.pump();
+      await tester.tap(find.text('Send prompt'));
+      await tester.pumpAndSettle();
+
+      // Assert
+      expect(platform.modes, <InferenceMode>[InferenceMode.onlyInCloud]);
+      expect(platform.generationCategories, <OnDeviceModelCategory>[OnDeviceModelCategory.preview]);
+    });
+
+    /// A failed request must be explained on screen and must leave the screen ready for another attempt.
+    testWidgets('shows the error when generation fails', (WidgetTester tester) async {
+      // Arrange
+      FirebaseHybridAiPlatform.instance = readyPlatform(
+        generationError: const OnDeviceModelUnavailableException(message: 'The model is not installed.'),
+      );
+      await openHome(tester);
+
+      // Act
+      await tester.enterText(find.byType(TextField), 'Hello');
+      await tester.pump();
+      await tester.tap(find.text('Send prompt'));
+      await tester.pumpAndSettle();
+
+      // Assert
+      expect(find.text('The model is not installed.'), findsOneWidget);
+      expect(find.text('Generation failed: The model is not installed.'), findsOneWidget);
+      expect(tester.widget<FilledButton>(find.widgetWithText(FilledButton, 'Send prompt')).onPressed, isNotNull);
+    });
+  });
+
   group('download', () {
     /// A model that is not installed offers a download, and any other state does not.
     testWidgets('offers a download button only when the model is downloadable', (WidgetTester tester) async {
@@ -209,7 +328,7 @@ void main() {
 /// A platform implementation with a settable status and a download stream the test controls.
 class _FakePlatform extends FirebaseHybridAiPlatform {
   /// Creates a fake that returns [result], or throws [error] when one is given.
-  new({this.result, this.error});
+  new({this.result, this.error, this.generation, this.generationError});
 
   /// The value returned by [checkOnDeviceStatus], when no [error] is set. Tests change it to simulate an installed
   /// model.
@@ -217,6 +336,17 @@ class _FakePlatform extends FirebaseHybridAiPlatform {
 
   /// The exception thrown by [checkOnDeviceStatus], if any.
   final Exception? error;
+
+  /// The value returned by [generateText], when no [generationError] is set.
+  final TextGenerationResult? generation;
+
+  /// The exception thrown by [generateText], if any.
+  final Exception? generationError;
+
+  /// The prompt, mode, and category of every [generateText] call, in order.
+  final List<String> prompts = <String>[];
+  final List<InferenceMode> modes = <InferenceMode>[];
+  final List<OnDeviceModelCategory> generationCategories = <OnDeviceModelCategory>[];
 
   /// The category of every call, in order, so tests can check which release the screen asked for.
   final List<OnDeviceModelCategory> categories = <OnDeviceModelCategory>[];
@@ -244,5 +374,23 @@ class _FakePlatform extends FirebaseHybridAiPlatform {
     categories.add(category);
 
     return progress.stream;
+  }
+
+  @override
+  Future<TextGenerationResult> generateText(
+    String prompt, {
+    InferenceMode mode = InferenceMode.preferOnDevice,
+    OnDeviceModelCategory category = OnDeviceModelCategory.stable,
+    String cloudModel = FirebaseHybridAi.defaultCloudModel,
+  }) async {
+    prompts.add(prompt);
+    modes.add(mode);
+    generationCategories.add(category);
+
+    if (generationError != null) {
+      throw generationError!;
+    }
+
+    return generation!;
   }
 }

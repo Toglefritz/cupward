@@ -20,6 +20,19 @@ public class FirebaseHybridAiPlugin: NSObject, FlutterPlugin, FirebaseHybridAiHo
     }
   }
 
+  func generateText(
+    prompt: String,
+    mode: InferenceMode,
+    category: OnDeviceModelCategory,
+    cloudModelName: String
+  ) async throws -> TextGenerationResult {
+    throw PigeonError(
+      code: "unimplemented",
+      message: "Text generation is not implemented on iOS.",
+      details: nil
+    )
+  }
+
   func checkOnDeviceStatus(category: OnDeviceModelCategory) async throws -> OnDeviceModelStatus {
     throw PigeonError(
       code: "unimplemented",

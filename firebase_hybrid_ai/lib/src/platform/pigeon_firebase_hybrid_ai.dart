@@ -6,6 +6,8 @@ import 'package:meta/meta.dart';
 import '../exceptions/firebase_hybrid_ai_exception.dart';
 import '../exceptions/firebase_not_initialized_exception.dart';
 import '../exceptions/hybrid_ai_not_supported_exception.dart';
+import '../exceptions/on_device_model_unavailable_exception.dart';
+import '../firebase_hybrid_ai.dart';
 import '../messages.g.dart';
 import '../messages.g.dart' as pigeon show downloadOnDeviceModel;
 import 'firebase_hybrid_ai_platform.dart';
@@ -47,6 +49,20 @@ class PigeonFirebaseHybridAi extends FirebaseHybridAiPlatform {
   }
 
   @override
+  Future<TextGenerationResult> generateText(
+    String prompt, {
+    InferenceMode mode = InferenceMode.preferOnDevice,
+    OnDeviceModelCategory category = OnDeviceModelCategory.stable,
+    String cloudModel = FirebaseHybridAi.defaultCloudModel,
+  }) async {
+    try {
+      return await _hostApi.generateText(prompt, mode, category, cloudModel);
+    } on PlatformException catch (exception) {
+      throw _exceptionFromPlatform(exception);
+    }
+  }
+
+  @override
   Stream<OnDeviceModelDownloadProgress> downloadOnDeviceModel({
     OnDeviceModelCategory category = OnDeviceModelCategory.stable,
   }) {
@@ -68,6 +84,8 @@ class PigeonFirebaseHybridAi extends FirebaseHybridAiPlatform {
     switch (exception.code) {
       case 'firebase-not-initialized':
         return FirebaseNotInitializedException(message: exception.message, details: details);
+      case 'on-device-unavailable':
+        return OnDeviceModelUnavailableException(message: exception.message, details: details);
       case 'unimplemented':
         return HybridAiNotSupportedException(message: exception.message, details: details);
       default:

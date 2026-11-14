@@ -11,8 +11,9 @@ import 'models/activity_entry.dart';
 /// State and behavior for [HomeRoute].
 ///
 /// Checks the on-device model status when the screen opens and again whenever the user asks. When the model can be
-/// downloaded, it starts the download, shows its progress, and checks the status again when the download finishes. Each
-/// step is recorded in an activity log that is shown on the screen, newest first.
+/// downloaded, it starts the download, shows its progress, and checks the status again when the download finishes. The
+/// user can also send a prompt to the hybrid AI system and see the response and where it came from. Each step is
+/// recorded in an activity log that is shown on the screen, newest first.
 class HomeController extends State<HomeRoute> {
   /// The plugin entry point.
   final FirebaseHybridAi hybridAi = FirebaseHybridAi();
@@ -45,6 +46,27 @@ class HomeController extends State<HomeRoute> {
   /// bar look any different, so reports closer together than this are skipped.
   static const double _progressStep = 0.01;
 
+  /// The prompt text that is sent to the model, which the user edits or fills from a sample prompt.
+  final TextEditingController promptController = TextEditingController();
+
+  /// How the next prompt is routed between the on-device model and the cloud.
+  InferenceMode mode = InferenceMode.preferOnDevice;
+
+  /// Whether a prompt is currently being generated.
+  bool isGenerating = false;
+
+  /// The response to the last prompt, or null before the first one and after a failure.
+  TextGenerationResult? generation;
+
+  /// How long the last successful request took, or null.
+  Duration? generationTime;
+
+  /// A description of the last failed request, or null if the last request succeeded.
+  String? generationError;
+
+  /// Whether the prompt can be sent now: it has text, and nothing else is running.
+  bool get canSend => promptController.text.trim().isNotEmpty && !isGenerating && !isChecking && !isDownloading;
+
   /// When the most recent successful check finished, or null before the first one.
   DateTime? checkedAt;
 
@@ -76,7 +98,17 @@ class HomeController extends State<HomeRoute> {
   @override
   void initState() {
     super.initState();
+
+    // The send button depends on the text, so the screen rebuilds as the user types.
+    promptController.addListener(() => setState(() {}));
+
     unawaited(onCheckPressed());
+  }
+
+  @override
+  void dispose() {
+    promptController.dispose();
+    super.dispose();
   }
 
   /// Reads the on-device model status and updates the screen with the result or the failure.
@@ -176,6 +208,67 @@ class HomeController extends State<HomeRoute> {
     // The status is read again so the screen shows the result of the download, such as the model name.
     if (succeeded && mounted) {
       await onCheckPressed();
+    }
+  }
+
+  /// Puts a sample prompt into the text field so the user can send it or edit it first.
+  // The text controller notifies the screen, so this is a method for the view to call and not a property setter.
+  // ignore: use_setters_to_change_properties
+  void onSamplePromptSelected(String prompt) {
+    promptController.text = prompt;
+  }
+
+  /// Chooses how the next prompt is routed between the on-device model and the cloud.
+  void onModeSelected(InferenceMode selected) {
+    setState(() => mode = selected);
+  }
+
+  /// Sends the prompt to the hybrid AI system and shows the response, or the failure.
+  ///
+  /// The model release, the routing mode, and the cloud model come from the screen's current selections. The time is
+  /// measured around the plugin call, so it includes any model loading that the first on-device request needs.
+  Future<void> onSendPressed() async {
+    final String prompt = promptController.text.trim();
+    final Stopwatch stopwatch = Stopwatch()..start();
+
+    setState(() {
+      isGenerating = true;
+      generation = null;
+      generationTime = null;
+      generationError = null;
+    });
+
+    _log('Sending a prompt (${mode.name}$_categorySuffix).');
+
+    try {
+      final TextGenerationResult result = await hybridAi.generateText(prompt, mode: mode, category: category);
+      stopwatch.stop();
+
+      if (!mounted) {
+        return;
+      }
+
+      _log('Response from ${result.source.name} in ${stopwatch.elapsedMilliseconds} ms.');
+
+      setState(() {
+        generation = result;
+        generationTime = stopwatch.elapsed;
+      });
+    } on FirebaseHybridAiException catch (exception) {
+      debugPrint('Text generation failed: $exception');
+
+      if (!mounted) {
+        return;
+      }
+
+      final String message = exception.message ?? exception.code;
+      _log('Generation failed: $message', isError: true);
+
+      setState(() => generationError = message);
+    } finally {
+      if (mounted) {
+        setState(() => isGenerating = false);
+      }
     }
   }
 

@@ -52,9 +52,18 @@ All of these are listed in `.gitignore`. Do not remove them from it, and do not 
    flutter analyze
    ```
 
+## Enabling cloud requests
+
+Checking the model status, downloading the model, and sending prompts that only use the on-device model need nothing beyond the files above. A prompt that uses the cloud model needs two more things in the Firebase console:
+
+1. Enable Firebase AI Logic for the project. In the console, open **AI Services**, then **AI Logic**, choose **Get started**, and select the **Gemini Developer API** as the provider.
+2. Register the App Check debug token for each device. App Check is enforced for Firebase AI Logic, and the example activates the debug providers in debug builds. On the first launch, the app prints the token to the console, as `AppCheck debug token` in the web console and in the Android log. In the console, open **Security**, then **App Check**, then **Apps**, find your app, and choose **Manage debug tokens**.
+
+Keep debug tokens private. Do not commit them, and do not ship a debug build. A release build needs a production App Check provider.
+
 ## Running on a device
 
-Checking the on-device model status does not contact Firebase servers, so it works with any project and without a network connection. The platforms have these requirements:
+Checking the on-device model status does not contact Firebase servers, so it works without a network connection. The platforms have these requirements:
 
 - **Android:** a device that supports on-device Gemini Nano through the ML Kit Prompt API. See the [supported devices](https://developers.google.com/ml-kit/genai#prompt-device). Emulators cannot run on-device models, and the status reads as unavailable.
 - **Web:** desktop Chrome with the Prompt API enabled. Chrome's [requirements](https://developer.chrome.com/docs/ai/prompt-api#requirements) cover the operating system, storage, and GPU or CPU. Set the `chrome://flags/#prompt-api-for-gemini-nano-multimodal-input` flag to Enabled and restart Chrome.

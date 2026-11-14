@@ -138,6 +138,39 @@ enum OnDeviceModelCategory {
   previewFast,
 }
 
+/// How a request chooses between the on-device model and the cloud model.
+///
+/// The on-device model is the one selected by [OnDeviceModelCategory] where the
+/// platform offers a choice. The cloud model is a Gemini model that the caller
+/// names for the request.
+enum InferenceMode {
+  /// Use the on-device model if it is available and can serve the request.
+  /// Otherwise, fall back to the cloud model.
+  preferOnDevice,
+
+  /// Use the on-device model. If it is not available, fail instead of using the
+  /// cloud.
+  onlyOnDevice,
+
+  /// Use the cloud model. If the device is offline, fall back to the on-device
+  /// model. Other cloud failures are not retried on the device.
+  preferInCloud,
+
+  /// Use the cloud model. If the cloud model is not available, fail instead of
+  /// using the on-device model.
+  onlyInCloud,
+}
+
+/// Where a response was generated.
+enum InferenceSource {
+  /// The on-device model generated the response, so the prompt did not leave
+  /// the device.
+  onDevice,
+
+  /// The cloud model generated the response.
+  inCloud,
+}
+
 /// The state of the on-device model on the current device or browser.
 class OnDeviceModelStatus {
   OnDeviceModelStatus({
@@ -249,6 +282,60 @@ class OnDeviceModelDownloadProgress {
   }
 }
 
+/// A generated text response and where it came from.
+class TextGenerationResult {
+  TextGenerationResult({
+    required this.text,
+    required this.source,
+  });
+
+  /// The generated text.
+  String text;
+
+  /// Whether the on-device model or the cloud model generated [text].
+  InferenceSource source;
+
+  List<Object?> _toList() {
+    return <Object?>[
+      text,
+      source,
+    ];
+  }
+
+  Object encode() {
+    return _toList();
+  }
+
+  static TextGenerationResult decode(Object result) {
+    result as List<Object?>;
+    return TextGenerationResult(
+      text: result[0]! as String,
+      source: result[1]! as InferenceSource,
+    );
+  }
+
+  @override
+  // ignore: avoid_equals_and_hash_code_on_mutable_classes
+  bool operator ==(Object other) {
+    if (other is! TextGenerationResult || other.runtimeType != runtimeType) {
+      return false;
+    }
+    if (identical(this, other)) {
+      return true;
+    }
+    return _deepEquals(text, other.text) && _deepEquals(source, other.source);
+  }
+
+  @override
+  // ignore: avoid_equals_and_hash_code_on_mutable_classes
+  int get hashCode => _deepHash(<Object?>[runtimeType, ..._toList()]);
+
+  @override
+  String toString() {
+    return 'TextGenerationResult(text: $text, source: $source)';
+  }
+}
+
 class _PigeonCodec extends StandardMessageCodec {
   const _PigeonCodec();
   @override
@@ -262,11 +349,20 @@ class _PigeonCodec extends StandardMessageCodec {
     } else if (value is OnDeviceModelCategory) {
       buffer.putUint8(130);
       writeValue(buffer, value.index);
-    } else if (value is OnDeviceModelStatus) {
+    } else if (value is InferenceMode) {
       buffer.putUint8(131);
+      writeValue(buffer, value.index);
+    } else if (value is InferenceSource) {
+      buffer.putUint8(132);
+      writeValue(buffer, value.index);
+    } else if (value is OnDeviceModelStatus) {
+      buffer.putUint8(133);
       writeValue(buffer, value.encode());
     } else if (value is OnDeviceModelDownloadProgress) {
-      buffer.putUint8(132);
+      buffer.putUint8(134);
+      writeValue(buffer, value.encode());
+    } else if (value is TextGenerationResult) {
+      buffer.putUint8(135);
       writeValue(buffer, value.encode());
     } else {
       super.writeValue(buffer, value);
@@ -283,9 +379,17 @@ class _PigeonCodec extends StandardMessageCodec {
         final value = readValue(buffer) as int?;
         return value == null ? null : OnDeviceModelCategory.values[value];
       case 131:
-        return OnDeviceModelStatus.decode(readValue(buffer)!);
+        final value = readValue(buffer) as int?;
+        return value == null ? null : InferenceMode.values[value];
       case 132:
+        final value = readValue(buffer) as int?;
+        return value == null ? null : InferenceSource.values[value];
+      case 133:
+        return OnDeviceModelStatus.decode(readValue(buffer)!);
+      case 134:
         return OnDeviceModelDownloadProgress.decode(readValue(buffer)!);
+      case 135:
+        return TextGenerationResult.decode(readValue(buffer)!);
       default:
         return super.readValueOfType(type, buffer);
     }
@@ -328,6 +432,40 @@ class FirebaseHybridAiHostApi {
       isNullValid: false,
     );
     return pigeonVar_replyValue! as OnDeviceModelStatus;
+  }
+
+  /// Generates text for [prompt] using the on-device model, the cloud model, or
+  /// both, as chosen by [mode].
+  ///
+  /// [category] selects the on-device model where the platform offers a
+  /// choice, and [cloudModelName] names the Gemini model used for cloud
+  /// inference.
+  Future<TextGenerationResult> generateText(
+    String prompt,
+    InferenceMode mode,
+    OnDeviceModelCategory category,
+    String cloudModelName,
+  ) async {
+    final pigeonVar_channelName =
+        'dev.flutter.pigeon.firebase_hybrid_ai.FirebaseHybridAiHostApi.generateText$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channel = BasicMessageChannel<Object?>(
+      pigeonVar_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: pigeonVar_binaryMessenger,
+    );
+    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[
+      prompt,
+      mode,
+      category,
+      cloudModelName,
+    ]);
+    final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
+    final Object? pigeonVar_replyValue = _extractReplyValueOrThrow(
+      pigeonVar_replyList,
+      pigeonVar_channelName,
+      isNullValid: false,
+    );
+    return pigeonVar_replyValue! as TextGenerationResult;
   }
 }
 

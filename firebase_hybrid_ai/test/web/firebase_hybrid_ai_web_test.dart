@@ -6,6 +6,7 @@ import 'dart:js_interop_unsafe';
 
 import 'package:firebase_hybrid_ai/firebase_hybrid_ai.dart';
 import 'package:firebase_hybrid_ai/firebase_hybrid_ai_web.dart';
+import 'package:firebase_hybrid_ai/src/web/web_generation_response.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 /// Verifies the web implementation against a stand-in for Chrome's `LanguageModel` global.
@@ -162,6 +163,193 @@ void main() {
 
       // Act and assert
       expect(FirebaseHybridAiWeb().downloadOnDeviceModel().toList(), throwsA(isA<FirebaseHybridAiException>()));
+    });
+  });
+
+  group('FirebaseHybridAiWeb.generateText', () {
+    /// A recorded call to the fake generator.
+    late List<Map<String, Object?>> calls;
+
+    /// Creates the web implementation with a browser availability string and a canned SDK response.
+    FirebaseHybridAiWeb build({
+      required String? availability,
+      String source = 'IN_CLOUD',
+      Exception? error,
+      bool availabilityThrows = false,
+    }) {
+      calls = <Map<String, Object?>>[];
+
+      return FirebaseHybridAiWeb(
+        availabilityReader: () async {
+          if (availabilityThrows) {
+            throw StateError('rejected');
+          }
+
+          return availability;
+        },
+        generator:
+            ({
+              required String prompt,
+              required InferenceMode mode,
+              required String cloudModel,
+              required bool initializeDeviceModel,
+            }) async {
+              calls.add(<String, Object?>{
+                'prompt': prompt,
+                'mode': mode,
+                'cloudModel': cloudModel,
+                'initializeDeviceModel': initializeDeviceModel,
+              });
+
+              if (error != null) {
+                throw error;
+              }
+
+              return WebGenerationResponse(text: 'Reply', source: source);
+            },
+      );
+    }
+
+    /// The SDK's source string must become the matching enum value, so callers can tell the device from the cloud.
+    test('reports an on-device response as on-device', () async {
+      // Arrange
+      final FirebaseHybridAiWeb web = build(availability: 'available', source: 'ON_DEVICE');
+
+      // Act
+      final TextGenerationResult result = await web.generateText('Hi');
+
+      // Assert
+      expect(result.text, 'Reply');
+      expect(result.source, InferenceSource.onDevice);
+    });
+
+    /// A cloud response must never be reported as local, because the source tells users where their prompt went.
+    test('reports a cloud response as in-cloud', () async {
+      // Arrange
+      final FirebaseHybridAiWeb web = build(availability: 'available');
+
+      // Act
+      final TextGenerationResult result = await web.generateText('Hi');
+
+      // Assert
+      expect(result.source, InferenceSource.inCloud);
+    });
+
+    /// An installed model is initialized, which the SDK requires before on-device inference.
+    test('initializes the device model when it is installed', () async {
+      // Arrange
+      final FirebaseHybridAiWeb web = build(availability: 'available');
+
+      // Act
+      await web.generateText('Hi');
+
+      // Assert
+      expect(calls.single['initializeDeviceModel'], isTrue);
+    });
+
+    /// A model that is not installed must not be initialized, because that starts a download, and the fallback modes
+    /// should answer from the cloud instead of waiting for one.
+    test('does not initialize a model that is not installed in a fallback mode', () async {
+      // Arrange
+      final FirebaseHybridAiWeb web = build(availability: 'downloadable');
+
+      // Act
+      await web.generateText('Hi');
+
+      // Assert
+      expect(calls.single['initializeDeviceModel'], isFalse);
+    });
+
+    /// A cloud-only request has no use for the on-device model, so it must not touch it.
+    test('does not initialize the device model for cloud-only requests', () async {
+      // Arrange
+      final FirebaseHybridAiWeb web = build(availability: 'available');
+
+      // Act
+      await web.generateText('Hi', mode: InferenceMode.onlyInCloud);
+
+      // Assert
+      expect(calls.single['initializeDeviceModel'], isFalse);
+      expect(calls.single['mode'], InferenceMode.onlyInCloud);
+    });
+
+    /// A request that must run on the device fails fast with a specific type, and never reaches the SDK.
+    test('throws OnDeviceModelUnavailableException for an only-on-device request without the model', () async {
+      // Arrange
+      final FirebaseHybridAiWeb web = build(availability: 'downloadable');
+
+      // Act and assert
+      await expectLater(
+        web.generateText('Hi', mode: InferenceMode.onlyOnDevice),
+        throwsA(isA<OnDeviceModelUnavailableException>()),
+      );
+      expect(calls, isEmpty);
+    });
+
+    /// A browser without the Prompt API cannot serve an only-on-device request either.
+    test('throws OnDeviceModelUnavailableException when the browser has no Prompt API', () {
+      // Arrange
+      final FirebaseHybridAiWeb web = build(availability: null);
+
+      // Act and assert
+      expect(
+        web.generateText('Hi', mode: InferenceMode.onlyOnDevice),
+        throwsA(isA<OnDeviceModelUnavailableException>()),
+      );
+    });
+
+    /// A failing availability check must not block a request that the cloud can still serve.
+    test('still sends a fallback-mode request when the availability check fails', () async {
+      // Arrange
+      final FirebaseHybridAiWeb web = build(availability: null, availabilityThrows: true);
+
+      // Act
+      final TextGenerationResult result = await web.generateText('Hi');
+
+      // Assert
+      expect(result.source, InferenceSource.inCloud);
+      expect(calls.single['initializeDeviceModel'], isFalse);
+    });
+
+    /// The prompt, mode, and cloud model must reach the SDK as given.
+    test('passes the prompt, mode, and cloud model to the SDK', () async {
+      // Arrange
+      final FirebaseHybridAiWeb web = build(availability: 'available');
+
+      // Act
+      await web.generateText('Question', mode: InferenceMode.preferInCloud, cloudModel: 'gemini-test');
+
+      // Assert
+      expect(calls.single['prompt'], 'Question');
+      expect(calls.single['mode'], InferenceMode.preferInCloud);
+      expect(calls.single['cloudModel'], 'gemini-test');
+    });
+
+    /// SDK failures must surface as the plugin's exception with the SDK's text kept for diagnosis.
+    test('wraps an SDK failure in FirebaseHybridAiException', () async {
+      // Arrange
+      final FirebaseHybridAiWeb web = build(availability: 'available', error: Exception('quota'));
+
+      // Act
+      FirebaseHybridAiException? caught;
+      try {
+        await web.generateText('Hi');
+      } on FirebaseHybridAiException catch (exception) {
+        caught = exception;
+      }
+
+      // Assert
+      expect(caught?.code, 'generation-failed');
+      expect(caught?.details, contains('quota'));
+    });
+
+    /// A missing Firebase app is reported by the SDK layer and must pass through with its own type.
+    test('does not rewrap FirebaseNotInitializedException', () {
+      // Arrange
+      final FirebaseHybridAiWeb web = build(availability: 'available', error: const FirebaseNotInitializedException());
+
+      // Act and assert
+      expect(web.generateText('Hi'), throwsA(isA<FirebaseNotInitializedException>()));
     });
   });
 }

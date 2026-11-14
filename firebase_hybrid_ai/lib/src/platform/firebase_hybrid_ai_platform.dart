@@ -3,6 +3,7 @@ import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 import '../exceptions/firebase_hybrid_ai_exception.dart';
 import '../exceptions/firebase_not_initialized_exception.dart';
 import '../exceptions/hybrid_ai_not_supported_exception.dart';
+import '../exceptions/on_device_model_unavailable_exception.dart';
 import '../firebase_hybrid_ai.dart';
 import '../messages.g.dart';
 import 'pigeon_firebase_hybrid_ai.dart';
@@ -51,5 +52,24 @@ abstract class FirebaseHybridAiPlatform extends PlatformInterface {
     OnDeviceModelCategory category = OnDeviceModelCategory.stable,
   }) {
     throw UnimplementedError('downloadOnDeviceModel() has not been implemented.');
+  }
+
+  /// Generates text for [prompt] and reports where it was generated.
+  ///
+  /// [mode] chooses between the on-device model and the cloud model. [category] selects the on-device model where
+  /// the platform offers a choice, and is ignored elsewhere. [cloudModel] names the Gemini model that handles cloud
+  /// inference.
+  ///
+  /// Throws an [OnDeviceModelUnavailableException] if [mode] requires the on-device model and it cannot serve the
+  /// request, a [FirebaseNotInitializedException] if Firebase is not initialized, a
+  /// [HybridAiNotSupportedException] if the platform does not provide the capability, and a
+  /// [FirebaseHybridAiException] for any other failure.
+  Future<TextGenerationResult> generateText(
+    String prompt, {
+    InferenceMode mode = InferenceMode.preferOnDevice,
+    OnDeviceModelCategory category = OnDeviceModelCategory.stable,
+    String cloudModel = FirebaseHybridAi.defaultCloudModel,
+  }) {
+    throw UnimplementedError('generateText() has not been implemented.');
   }
 }

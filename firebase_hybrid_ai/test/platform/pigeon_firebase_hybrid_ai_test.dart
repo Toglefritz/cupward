@@ -11,6 +11,7 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   _downloadTests();
+  _generationTests();
 
   group('checkOnDeviceStatus', () {
     /// The status from the host, including the optional model name, must reach the caller unchanged.
@@ -180,10 +181,94 @@ void _downloadTests() {
   });
 }
 
+/// Verifies how [PigeonFirebaseHybridAi] sends prompts to the host and translates the host's errors.
+void _generationTests() {
+  group('generateText', () {
+    /// The host receives every option, and its result reaches the caller unchanged.
+    test('passes the prompt and options to the host and returns its result', () async {
+      // Arrange
+      final _FakeHostApi api = _FakeHostApi(
+        generation: TextGenerationResult(text: 'Nine', source: InferenceSource.onDevice),
+      );
+      final PigeonFirebaseHybridAi platform = PigeonFirebaseHybridAi(api: api);
+
+      // Act
+      final TextGenerationResult result = await platform.generateText(
+        'How many planets?',
+        mode: InferenceMode.onlyOnDevice,
+        category: OnDeviceModelCategory.preview,
+        cloudModel: 'gemini-test',
+      );
+
+      // Assert
+      expect(result.text, 'Nine');
+      expect(result.source, InferenceSource.onDevice);
+      expect(api.lastPrompt, 'How many planets?');
+      expect(api.lastMode, InferenceMode.onlyOnDevice);
+      expect(api.lastCategory, OnDeviceModelCategory.preview);
+      expect(api.lastCloudModel, 'gemini-test');
+    });
+
+    /// An only-on-device request that the device cannot serve is a condition callers act on, so it gets its own type.
+    test('throws OnDeviceModelUnavailableException for the on-device-unavailable code', () {
+      // Arrange
+      final PigeonFirebaseHybridAi platform = PigeonFirebaseHybridAi(
+        api: _FakeHostApi(
+          error: PlatformException(code: 'on-device-unavailable', message: 'No model'),
+        ),
+      );
+
+      // Act and assert
+      expect(platform.generateText('Hi'), throwsA(isA<OnDeviceModelUnavailableException>()));
+    });
+
+    /// A missing Firebase app is reported with the same type as for the other operations.
+    test('throws FirebaseNotInitializedException for the firebase-not-initialized code', () {
+      // Arrange
+      final PigeonFirebaseHybridAi platform = PigeonFirebaseHybridAi(
+        api: _FakeHostApi(error: PlatformException(code: 'firebase-not-initialized')),
+      );
+
+      // Act and assert
+      expect(platform.generateText('Hi'), throwsA(isA<FirebaseNotInitializedException>()));
+    });
+
+    /// Other failures keep the host's code so callers and logs can tell them apart.
+    test('keeps the platform code for other failures', () async {
+      // Arrange
+      final PigeonFirebaseHybridAi platform = PigeonFirebaseHybridAi(
+        api: _FakeHostApi(
+          error: PlatformException(code: 'generation-failed', message: 'Quota exceeded'),
+        ),
+      );
+
+      // Act
+      FirebaseHybridAiException? caught;
+      try {
+        await platform.generateText('Hi');
+      } on FirebaseHybridAiException catch (exception) {
+        caught = exception;
+      }
+
+      // Assert
+      expect(caught?.code, 'generation-failed');
+      expect(caught?.message, 'Quota exceeded');
+    });
+  });
+}
+
 /// A host API that returns a preset [status] or throws a preset [error] without using a message channel.
 class _FakeHostApi extends FirebaseHybridAiHostApi {
   /// Creates a fake that returns [status], or throws [error] when one is given.
-  new({this.status, this.error});
+  new({this.status, this.error, this.generation});
+
+  /// The value returned by [generateText], when no [error] is set.
+  final TextGenerationResult? generation;
+
+  /// The arguments of the most recent [generateText] call.
+  String? lastPrompt;
+  InferenceMode? lastMode;
+  String? lastCloudModel;
 
   /// The category received by the most recent call.
   OnDeviceModelCategory? lastCategory;
@@ -203,5 +288,24 @@ class _FakeHostApi extends FirebaseHybridAiHostApi {
     }
 
     return status!;
+  }
+
+  @override
+  Future<TextGenerationResult> generateText(
+    String prompt,
+    InferenceMode mode,
+    OnDeviceModelCategory category,
+    String cloudModelName,
+  ) async {
+    lastPrompt = prompt;
+    lastMode = mode;
+    lastCategory = category;
+    lastCloudModel = cloudModelName;
+
+    if (error != null) {
+      throw error!;
+    }
+
+    return generation!;
   }
 }

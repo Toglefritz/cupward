@@ -5,6 +5,7 @@ import 'components/activity_tile.dart';
 import 'components/check_status_row.dart';
 import 'components/header.dart';
 import 'components/model_status_section.dart';
+import 'components/prompt_section.dart';
 import 'components/section_header.dart';
 import 'home_controller.dart';
 
@@ -54,6 +55,7 @@ class HomeView extends StatelessWidget {
                         ),
                       ),
                       ModelStatusSection(state: state),
+                      PromptSection(state: state),
                       const Padding(
                         padding: EdgeInsets.only(top: Insets.large),
                         child: SectionHeader(title: 'Activity'),

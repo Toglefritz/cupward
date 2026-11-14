@@ -77,6 +77,18 @@ class FirebaseHybridAiPlugin :
         }
     }
 
+    /**
+     * Generates text for [prompt] with the Firebase AI Logic hybrid SDK. See [generateTextWithFirebaseAi] for how the
+     * arguments are used and which errors it returns.
+     */
+    override suspend fun generateText(
+        prompt: String,
+        mode: InferenceMode,
+        category: OnDeviceModelCategory,
+        cloudModelName: String,
+    ): TextGenerationResult =
+        generateTextWithFirebaseAi(prompt, mode, category, cloudModelName)
+
     private companion object {
         /** Error code returned to Dart when the SDK throws while checking the model status. */
         const val ERROR_STATUS_CHECK_FAILED = "status-check-failed"

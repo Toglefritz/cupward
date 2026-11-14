@@ -34,6 +34,63 @@ void main() {
     });
   });
 
+  group('generateText', () {
+    /// Callers that only pass a prompt must get the hybrid default: prefer the device, stable model, default cloud
+    /// model. The response must reach the caller unchanged, including its source.
+    test('uses the defaults and returns the platform result', () async {
+      // Arrange
+      final _FakePlatform platform = _FakePlatform(
+        generation: TextGenerationResult(text: 'Hello', source: InferenceSource.onDevice),
+      );
+      FirebaseHybridAiPlatform.instance = platform;
+
+      // Act
+      final TextGenerationResult result = await FirebaseHybridAi().generateText('Hi');
+
+      // Assert
+      expect(result.text, 'Hello');
+      expect(result.source, InferenceSource.onDevice);
+      expect(platform.lastPrompt, 'Hi');
+      expect(platform.lastMode, InferenceMode.preferOnDevice);
+      expect(platform.lastCategory, OnDeviceModelCategory.stable);
+      expect(platform.lastCloudModel, FirebaseHybridAi.defaultCloudModel);
+    });
+
+    /// Every option must reach the platform, because each one changes where the prompt is processed.
+    test('forwards the mode, category, and cloud model', () async {
+      // Arrange
+      final _FakePlatform platform = _FakePlatform(
+        generation: TextGenerationResult(text: 'Cloud', source: InferenceSource.inCloud),
+      );
+      FirebaseHybridAiPlatform.instance = platform;
+
+      // Act
+      await FirebaseHybridAi().generateText(
+        'Hi',
+        mode: InferenceMode.onlyInCloud,
+        category: OnDeviceModelCategory.preview,
+        cloudModel: 'gemini-test',
+      );
+
+      // Assert
+      expect(platform.lastMode, InferenceMode.onlyInCloud);
+      expect(platform.lastCategory, OnDeviceModelCategory.preview);
+      expect(platform.lastCloudModel, 'gemini-test');
+    });
+
+    /// A caller that requires the device must be able to tell that the device could not serve the request.
+    test('propagates an OnDeviceModelUnavailableException', () {
+      // Arrange
+      FirebaseHybridAiPlatform.instance = _FakePlatform(error: const OnDeviceModelUnavailableException());
+
+      // Act and assert
+      expect(
+        FirebaseHybridAi().generateText('Hi', mode: InferenceMode.onlyOnDevice),
+        throwsA(isA<OnDeviceModelUnavailableException>()),
+      );
+    });
+  });
+
   group('category', () {
     /// Callers that do not choose a category get the stable model, so existing behavior does not change.
     test('defaults to the stable category', () async {
@@ -99,10 +156,18 @@ void main() {
 /// A platform implementation that returns a preset [result] or throws a preset [error].
 class _FakePlatform extends FirebaseHybridAiPlatform {
   /// Creates a fake that returns [result], or throws [error] when one is given.
-  new({this.result, this.error, this.progress = const <double>[]});
+  new({this.result, this.error, this.progress = const <double>[], this.generation});
 
   /// The category received by the most recent call, so tests can check that the public class forwards it.
   OnDeviceModelCategory? lastCategory;
+
+  /// The value returned by [generateText], when no [error] is set.
+  final TextGenerationResult? generation;
+
+  /// The prompt, mode, and cloud model received by the most recent [generateText] call.
+  String? lastPrompt;
+  InferenceMode? lastMode;
+  String? lastCloudModel;
 
   /// The fractions emitted by [downloadOnDeviceModel].
   final List<double> progress;
@@ -135,5 +200,24 @@ class _FakePlatform extends FirebaseHybridAiPlatform {
     }
 
     return result!;
+  }
+
+  @override
+  Future<TextGenerationResult> generateText(
+    String prompt, {
+    InferenceMode mode = InferenceMode.preferOnDevice,
+    OnDeviceModelCategory category = OnDeviceModelCategory.stable,
+    String cloudModel = FirebaseHybridAi.defaultCloudModel,
+  }) async {
+    lastPrompt = prompt;
+    lastMode = mode;
+    lastCategory = category;
+    lastCloudModel = cloudModel;
+
+    if (error != null) {
+      throw error!;
+    }
+
+    return generation!;
   }
 }

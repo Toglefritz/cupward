@@ -70,6 +70,39 @@ enum OnDeviceModelCategory {
   previewFast,
 }
 
+/// How a request chooses between the on-device model and the cloud model.
+///
+/// The on-device model is the one selected by [OnDeviceModelCategory] where the
+/// platform offers a choice. The cloud model is a Gemini model that the caller
+/// names for the request.
+enum InferenceMode {
+  /// Use the on-device model if it is available and can serve the request.
+  /// Otherwise, fall back to the cloud model.
+  preferOnDevice,
+
+  /// Use the on-device model. If it is not available, fail instead of using the
+  /// cloud.
+  onlyOnDevice,
+
+  /// Use the cloud model. If the device is offline, fall back to the on-device
+  /// model. Other cloud failures are not retried on the device.
+  preferInCloud,
+
+  /// Use the cloud model. If the cloud model is not available, fail instead of
+  /// using the on-device model.
+  onlyInCloud,
+}
+
+/// Where a response was generated.
+enum InferenceSource {
+  /// The on-device model generated the response, so the prompt did not leave
+  /// the device.
+  onDevice,
+
+  /// The cloud model generated the response.
+  inCloud,
+}
+
 /// The state of the on-device model on the current device or browser.
 class OnDeviceModelStatus {
   OnDeviceModelStatus({required this.availability, this.modelName});
@@ -98,6 +131,17 @@ class OnDeviceModelDownloadProgress {
   final double fraction;
 }
 
+/// A generated text response and where it came from.
+class TextGenerationResult {
+  TextGenerationResult({required this.text, required this.source});
+
+  /// The generated text.
+  final String text;
+
+  /// Whether the on-device model or the cloud model generated [text].
+  final InferenceSource source;
+}
+
 /// Calls from Dart into the Android and iOS host code.
 @HostApi()
 abstract class FirebaseHybridAiHostApi {
@@ -105,6 +149,20 @@ abstract class FirebaseHybridAiHostApi {
   /// [category] of model where the platform offers a choice.
   @async
   OnDeviceModelStatus checkOnDeviceStatus(OnDeviceModelCategory category);
+
+  /// Generates text for [prompt] using the on-device model, the cloud model, or
+  /// both, as chosen by [mode].
+  ///
+  /// [category] selects the on-device model where the platform offers a
+  /// choice, and [cloudModelName] names the Gemini model used for cloud
+  /// inference.
+  @async
+  TextGenerationResult generateText(
+    String prompt,
+    InferenceMode mode,
+    OnDeviceModelCategory category,
+    String cloudModelName,
+  );
 }
 
 /// Streams from the Android and iOS host code to Dart.
