@@ -1,6 +1,7 @@
 name: flutter_bookoo
 description: "Connect Flutter apps to BOOKOO Themis coffee scales over Bluetooth Low Energy, with live weight, flow rate, and timer data."
 version: 0.0.1
+repository: https://github.com/Toglefritz/cupward/tree/main/flutter_bookoo
 
 environment:
   sdk: ^3.14.0
