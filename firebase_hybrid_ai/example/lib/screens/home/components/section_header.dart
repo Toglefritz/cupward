@@ -1,5 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 
+import '../../../theme/insets.dart';
+
 /// A section title over a full-width rule.
 class SectionHeader extends StatelessWidget {
   /// Creates a header reading [title], with an optional [trailing] widget on the right.
@@ -17,7 +19,7 @@ class SectionHeader extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
         Padding(
-          padding: const EdgeInsets.only(bottom: 12),
+          padding: const EdgeInsets.only(bottom: Insets.small),
           child: Row(
             children: <Widget>[
               Expanded(

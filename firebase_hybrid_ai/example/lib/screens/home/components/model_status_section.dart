@@ -1,5 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 
+import '../../../theme/insets.dart';
 import '../home_controller.dart';
 import 'availability_figure.dart';
 import 'status_stats.dart';
@@ -18,11 +19,11 @@ class ModelStatusSection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
         Padding(
-          padding: const EdgeInsets.only(top: 24),
+          padding: const EdgeInsets.only(top: Insets.medium),
           child: AvailabilityFigure(availability: state.status?.availability, errorMessage: state.errorMessage),
         ),
         Padding(
-          padding: const EdgeInsets.only(top: 12),
+          padding: const EdgeInsets.only(top: Insets.small),
           child: StatusStats(
             platform: state.platformLabel,
             modelName: state.status?.modelName,
@@ -31,7 +32,7 @@ class ModelStatusSection extends StatelessWidget {
         ),
         const Divider(),
         Padding(
-          padding: const EdgeInsets.only(top: 28),
+          padding: const EdgeInsets.only(top: Insets.medium),
           child: FilledButton(
             onPressed: state.isChecking ? null : state.onCheckPressed,
             child: Text(state.isChecking ? 'Checking' : 'Check on-device model'),

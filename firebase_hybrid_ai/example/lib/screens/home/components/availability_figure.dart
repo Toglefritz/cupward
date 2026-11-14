@@ -1,6 +1,8 @@
 import 'package:firebase_hybrid_ai/firebase_hybrid_ai.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../../../theme/insets.dart';
+
 /// The on-device model's availability as a large figure, with a sentence explaining what it means.
 class AvailabilityFigure extends StatelessWidget {
   /// Creates the display for [availability], or a placeholder when it is null.
@@ -57,7 +59,7 @@ class AvailabilityFigure extends StatelessWidget {
       children: <Widget>[
         Text('On-device model', style: theme.textTheme.titleMedium),
         Padding(
-          padding: const EdgeInsets.only(top: 8),
+          padding: const EdgeInsets.only(top: Insets.xSmall),
           child: FittedBox(
             fit: BoxFit.scaleDown,
             alignment: Alignment.centerLeft,
@@ -65,7 +67,7 @@ class AvailabilityFigure extends StatelessWidget {
           ),
         ),
         Padding(
-          padding: const EdgeInsets.only(top: 12),
+          padding: const EdgeInsets.only(top: Insets.small),
           child: Text(
             errorMessage ?? explanation,
             style: theme.textTheme.bodyMedium?.copyWith(

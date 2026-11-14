@@ -1,5 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 
+import '../../../theme/insets.dart';
+
 /// A caption above a monospaced value, used in `StatusStats`.
 class StatCell extends StatelessWidget {
   /// Creates a cell showing [value] under [label].
@@ -16,13 +18,13 @@ class StatCell extends StatelessWidget {
     final TextTheme text = Theme.of(context).textTheme;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 16),
+      padding: const EdgeInsets.symmetric(horizontal: Insets.xxSmall, vertical: Insets.small),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           Text(label, style: text.bodyMedium),
           Padding(
-            padding: const EdgeInsets.only(top: 6),
+            padding: const EdgeInsets.only(top: Insets.small),
             child: FittedBox(
               fit: BoxFit.scaleDown,
               alignment: Alignment.centerLeft,

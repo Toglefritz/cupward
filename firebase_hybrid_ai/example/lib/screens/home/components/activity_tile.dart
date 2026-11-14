@@ -1,5 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 
+import '../../../theme/insets.dart';
 import '../models/activity_entry.dart';
 import 'status_dot.dart';
 
@@ -14,6 +15,7 @@ class ActivityTile extends StatelessWidget {
   /// Formats [time] as a 24-hour clock with seconds, such as "10:24:31".
   static String formatTime(DateTime time) {
     String two(int value) => value.toString().padLeft(2, '0');
+
     return '${two(time.hour)}:${two(time.minute)}:${two(time.second)}';
   }
 
@@ -23,17 +25,17 @@ class ActivityTile extends StatelessWidget {
     final Color color = entry.isError ? theme.colorScheme.error : theme.colorScheme.primary;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 14),
+      padding: const EdgeInsets.symmetric(vertical: Insets.small),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           Padding(
-            padding: const EdgeInsets.only(top: 5),
-            child: StatusDot(color: color, size: 10),
+            padding: const EdgeInsets.only(top: Insets.xxSmall),
+            child: StatusDot(color: color, size: Insets.xSmall),
           ),
           Expanded(
             child: Padding(
-              padding: const EdgeInsets.only(left: 16, right: 12),
+              padding: const EdgeInsets.symmetric(horizontal: Insets.small),
               child: SelectableText(
                 entry.message,
                 style: theme.textTheme.bodyLarge?.copyWith(
@@ -43,7 +45,7 @@ class ActivityTile extends StatelessWidget {
             ),
           ),
           Padding(
-            padding: const EdgeInsets.only(top: 2),
+            padding: const EdgeInsets.only(top: Insets.micro),
             child: Text(
               formatTime(entry.time),
               style: theme.textTheme.labelSmall,

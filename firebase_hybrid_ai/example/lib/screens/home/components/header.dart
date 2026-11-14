@@ -1,5 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 
+import '../../../theme/insets.dart';
+
 /// The screen title and the capability it demonstrates.
 class Header extends StatelessWidget {
   /// Creates the header.
@@ -14,7 +16,7 @@ class Header extends StatelessWidget {
       children: <Widget>[
         Text('Hybrid AI', style: text.headlineLarge),
         Padding(
-          padding: const EdgeInsets.only(top: 6),
+          padding: const EdgeInsets.only(top: Insets.small),
           child: Text('Firebase AI Logic', style: text.labelMedium),
         ),
       ],

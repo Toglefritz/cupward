@@ -1,5 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 
+import '../../../theme/insets.dart';
 import 'status_dot.dart';
 
 /// The state of the status check itself.
@@ -43,7 +44,7 @@ class CheckStatusRow extends StatelessWidget {
           StatusDot(color: dotColor),
           Expanded(
             child: Padding(
-              padding: const EdgeInsets.only(left: 16),
+              padding: const EdgeInsets.only(left: Insets.small),
               child: Text(label, style: theme.textTheme.titleMedium),
             ),
           ),

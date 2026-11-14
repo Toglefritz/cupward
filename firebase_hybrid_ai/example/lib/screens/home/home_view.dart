@@ -1,8 +1,9 @@
 import 'package:material_ui/material_ui.dart';
 
+import '../../theme/insets.dart';
 import 'components/activity_tile.dart';
-import 'components/header.dart';
 import 'components/check_status_row.dart';
+import 'components/header.dart';
 import 'components/model_status_section.dart';
 import 'components/section_header.dart';
 import 'home_controller.dart';
@@ -36,23 +37,23 @@ class HomeView extends StatelessWidget {
             child: CustomScrollView(
               slivers: <Widget>[
                 SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(_margin, 32, _margin, 0),
+                  padding: const EdgeInsets.fromLTRB(_margin, Insets.large, _margin, 0),
                   sliver: SliverList.list(
                     children: <Widget>[
                       const Header(),
-                      const Padding(padding: EdgeInsets.only(top: 24), child: Divider()),
+                      const Padding(padding: EdgeInsets.only(top: Insets.medium), child: Divider()),
                       Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        padding: const EdgeInsets.symmetric(vertical: Insets.xSmall),
                         child: CheckStatusRow(isChecking: state.isChecking, hasFailed: state.errorMessage != null),
                       ),
                       ModelStatusSection(state: state),
                       const Padding(
-                        padding: EdgeInsets.only(top: 36),
+                        padding: EdgeInsets.only(top: Insets.large),
                         child: SectionHeader(title: 'Activity'),
                       ),
                       if (state.activity.isEmpty)
                         Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          padding: const EdgeInsets.symmetric(vertical: Insets.small),
                           child: Text(
                             'Nothing yet.',
                             style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
@@ -62,7 +63,7 @@ class HomeView extends StatelessWidget {
                   ),
                 ),
                 SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(_margin, 0, _margin, 32),
+                  padding: const EdgeInsets.fromLTRB(_margin, 0, _margin, Insets.large),
                   sliver: SliverList.separated(
                     itemCount: state.activity.length,
                     itemBuilder: (BuildContext context, int index) => ActivityTile(entry: state.activity[index]),
