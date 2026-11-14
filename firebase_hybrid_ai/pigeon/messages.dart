@@ -64,10 +64,32 @@ class OnDeviceModelStatus {
   final String? modelName;
 }
 
+/// How far along an on-device model download is.
+class OnDeviceModelDownloadProgress {
+  OnDeviceModelDownloadProgress({required this.fraction});
+
+  /// The portion of the download that has finished, from 0.0 (nothing
+  /// downloaded) to 1.0 (complete).
+  ///
+  /// The platforms report different amounts of detail, so only this common
+  /// value is exposed.
+  final double fraction;
+}
+
 /// Calls from Dart into the Android and iOS host code.
 @HostApi()
 abstract class FirebaseHybridAiHostApi {
   /// Returns the state of the on-device model on this device.
   @async
   OnDeviceModelStatus checkOnDeviceStatus();
+}
+
+/// Streams from the Android and iOS host code to Dart.
+@EventChannelApi()
+abstract class FirebaseHybridAiEventsApi {
+  /// Starts downloading the on-device model and streams its progress.
+  ///
+  /// The stream ends when the download completes and emits an error if it
+  /// fails. Cancelling the subscription stops listening to the download.
+  OnDeviceModelDownloadProgress downloadOnDeviceModel();
 }

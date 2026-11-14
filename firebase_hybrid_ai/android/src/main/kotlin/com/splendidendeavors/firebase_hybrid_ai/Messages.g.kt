@@ -284,6 +284,54 @@ data class OnDeviceModelStatus (
     return "OnDeviceModelStatus(availability=$availability, modelName=$modelName)"
   }
 }
+
+/**
+ * How far along an on-device model download is.
+ *
+ * Generated class from Pigeon that represents data sent in messages.
+ */
+data class OnDeviceModelDownloadProgress (
+  /**
+   * The portion of the download that has finished, from 0.0 (nothing
+   * downloaded) to 1.0 (complete).
+   *
+   * The platforms report different amounts of detail, so only this common
+   * value is exposed.
+   */
+  val fraction: Double
+)
+ {
+  companion object {
+    fun fromList(pigeonVar_list: List<Any?>): OnDeviceModelDownloadProgress {
+      val fraction = pigeonVar_list[0] as Double
+      return OnDeviceModelDownloadProgress(fraction)
+    }
+  }
+  fun toList(): List<Any?> {
+    return listOf(
+      fraction,
+    )
+  }
+  override fun equals(other: Any?): Boolean {
+    if (other == null || other.javaClass != javaClass) {
+      return false
+    }
+    if (this === other) {
+      return true
+    }
+    val other = other as OnDeviceModelDownloadProgress
+    return MessagesPigeonUtils.deepEquals(this.fraction, other.fraction)
+  }
+
+  override fun hashCode(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + MessagesPigeonUtils.deepHash(this.fraction)
+    return result
+  }
+  override fun toString(): String {
+    return "OnDeviceModelDownloadProgress(fraction=$fraction)"
+  }
+}
 private open class MessagesPigeonCodec : StandardMessageCodec() {
   override fun readValueOfType(type: Byte, buffer: ByteBuffer): Any? {
     return when (type) {
@@ -295,6 +343,11 @@ private open class MessagesPigeonCodec : StandardMessageCodec() {
       130.toByte() -> {
         (readValue(buffer) as? List<Any?>)?.let {
           OnDeviceModelStatus.fromList(it)
+        }
+      }
+      131.toByte() -> {
+        (readValue(buffer) as? List<Any?>)?.let {
+          OnDeviceModelDownloadProgress.fromList(it)
         }
       }
       else -> super.readValueOfType(type, buffer)
@@ -310,10 +363,16 @@ private open class MessagesPigeonCodec : StandardMessageCodec() {
         stream.write(130)
         writeValue(stream, value.toList())
       }
+      is OnDeviceModelDownloadProgress -> {
+        stream.write(131)
+        writeValue(stream, value.toList())
+      }
       else -> super.writeValue(stream, value)
     }
   }
 }
+
+val MessagesPigeonMethodCodec = StandardMethodCodec(MessagesPigeonCodec())
 
 
 /**
@@ -354,3 +413,86 @@ interface FirebaseHybridAiHostApi {
     }
   }
 }
+
+private class MessagesPigeonStreamHandler<T>(
+    val wrapper: MessagesPigeonEventChannelWrapper<T>
+) : EventChannel.StreamHandler {
+  var pigeonSink: PigeonEventSink<T>? = null
+
+  override fun onListen(p0: Any?, sink: EventChannel.EventSink) {
+    pigeonSink = PigeonEventSink<T>(sink)
+    wrapper.onListen(p0, pigeonSink!!)
+  }
+
+  override fun onCancel(p0: Any?) {
+    pigeonSink = null
+    wrapper.onCancel(p0)
+  }
+}
+
+interface MessagesPigeonEventChannelWrapper<T> {
+  fun onListen(p0: Any?, sink: PigeonEventSink<T>) {}
+
+  fun onCancel(p0: Any?) {}
+}
+
+class PigeonEventSink<T>(private val sink: EventChannel.EventSink) {
+  fun success(value: T) {
+    sink.success(value)
+  }
+
+  fun error(errorCode: String, errorMessage: String?, errorDetails: Any?) {
+    sink.error(errorCode, errorMessage, errorDetails)
+  }
+
+  fun endOfStream() {
+    sink.endOfStream()
+  }
+}
+      
+/** Streams from the Android and iOS host code to Dart. */
+/** A typed channel for communicating with the Flutter application using asynchronous event streams. */
+class DownloadOnDeviceModelEventChannel(messenger: BinaryMessenger, instanceName: String = "") {
+  private val channel: EventChannel
+
+  init {
+    var channelName = "dev.flutter.pigeon.firebase_hybrid_ai.FirebaseHybridAiEventsApi.downloadOnDeviceModel"
+    if (instanceName.isNotEmpty()) {
+      channelName += ".$instanceName"
+    }
+    channel = EventChannel(messenger, channelName, MessagesPigeonMethodCodec)
+  }
+
+  /**
+   * Sets the stream handler for this channel, replacing any previous handler.
+   *
+   * Pass `null` to remove the event channel registration.
+   */
+  fun setStreamHandler(streamHandler: DownloadOnDeviceModelStreamHandler?) {
+    val internalHandler = streamHandler?.let { MessagesPigeonStreamHandler<OnDeviceModelDownloadProgress>(it) }
+    channel.setStreamHandler(internalHandler)
+  }
+}
+
+abstract class DownloadOnDeviceModelStreamHandler : MessagesPigeonEventChannelWrapper<OnDeviceModelDownloadProgress> {
+  companion object {
+    /**
+     * Creates and returns a new event channel that calls the provided stream handler.
+     *
+     * The returned channel can be stored to allow changing or removing the stream handler.
+     * If the handler will not be changed for the lifetime of the engine associated with the messenger,
+     * the return value can be ignored.
+     */
+    fun register(messenger: BinaryMessenger, streamHandler: DownloadOnDeviceModelStreamHandler, instanceName: String = ""): DownloadOnDeviceModelEventChannel {
+      val channel = DownloadOnDeviceModelEventChannel(messenger, instanceName)
+      channel.setStreamHandler(streamHandler)
+      return channel
+    }
+  }
+
+  // Implement methods from MessagesPigeonEventChannelWrapper
+  override fun onListen(p0: Any?, sink: PigeonEventSink<OnDeviceModelDownloadProgress>) {}
+
+  override fun onCancel(p0: Any?) {}
+}
+      

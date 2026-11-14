@@ -1,10 +1,5 @@
 package com.splendidendeavors.firebase_hybrid_ai
 
-import com.google.firebase.Firebase
-import com.google.firebase.ai.InferenceMode
-import com.google.firebase.ai.OnDeviceConfig
-import com.google.firebase.ai.ai
-import com.google.firebase.ai.type.GenerativeBackend
 import com.google.firebase.ai.type.PublicPreviewAPI
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 
@@ -19,12 +14,24 @@ import io.flutter.embedding.engine.plugins.FlutterPlugin
 class FirebaseHybridAiPlugin :
     FlutterPlugin,
     FirebaseHybridAiHostApi {
+    /** Streams download progress to Dart. Created when the plugin attaches and disposed when it detaches. */
+    private var downloadHandler: OnDeviceModelDownloadHandler? = null
+
     override fun onAttachedToEngine(flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
         FirebaseHybridAiHostApi.setUp(flutterPluginBinding.binaryMessenger, this)
+
+        val handler = OnDeviceModelDownloadHandler()
+        downloadHandler = handler
+        DownloadOnDeviceModelStreamHandler.register(flutterPluginBinding.binaryMessenger, handler)
     }
 
     override fun onDetachedFromEngine(binding: FlutterPlugin.FlutterPluginBinding) {
         FirebaseHybridAiHostApi.setUp(binding.binaryMessenger, null)
+
+        // Passing null removes the handler registration for this channel.
+        DownloadOnDeviceModelEventChannel(binding.binaryMessenger).setStreamHandler(null)
+        downloadHandler?.dispose()
+        downloadHandler = null
     }
 
     /**
@@ -38,25 +45,7 @@ class FirebaseHybridAiPlugin :
      * @throws FlutterError if Firebase is not initialized or the SDK reports a failure.
      */
     override suspend fun checkOnDeviceStatus(): OnDeviceModelStatus {
-        val model = try {
-            Firebase.ai(backend = GenerativeBackend.googleAI()).generativeModel(
-                modelName = PLACEHOLDER_CLOUD_MODEL_NAME,
-                onDeviceConfig = OnDeviceConfig(mode = InferenceMode.PREFER_ON_DEVICE),
-            )
-        } catch (exception: IllegalStateException) {
-            throw FlutterError(
-                ERROR_FIREBASE_NOT_INITIALIZED,
-                "Firebase must be initialized before the on-device model status can be checked.",
-                exception.message,
-            )
-        }
-
-        val extension = model.onDeviceExtension
-            ?: throw FlutterError(
-                ERROR_ON_DEVICE_UNSUPPORTED,
-                "The Firebase AI Logic SDK did not provide an on-device extension.",
-                null,
-            )
+        val extension = createOnDeviceExtension()
 
         return try {
             val availability = extension.checkStatus().toAvailability()
@@ -76,18 +65,6 @@ class FirebaseHybridAiPlugin :
     }
 
     private companion object {
-        /**
-         * Cloud model name used when building the model for a status check. The name is required by the SDK but is
-         * never sent anywhere, because a status check makes no inference request.
-         */
-        const val PLACEHOLDER_CLOUD_MODEL_NAME = "gemini-3.8-flash"
-
-        /** Error code returned to Dart when no default `FirebaseApp` exists. */
-        const val ERROR_FIREBASE_NOT_INITIALIZED = "firebase-not-initialized"
-
-        /** Error code returned to Dart when the SDK does not expose an on-device extension. */
-        const val ERROR_ON_DEVICE_UNSUPPORTED = "on-device-unsupported"
-
         /** Error code returned to Dart when the SDK throws while checking the model status. */
         const val ERROR_STATUS_CHECK_FAILED = "status-check-failed"
     }

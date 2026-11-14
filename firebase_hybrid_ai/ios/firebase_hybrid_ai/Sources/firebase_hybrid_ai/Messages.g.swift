@@ -252,6 +252,48 @@ struct OnDeviceModelStatus: Hashable, CustomStringConvertible {
   }
 }
 
+/// How far along an on-device model download is.
+///
+/// Generated class from Pigeon that represents data sent in messages.
+struct OnDeviceModelDownloadProgress: Hashable, CustomStringConvertible {
+  /// The portion of the download that has finished, from 0.0 (nothing
+  /// downloaded) to 1.0 (complete).
+  ///
+  /// The platforms report different amounts of detail, so only this common
+  /// value is exposed.
+  var fraction: Double
+
+
+  // swift-format-ignore: AlwaysUseLowerCamelCase
+  static func fromList(_ pigeonVar_list: [Any?]) -> OnDeviceModelDownloadProgress? {
+    let fraction = pigeonVar_list[0] as! Double
+
+    return OnDeviceModelDownloadProgress(
+      fraction: fraction
+    )
+  }
+  func toList() -> [Any?] {
+    return [
+      fraction
+    ]
+  }
+  static func == (lhs: OnDeviceModelDownloadProgress, rhs: OnDeviceModelDownloadProgress) -> Bool {
+    if Swift.type(of: lhs) != Swift.type(of: rhs) {
+      return false
+    }
+    return MessagesPigeonInternal.deepEquals(lhs.fraction, rhs.fraction)
+  }
+
+  func hash(into hasher: inout Hasher) {
+    hasher.combine("OnDeviceModelDownloadProgress")
+    MessagesPigeonInternal.deepHash(value: fraction, hasher: &hasher)
+  }
+
+  public var description: String {
+    return "OnDeviceModelDownloadProgress(fraction: \(String(describing: fraction)))"
+  }
+}
+
 private class MessagesPigeonCodecReader: FlutterStandardReader {
   override func readValue(ofType type: UInt8) -> Any? {
     switch type {
@@ -263,6 +305,8 @@ private class MessagesPigeonCodecReader: FlutterStandardReader {
       return nil
     case 130:
       return OnDeviceModelStatus.fromList(self.readValue() as! [Any?])
+    case 131:
+      return OnDeviceModelDownloadProgress.fromList(self.readValue() as! [Any?])
     default:
       return super.readValue(ofType: type)
     }
@@ -276,6 +320,9 @@ private class MessagesPigeonCodecWriter: FlutterStandardWriter {
       super.writeValue(value.rawValue)
     } else if let value = value as? OnDeviceModelStatus {
       super.writeByte(130)
+      super.writeValue(value.toList())
+    } else if let value = value as? OnDeviceModelDownloadProgress {
+      super.writeByte(131)
       super.writeValue(value.toList())
     } else {
       super.writeValue(value)
@@ -296,6 +343,8 @@ private class MessagesPigeonCodecReaderWriter: FlutterStandardReaderWriter {
 class MessagesPigeonCodec: FlutterStandardMessageCodec, @unchecked Sendable {
   static let shared = MessagesPigeonCodec(readerWriter: MessagesPigeonCodecReaderWriter())
 }
+
+var messagesPigeonMethodCodec = FlutterStandardMethodCodec(readerWriter: MessagesPigeonCodecReaderWriter());
 
 
 /// Calls from Dart into the Android and iOS host code.
@@ -330,3 +379,92 @@ class FirebaseHybridAiHostApiSetup {
     }
   }
 }
+
+private class PigeonStreamHandler<ReturnType>: NSObject, FlutterStreamHandler {
+  private let wrapper: PigeonEventChannelWrapper<ReturnType>
+  private var pigeonSink: PigeonEventSink<ReturnType>? = nil
+
+  init(wrapper: PigeonEventChannelWrapper<ReturnType>) {
+    self.wrapper = wrapper
+  }
+
+  func onListen(withArguments arguments: Any?, eventSink events: @escaping FlutterEventSink)
+    -> FlutterError?
+  {
+    pigeonSink = PigeonEventSink<ReturnType>(events)
+    wrapper.onListen(withArguments: arguments, sink: pigeonSink!)
+    return nil
+  }
+
+  func onCancel(withArguments arguments: Any?) -> FlutterError? {
+    pigeonSink = nil
+    wrapper.onCancel(withArguments: arguments)
+    return nil
+  }
+}
+
+class PigeonEventChannelWrapper<ReturnType> {
+  func onListen(withArguments arguments: Any?, sink: PigeonEventSink<ReturnType>) {}
+  func onCancel(withArguments arguments: Any?) {}
+}
+
+class PigeonEventSink<ReturnType> {
+  private let sink: FlutterEventSink
+
+  init(_ sink: @escaping FlutterEventSink) {
+    self.sink = sink
+  }
+
+  func success(_ value: ReturnType) {
+    sink(value)
+  }
+
+  func error(code: String, message: String?, details: Any?) {
+    sink(FlutterError(code: code, message: message, details: details))
+  }
+
+  func endOfStream() {
+    sink(FlutterEndOfEventStream)
+  }
+
+}
+
+/// Streams from the Android and iOS host code to Dart.
+/// A typed channel for communicating with the Flutter application using asynchronous event streams.
+class DownloadOnDeviceModelEventChannel {
+  private let channel: FlutterEventChannel
+
+  init(messenger: FlutterBinaryMessenger, instanceName: String = "") {
+    var channelName = "dev.flutter.pigeon.firebase_hybrid_ai.FirebaseHybridAiEventsApi.downloadOnDeviceModel"
+    if !instanceName.isEmpty {
+      channelName += ".\(instanceName)"
+    }
+    channel = FlutterEventChannel(name: channelName, binaryMessenger: messenger, codec: messagesPigeonMethodCodec)
+  }
+
+  /// Sets the stream handler for this channel, replacing any previous handler.
+  /// 
+  /// Pass `nil` to remove the event channel registration.
+  func setStreamHandler(_ streamHandler: DownloadOnDeviceModelStreamHandler?) {
+    let internalHandler = streamHandler.map({ PigeonStreamHandler<OnDeviceModelDownloadProgress>(wrapper: $0) })
+    channel.setStreamHandler(internalHandler)
+  }
+}
+
+class DownloadOnDeviceModelStreamHandler: PigeonEventChannelWrapper<OnDeviceModelDownloadProgress> {
+  /// Creates and returns a new event channel that calls the provided stream handler.
+  /// 
+  /// The returned channel can be stored to allow changing or removing the stream handler.
+  /// If the handler will not be changed for the lifetime of the engine associated with the messenger,
+  /// the return value can be ignored.
+  @discardableResult static func register(
+    with messenger: FlutterBinaryMessenger,
+    instanceName: String = "",
+    streamHandler: DownloadOnDeviceModelStreamHandler
+  ) -> DownloadOnDeviceModelEventChannel {
+    let channel = DownloadOnDeviceModelEventChannel(messenger: messenger, instanceName: instanceName)
+    channel.setStreamHandler(streamHandler)
+    return channel
+  }
+}
+      

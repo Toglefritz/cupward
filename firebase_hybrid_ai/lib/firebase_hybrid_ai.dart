@@ -7,5 +7,5 @@ export 'src/exceptions/hybrid_ai_not_supported_exception.dart';
 export 'src/firebase_hybrid_ai.dart';
 // The data types are declared in pigeon/messages.dart and generated into this file. Only they are exported. The host
 // API class in the same file is an implementation detail.
-export 'src/messages.g.dart' show OnDeviceModelAvailability, OnDeviceModelStatus;
+export 'src/messages.g.dart' show OnDeviceModelAvailability, OnDeviceModelDownloadProgress, OnDeviceModelStatus;
 export 'src/platform/firebase_hybrid_ai_platform.dart';

@@ -10,8 +10,8 @@ import 'home_controller.dart';
 
 /// Layout for the example screen. Contains no logic.
 ///
-/// The screen shows the state of the status check, the on-device model's availability, supporting values, and a button
-/// to check again. The activity log follows.
+/// The screen shows the state of the current operation, the on-device model's availability, supporting values, and a
+/// button that checks the model or downloads it. The activity log follows.
 class HomeView extends StatelessWidget {
   /// Creates the view for [state].
   const new(this.state, {super.key});
@@ -41,10 +41,17 @@ class HomeView extends StatelessWidget {
                   sliver: SliverList.list(
                     children: <Widget>[
                       const Header(),
-                      const Padding(padding: EdgeInsets.only(top: Insets.medium), child: Divider()),
+                      const Padding(
+                        padding: EdgeInsets.only(top: Insets.medium),
+                        child: Divider(),
+                      ),
                       Padding(
                         padding: const EdgeInsets.symmetric(vertical: Insets.xSmall),
-                        child: CheckStatusRow(isChecking: state.isChecking, hasFailed: state.errorMessage != null),
+                        child: CheckStatusRow(
+                          isBusy: state.isChecking || state.isDownloading,
+                          busyLabel: state.isDownloading ? 'Downloading' : 'Checking',
+                          hasFailed: state.errorMessage != null,
+                        ),
                       ),
                       ModelStatusSection(state: state),
                       const Padding(

@@ -19,4 +19,17 @@ class FirebaseHybridAi {
   /// [HybridAiNotSupportedException] if the platform does not provide hybrid inference, and a
   /// [FirebaseHybridAiException] for any other failure reported by the platform.
   Future<OnDeviceModelStatus> checkOnDeviceStatus() => FirebaseHybridAiPlatform.instance.checkOnDeviceStatus();
+
+  /// Downloads the on-device model and reports progress as a fraction from 0.0 to 1.0.
+  ///
+  /// The download starts when the returned stream is listened to, and the stream completes when the model is
+  /// installed. Use [checkOnDeviceStatus] afterwards to confirm the result. Failures are emitted as errors of type
+  /// [FirebaseHybridAiException].
+  ///
+  /// On the web, Chrome only starts a download in response to a user action, so listen to the stream from a handler
+  /// such as a button tap. On Apple platforms the system installs the model when Apple Intelligence is enabled, so
+  /// the stream fails with [HybridAiNotSupportedException]. Listen to the stream only once at a time, because
+  /// platforms do not support concurrent downloads of the same model.
+  Stream<OnDeviceModelDownloadProgress> downloadOnDeviceModel() =>
+      FirebaseHybridAiPlatform.instance.downloadOnDeviceModel();
 }

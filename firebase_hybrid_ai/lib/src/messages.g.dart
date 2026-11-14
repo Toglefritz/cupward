@@ -175,6 +175,58 @@ class OnDeviceModelStatus {
   }
 }
 
+/// How far along an on-device model download is.
+class OnDeviceModelDownloadProgress {
+  OnDeviceModelDownloadProgress({
+    required this.fraction,
+  });
+
+  /// The portion of the download that has finished, from 0.0 (nothing
+  /// downloaded) to 1.0 (complete).
+  ///
+  /// The platforms report different amounts of detail, so only this common
+  /// value is exposed.
+  double fraction;
+
+  List<Object?> _toList() {
+    return <Object?>[
+      fraction,
+    ];
+  }
+
+  Object encode() {
+    return _toList();
+  }
+
+  static OnDeviceModelDownloadProgress decode(Object result) {
+    result as List<Object?>;
+    return OnDeviceModelDownloadProgress(
+      fraction: result[0]! as double,
+    );
+  }
+
+  @override
+  // ignore: avoid_equals_and_hash_code_on_mutable_classes
+  bool operator ==(Object other) {
+    if (other is! OnDeviceModelDownloadProgress || other.runtimeType != runtimeType) {
+      return false;
+    }
+    if (identical(this, other)) {
+      return true;
+    }
+    return _deepEquals(fraction, other.fraction);
+  }
+
+  @override
+  // ignore: avoid_equals_and_hash_code_on_mutable_classes
+  int get hashCode => _deepHash(<Object?>[runtimeType, ..._toList()]);
+
+  @override
+  String toString() {
+    return 'OnDeviceModelDownloadProgress(fraction: $fraction)';
+  }
+}
+
 class _PigeonCodec extends StandardMessageCodec {
   const _PigeonCodec();
   @override
@@ -187,6 +239,9 @@ class _PigeonCodec extends StandardMessageCodec {
       writeValue(buffer, value.index);
     } else if (value is OnDeviceModelStatus) {
       buffer.putUint8(130);
+      writeValue(buffer, value.encode());
+    } else if (value is OnDeviceModelDownloadProgress) {
+      buffer.putUint8(131);
       writeValue(buffer, value.encode());
     } else {
       super.writeValue(buffer, value);
@@ -201,11 +256,15 @@ class _PigeonCodec extends StandardMessageCodec {
         return value == null ? null : OnDeviceModelAvailability.values[value];
       case 130:
         return OnDeviceModelStatus.decode(readValue(buffer)!);
+      case 131:
+        return OnDeviceModelDownloadProgress.decode(readValue(buffer)!);
       default:
         return super.readValueOfType(type, buffer);
     }
   }
 }
+
+const StandardMethodCodec pigeonMethodCodec = StandardMethodCodec(_PigeonCodec());
 
 /// Calls from Dart into the Android and iOS host code.
 class FirebaseHybridAiHostApi {
@@ -241,4 +300,29 @@ class FirebaseHybridAiHostApi {
     );
     return pigeonVar_replyValue! as OnDeviceModelStatus;
   }
+}
+
+/// Streams from the Android and iOS host code to Dart.
+/// Starts downloading the on-device model and streams its progress.
+///
+/// The stream ends when the download completes and emits an error if it
+/// fails. Cancelling the subscription stops listening to the download.
+///
+/// Returns a broadcast [Stream] of events from the `downloadOnDeviceModel` event channel.
+///
+/// Each call to this method creates a new [EventChannel], so it should
+/// not be called multiple times for the same `instanceName`. To deliver
+/// events to multiple listeners, call this method once and listen to the
+/// returned broadcast stream multiple times instead.
+Stream<OnDeviceModelDownloadProgress> downloadOnDeviceModel({String instanceName = ''}) {
+  if (instanceName.isNotEmpty) {
+    instanceName = '.$instanceName';
+  }
+  final EventChannel downloadOnDeviceModelChannel = EventChannel(
+    'dev.flutter.pigeon.firebase_hybrid_ai.FirebaseHybridAiEventsApi.downloadOnDeviceModel$instanceName',
+    pigeonMethodCodec,
+  );
+  return downloadOnDeviceModelChannel.receiveBroadcastStream().map((dynamic event) {
+    return event as OnDeviceModelDownloadProgress;
+  });
 }

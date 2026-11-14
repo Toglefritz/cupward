@@ -103,4 +103,65 @@ void main() {
       expect(FirebaseHybridAiWeb().checkOnDeviceStatus(), throwsA(isA<FirebaseHybridAiException>()));
     });
   });
+
+  group('FirebaseHybridAiWeb.downloadOnDeviceModel', () {
+    /// A browser without the Prompt API has nothing to download, which must read as unsupported.
+    test('throws HybridAiNotSupportedException when the browser has no LanguageModel global', () {
+      expect(FirebaseHybridAiWeb().downloadOnDeviceModel().toList(), throwsA(isA<HybridAiNotSupportedException>()));
+    });
+
+    /// The monitor's downloadprogress events must become progress fractions, and the session that Chrome returns
+    /// must be destroyed, because only the downloaded model is wanted.
+    test('streams the downloadprogress events and destroys the session', () async {
+      // Arrange
+      globalContext.callMethod<JSAny?>(
+        'eval'.toJS,
+        '''
+        window.__sessionDestroyed = false;
+        window.LanguageModel = {
+          availability: async () => 'downloadable',
+          create: async (options) => {
+            const target = new EventTarget();
+            options.monitor(target);
+            for (const loaded of [0.25, 0.5]) {
+              const event = new Event('downloadprogress');
+              event.loaded = loaded;
+              target.dispatchEvent(event);
+            }
+            return { destroy() { window.__sessionDestroyed = true; } };
+          },
+        };
+        '''
+            .toJS,
+      );
+
+      // Act
+      final List<double> fractions = await FirebaseHybridAiWeb()
+          .downloadOnDeviceModel()
+          .map((OnDeviceModelDownloadProgress progress) => progress.fraction)
+          .toList();
+
+      // Assert
+      expect(fractions, <double>[0.25, 0.5, 1]);
+      expect(globalContext['__sessionDestroyed'], isA<JSBoolean>().having((JSBoolean v) => v.toDart, 'value', true));
+    });
+
+    /// A rejected create() must surface as the plugin's exception so callers have one type to catch.
+    test('throws FirebaseHybridAiException when Chrome rejects create()', () {
+      // Arrange
+      globalContext.callMethod<JSAny?>(
+        'eval'.toJS,
+        '''
+        window.LanguageModel = {
+          availability: async () => 'downloadable',
+          create: async () => { throw new Error('NotAllowedError'); },
+        };
+        '''
+            .toJS,
+      );
+
+      // Act and assert
+      expect(FirebaseHybridAiWeb().downloadOnDeviceModel().toList(), throwsA(isA<FirebaseHybridAiException>()));
+    });
+  });
 }

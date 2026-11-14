@@ -1,5 +1,6 @@
 import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 
+import '../exceptions/firebase_hybrid_ai_exception.dart';
 import '../exceptions/firebase_not_initialized_exception.dart';
 import '../exceptions/hybrid_ai_not_supported_exception.dart';
 import '../firebase_hybrid_ai.dart';
@@ -35,5 +36,14 @@ abstract class FirebaseHybridAiPlatform extends PlatformInterface {
   /// [HybridAiNotSupportedException] if the platform does not provide the capability.
   Future<OnDeviceModelStatus> checkOnDeviceStatus() {
     throw UnimplementedError('checkOnDeviceStatus() has not been implemented.');
+  }
+
+  /// Downloads the on-device model and reports progress.
+  ///
+  /// The download starts when the returned stream is listened to. The stream emits the progress as it advances,
+  /// then completes when the model is installed. Failures are emitted as errors of type
+  /// [FirebaseHybridAiException], including [HybridAiNotSupportedException] on platforms that cannot download.
+  Stream<OnDeviceModelDownloadProgress> downloadOnDeviceModel() {
+    throw UnimplementedError('downloadOnDeviceModel() has not been implemented.');
   }
 }

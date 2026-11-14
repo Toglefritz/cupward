@@ -10,6 +10,8 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
+  _downloadTests();
+
   group('checkOnDeviceStatus', () {
     /// The status from the host, including the optional model name, must reach the caller unchanged.
     test('returns the status reported by the host', () async {
@@ -73,6 +75,66 @@ void main() {
       expect(caught, isNotNull);
       expect(caught!.code, 'status-check-failed');
       expect(caught.message, 'AICore error');
+    });
+  });
+}
+
+/// Verifies how [PigeonFirebaseHybridAi] relays download progress and translates stream errors.
+///
+/// The generated event stream is replaced with a controllable stream.
+void _downloadTests() {
+  group('downloadOnDeviceModel', () {
+    /// Progress from the native side must pass through unchanged and in order.
+    test('relays progress events', () async {
+      // Arrange
+      final PigeonFirebaseHybridAi platform = PigeonFirebaseHybridAi(
+        downloadStream: () => Stream<OnDeviceModelDownloadProgress>.fromIterable(<OnDeviceModelDownloadProgress>[
+          OnDeviceModelDownloadProgress(fraction: 0),
+          OnDeviceModelDownloadProgress(fraction: 1),
+        ]),
+      );
+
+      // Act
+      final List<double> fractions = await platform
+          .downloadOnDeviceModel()
+          .map((OnDeviceModelDownloadProgress progress) => progress.fraction)
+          .toList();
+
+      // Assert
+      expect(fractions, <double>[0, 1]);
+    });
+
+    /// A platform error on the stream must become the plugin's exception with the original code.
+    test('translates platform errors into FirebaseHybridAiException', () async {
+      // Arrange
+      final PigeonFirebaseHybridAi platform = PigeonFirebaseHybridAi(
+        downloadStream: () => Stream<OnDeviceModelDownloadProgress>.error(
+          PlatformException(code: 'download-failed', message: 'No space left.'),
+        ),
+      );
+
+      // Act
+      Object? caught;
+      try {
+        await platform.downloadOnDeviceModel().toList();
+      } on Object catch (error) {
+        caught = error;
+      }
+
+      // Assert
+      expect(caught, isA<FirebaseHybridAiException>());
+      expect((caught! as FirebaseHybridAiException).code, 'download-failed');
+    });
+
+    /// Platforms that cannot download report the unimplemented code, which must read as unsupported.
+    test('translates the unimplemented code into HybridAiNotSupportedException', () {
+      // Arrange
+      final PigeonFirebaseHybridAi platform = PigeonFirebaseHybridAi(
+        downloadStream: () => Stream<OnDeviceModelDownloadProgress>.error(PlatformException(code: 'unimplemented')),
+      );
+
+      // Act and assert
+      expect(platform.downloadOnDeviceModel().toList(), throwsA(isA<HybridAiNotSupportedException>()));
     });
   });
 }
