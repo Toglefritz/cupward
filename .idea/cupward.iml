@@ -6,6 +6,12 @@
       <excludeFolder url="file://$MODULE_DIR$/cupward_app/.dart_tool" />
       <excludeFolder url="file://$MODULE_DIR$/cupward_app/.pub" />
       <excludeFolder url="file://$MODULE_DIR$/cupward_app/build" />
+      <excludeFolder url="file://$MODULE_DIR$/flutter_bookoo/.dart_tool" />
+      <excludeFolder url="file://$MODULE_DIR$/flutter_bookoo/.pub" />
+      <excludeFolder url="file://$MODULE_DIR$/flutter_bookoo/build" />
+      <excludeFolder url="file://$MODULE_DIR$/flutter_bookoo/example/.dart_tool" />
+      <excludeFolder url="file://$MODULE_DIR$/flutter_bookoo/example/.pub" />
+      <excludeFolder url="file://$MODULE_DIR$/flutter_bookoo/example/build" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
