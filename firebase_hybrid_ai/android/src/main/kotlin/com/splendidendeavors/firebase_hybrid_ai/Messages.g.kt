@@ -232,6 +232,41 @@ enum class OnDeviceModelAvailability(val raw: Int) {
 }
 
 /**
+ * Which on-device model the platform should use, when it offers a choice.
+ *
+ * Only Android offers a choice. Gemini Nano is available in a stable release
+ * and in preview releases that are newer and not yet widely deployed. Other
+ * platforms ignore this value.
+ */
+enum class OnDeviceModelCategory(val raw: Int) {
+  /**
+   * The latest stable model, fully tested and available on consumer devices.
+   * This is the default.
+   */
+  STABLE(0),
+  /**
+   * The latest preview model with full performance, such as Gemini Nano 4
+   * Full. It is designed for higher reasoning power and complex tasks.
+   * Preview models may need the AICore Developer Preview on the device.
+   */
+  PREVIEW(1),
+  /**
+   * The latest preview model that is optimized for speed and lower latency,
+   * such as Gemini Nano 4 Fast. It may need the AICore Developer Preview on
+   * the device.
+   */
+  PREVIEW_FAST(2);
+
+  companion object {
+    private val pigeonValues = values()
+
+    fun ofRaw(raw: Int): OnDeviceModelCategory? {
+      return pigeonValues.getOrNull(raw)
+    }
+  }
+}
+
+/**
  * The state of the on-device model on the current device or browser.
  *
  * Generated class from Pigeon that represents data sent in messages.
@@ -341,11 +376,16 @@ private open class MessagesPigeonCodec : StandardMessageCodec() {
         }
       }
       130.toByte() -> {
+        (readValue(buffer) as Long?)?.let {
+          OnDeviceModelCategory.ofRaw(it.toInt())
+        }
+      }
+      131.toByte() -> {
         (readValue(buffer) as? List<Any?>)?.let {
           OnDeviceModelStatus.fromList(it)
         }
       }
-      131.toByte() -> {
+      132.toByte() -> {
         (readValue(buffer) as? List<Any?>)?.let {
           OnDeviceModelDownloadProgress.fromList(it)
         }
@@ -359,12 +399,16 @@ private open class MessagesPigeonCodec : StandardMessageCodec() {
         stream.write(129)
         writeValue(stream, value.raw.toLong())
       }
-      is OnDeviceModelStatus -> {
+      is OnDeviceModelCategory -> {
         stream.write(130)
+        writeValue(stream, value.raw.toLong())
+      }
+      is OnDeviceModelStatus -> {
+        stream.write(131)
         writeValue(stream, value.toList())
       }
       is OnDeviceModelDownloadProgress -> {
-        stream.write(131)
+        stream.write(132)
         writeValue(stream, value.toList())
       }
       else -> super.writeValue(stream, value)
@@ -381,8 +425,11 @@ val MessagesPigeonMethodCodec = StandardMethodCodec(MessagesPigeonCodec())
  * Generated interface from Pigeon that represents a handler of messages from Flutter.
  */
 interface FirebaseHybridAiHostApi {
-  /** Returns the state of the on-device model on this device. */
-  suspend fun checkOnDeviceStatus(): OnDeviceModelStatus
+  /**
+   * Returns the state of the on-device model on this device, for the given
+   * [category] of model where the platform offers a choice.
+   */
+  suspend fun checkOnDeviceStatus(category: OnDeviceModelCategory): OnDeviceModelStatus
 
   companion object {
     /** The codec used by FirebaseHybridAiHostApi. */
@@ -396,10 +443,12 @@ interface FirebaseHybridAiHostApi {
       run {
         val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.firebase_hybrid_ai.FirebaseHybridAiHostApi.checkOnDeviceStatus$separatedMessageChannelSuffix", codec)
         if (api != null) {
-          channel.setMessageHandler { _, reply ->
+          channel.setMessageHandler { message, reply ->
+            val args = message as List<Any?>
+            val categoryArg = args[0] as OnDeviceModelCategory
             CoroutineScope(Dispatchers.Main).launch {
               val wrapped: List<Any?> = try {
-                listOf(api.checkOnDeviceStatus())
+                listOf(api.checkOnDeviceStatus(categoryArg))
               } catch (exception: Throwable) {
                 MessagesPigeonUtils.wrapError(exception)
               }

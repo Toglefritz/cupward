@@ -30,6 +30,21 @@ void main() {
       expect(result.modelName, 'nano-v4-full');
     });
 
+    /// The category is the only way the caller chooses between Gemini Nano releases, so it must reach the host.
+    test('passes the category to the host', () async {
+      // Arrange
+      final _FakeHostApi api = _FakeHostApi(
+        status: OnDeviceModelStatus(availability: OnDeviceModelAvailability.available),
+      );
+      final PigeonFirebaseHybridAi platform = PigeonFirebaseHybridAi(api: api);
+
+      // Act
+      await platform.checkOnDeviceStatus(category: OnDeviceModelCategory.previewFast);
+
+      // Assert
+      expect(api.lastCategory, OnDeviceModelCategory.previewFast);
+    });
+
     /// A missing Firebase app is a condition callers can fix, so it gets its own exception type.
     test('throws FirebaseNotInitializedException for the firebase-not-initialized code', () {
       // Arrange
@@ -88,10 +103,11 @@ void _downloadTests() {
     test('relays progress events', () async {
       // Arrange
       final PigeonFirebaseHybridAi platform = PigeonFirebaseHybridAi(
-        downloadStream: () => Stream<OnDeviceModelDownloadProgress>.fromIterable(<OnDeviceModelDownloadProgress>[
-          OnDeviceModelDownloadProgress(fraction: 0),
-          OnDeviceModelDownloadProgress(fraction: 1),
-        ]),
+        downloadStream: (OnDeviceModelCategory category) =>
+            Stream<OnDeviceModelDownloadProgress>.fromIterable(<OnDeviceModelDownloadProgress>[
+              OnDeviceModelDownloadProgress(fraction: 0),
+              OnDeviceModelDownloadProgress(fraction: 1),
+            ]),
       );
 
       // Act
@@ -104,11 +120,35 @@ void _downloadTests() {
       expect(fractions, <double>[0, 1]);
     });
 
+    /// Event channels take no parameters, so the category is the channel's instance name. Android registers its
+    /// channels under the same names, so a mismatch would listen to a channel that no handler serves.
+    test('opens the download stream for the chosen category', () async {
+      // Arrange
+      OnDeviceModelCategory? requested;
+      final PigeonFirebaseHybridAi platform = PigeonFirebaseHybridAi(
+        downloadStream: (OnDeviceModelCategory category) {
+          requested = category;
+          return const Stream<OnDeviceModelDownloadProgress>.empty();
+        },
+      );
+
+      // Act
+      await platform.downloadOnDeviceModel(category: OnDeviceModelCategory.preview).toList();
+
+      // Assert
+      expect(requested, OnDeviceModelCategory.preview);
+      expect(OnDeviceModelCategory.values.map((OnDeviceModelCategory category) => category.name), <String>[
+        'stable',
+        'preview',
+        'previewFast',
+      ]);
+    });
+
     /// A platform error on the stream must become the plugin's exception with the original code.
     test('translates platform errors into FirebaseHybridAiException', () async {
       // Arrange
       final PigeonFirebaseHybridAi platform = PigeonFirebaseHybridAi(
-        downloadStream: () => Stream<OnDeviceModelDownloadProgress>.error(
+        downloadStream: (OnDeviceModelCategory category) => Stream<OnDeviceModelDownloadProgress>.error(
           PlatformException(code: 'download-failed', message: 'No space left.'),
         ),
       );
@@ -130,7 +170,8 @@ void _downloadTests() {
     test('translates the unimplemented code into HybridAiNotSupportedException', () {
       // Arrange
       final PigeonFirebaseHybridAi platform = PigeonFirebaseHybridAi(
-        downloadStream: () => Stream<OnDeviceModelDownloadProgress>.error(PlatformException(code: 'unimplemented')),
+        downloadStream: (OnDeviceModelCategory category) =>
+            Stream<OnDeviceModelDownloadProgress>.error(PlatformException(code: 'unimplemented')),
       );
 
       // Act and assert
@@ -144,6 +185,9 @@ class _FakeHostApi extends FirebaseHybridAiHostApi {
   /// Creates a fake that returns [status], or throws [error] when one is given.
   new({this.status, this.error});
 
+  /// The category received by the most recent call.
+  OnDeviceModelCategory? lastCategory;
+
   /// The value returned by [checkOnDeviceStatus], when no [error] is set.
   final OnDeviceModelStatus? status;
 
@@ -151,7 +195,9 @@ class _FakeHostApi extends FirebaseHybridAiHostApi {
   final PlatformException? error;
 
   @override
-  Future<OnDeviceModelStatus> checkOnDeviceStatus() async {
+  Future<OnDeviceModelStatus> checkOnDeviceStatus(OnDeviceModelCategory category) async {
+    lastCategory = category;
+
     if (error != null) {
       throw error!;
     }

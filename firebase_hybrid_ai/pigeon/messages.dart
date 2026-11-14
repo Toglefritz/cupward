@@ -48,6 +48,27 @@ enum OnDeviceModelAvailability {
   unavailable,
 }
 
+/// Which on-device model the platform should use, when it offers a choice.
+///
+/// Only Android offers a choice. Gemini Nano is available in a stable release
+/// and in preview releases that are newer and not yet widely deployed. Other
+/// platforms ignore this value.
+enum OnDeviceModelCategory {
+  /// The latest stable model, fully tested and available on consumer devices.
+  /// This is the default.
+  stable,
+
+  /// The latest preview model with full performance, such as Gemini Nano 4
+  /// Full. It is designed for higher reasoning power and complex tasks.
+  /// Preview models may need the AICore Developer Preview on the device.
+  preview,
+
+  /// The latest preview model that is optimized for speed and lower latency,
+  /// such as Gemini Nano 4 Fast. It may need the AICore Developer Preview on
+  /// the device.
+  previewFast,
+}
+
 /// The state of the on-device model on the current device or browser.
 class OnDeviceModelStatus {
   OnDeviceModelStatus({required this.availability, this.modelName});
@@ -79,9 +100,10 @@ class OnDeviceModelDownloadProgress {
 /// Calls from Dart into the Android and iOS host code.
 @HostApi()
 abstract class FirebaseHybridAiHostApi {
-  /// Returns the state of the on-device model on this device.
+  /// Returns the state of the on-device model on this device, for the given
+  /// [category] of model where the platform offers a choice.
   @async
-  OnDeviceModelStatus checkOnDeviceStatus();
+  OnDeviceModelStatus checkOnDeviceStatus(OnDeviceModelCategory category);
 }
 
 /// Streams from the Android and iOS host code to Dart.
@@ -91,5 +113,10 @@ abstract class FirebaseHybridAiEventsApi {
   ///
   /// The stream ends when the download completes and emits an error if it
   /// fails. Cancelling the subscription stops listening to the download.
+  ///
+  /// Pigeon event channels cannot take parameters, so the category of model to
+  /// download is chosen with the channel's instance name. The host code
+  /// registers one channel for each [OnDeviceModelCategory], named after the
+  /// category's `name`, and Dart opens the matching one.
   OnDeviceModelDownloadProgress downloadOnDeviceModel();
 }

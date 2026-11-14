@@ -22,28 +22,35 @@ class PigeonFirebaseHybridAi extends FirebaseHybridAiPlatform {
   /// tests.
   new({
     @visibleForTesting FirebaseHybridAiHostApi? api,
-    @visibleForTesting Stream<OnDeviceModelDownloadProgress> Function()? downloadStream,
+    @visibleForTesting Stream<OnDeviceModelDownloadProgress> Function(OnDeviceModelCategory category)? downloadStream,
   }) : _hostApi = api ?? FirebaseHybridAiHostApi(),
-       _downloadStream = downloadStream ?? pigeon.downloadOnDeviceModel;
+       _downloadStream =
+           downloadStream ??
+           // The category is the channel's instance name, because event channels cannot take parameters.
+           ((OnDeviceModelCategory category) => pigeon.downloadOnDeviceModel(instanceName: category.name));
 
   /// The generated client that sends messages to the native code.
   final FirebaseHybridAiHostApi _hostApi;
 
-  /// Opens the generated event stream that carries download progress from the native code.
-  final Stream<OnDeviceModelDownloadProgress> Function() _downloadStream;
+  /// Opens the generated event stream that carries download progress for a category from the native code.
+  final Stream<OnDeviceModelDownloadProgress> Function(OnDeviceModelCategory category) _downloadStream;
 
   @override
-  Future<OnDeviceModelStatus> checkOnDeviceStatus() async {
+  Future<OnDeviceModelStatus> checkOnDeviceStatus({
+    OnDeviceModelCategory category = OnDeviceModelCategory.stable,
+  }) async {
     try {
-      return await _hostApi.checkOnDeviceStatus();
+      return await _hostApi.checkOnDeviceStatus(category);
     } on PlatformException catch (exception) {
       throw _exceptionFromPlatform(exception);
     }
   }
 
   @override
-  Stream<OnDeviceModelDownloadProgress> downloadOnDeviceModel() {
-    return _downloadStream().transform(
+  Stream<OnDeviceModelDownloadProgress> downloadOnDeviceModel({
+    OnDeviceModelCategory category = OnDeviceModelCategory.stable,
+  }) {
+    return _downloadStream(category).transform(
       StreamTransformer<OnDeviceModelDownloadProgress, OnDeviceModelDownloadProgress>.fromHandlers(
         handleError: (Object error, StackTrace stackTrace, EventSink<OnDeviceModelDownloadProgress> sink) {
           sink.addError(error is PlatformException ? _exceptionFromPlatform(error) : error, stackTrace);

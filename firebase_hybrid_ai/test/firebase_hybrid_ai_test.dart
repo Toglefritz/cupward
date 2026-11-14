@@ -34,6 +34,40 @@ void main() {
     });
   });
 
+  group('category', () {
+    /// Callers that do not choose a category get the stable model, so existing behavior does not change.
+    test('defaults to the stable category', () async {
+      // Arrange
+      final _FakePlatform platform = _FakePlatform(
+        result: OnDeviceModelStatus(availability: OnDeviceModelAvailability.available),
+      );
+      FirebaseHybridAiPlatform.instance = platform;
+
+      // Act
+      await FirebaseHybridAi().checkOnDeviceStatus();
+
+      // Assert
+      expect(platform.lastCategory, OnDeviceModelCategory.stable);
+    });
+
+    /// The chosen category must reach the platform for both operations, because checking one model and
+    /// downloading another would give misleading results.
+    test('forwards the chosen category for checks and downloads', () async {
+      // Arrange
+      final _FakePlatform platform = _FakePlatform(
+        result: OnDeviceModelStatus(availability: OnDeviceModelAvailability.available),
+      );
+      FirebaseHybridAiPlatform.instance = platform;
+
+      // Act and assert
+      await FirebaseHybridAi().checkOnDeviceStatus(category: OnDeviceModelCategory.preview);
+      expect(platform.lastCategory, OnDeviceModelCategory.preview);
+
+      await FirebaseHybridAi().downloadOnDeviceModel(category: OnDeviceModelCategory.previewFast).toList();
+      expect(platform.lastCategory, OnDeviceModelCategory.previewFast);
+    });
+  });
+
   group('checkOnDeviceStatus', () {
     /// The result from the platform must reach the caller unchanged.
     test('returns the status from the platform', () async {
@@ -67,6 +101,9 @@ class _FakePlatform extends FirebaseHybridAiPlatform {
   /// Creates a fake that returns [result], or throws [error] when one is given.
   new({this.result, this.error, this.progress = const <double>[]});
 
+  /// The category received by the most recent call, so tests can check that the public class forwards it.
+  OnDeviceModelCategory? lastCategory;
+
   /// The fractions emitted by [downloadOnDeviceModel].
   final List<double> progress;
 
@@ -77,14 +114,22 @@ class _FakePlatform extends FirebaseHybridAiPlatform {
   final Exception? error;
 
   @override
-  Stream<OnDeviceModelDownloadProgress> downloadOnDeviceModel() {
+  Stream<OnDeviceModelDownloadProgress> downloadOnDeviceModel({
+    OnDeviceModelCategory category = OnDeviceModelCategory.stable,
+  }) {
+    lastCategory = category;
+
     return Stream<OnDeviceModelDownloadProgress>.fromIterable(
       progress.map((double fraction) => OnDeviceModelDownloadProgress(fraction: fraction)),
     );
   }
 
   @override
-  Future<OnDeviceModelStatus> checkOnDeviceStatus() async {
+  Future<OnDeviceModelStatus> checkOnDeviceStatus({
+    OnDeviceModelCategory category = OnDeviceModelCategory.stable,
+  }) async {
+    lastCategory = category;
+
     if (error != null) {
       throw error!;
     }

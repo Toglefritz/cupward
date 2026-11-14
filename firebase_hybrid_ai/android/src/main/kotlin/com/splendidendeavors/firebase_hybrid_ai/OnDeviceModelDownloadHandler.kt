@@ -13,13 +13,15 @@ import kotlinx.coroutines.launch
 /**
  * Streams the progress of an on-device model download to Dart.
  *
- * Each Dart listener starts one download through the Firebase AI Logic SDK and receives its progress as fractions.
+ * Each Dart listener starts one download of the model for [category] through the Firebase AI Logic SDK and receives
+ * its progress as fractions.
  * The stream ends when the SDK reports completion and reports an error if the SDK reports failure. Cancelling the
  * Dart subscription stops this handler from listening, but the SDK may finish the download in the background.
  * The sink is used on the main thread, which is where the coroutine runs.
  */
 @OptIn(PublicPreviewAPI::class)
-internal class OnDeviceModelDownloadHandler : DownloadOnDeviceModelStreamHandler() {
+internal class OnDeviceModelDownloadHandler(private val category: OnDeviceModelCategory) :
+    DownloadOnDeviceModelStreamHandler() {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
     /** The collection of the active download, or null when no listener is attached. */
@@ -32,7 +34,7 @@ internal class OnDeviceModelDownloadHandler : DownloadOnDeviceModelStreamHandler
             try {
                 var bytesToDownload = 0L
 
-                createOnDeviceExtension().download().collect { status ->
+                createOnDeviceExtension(category).download().collect { status ->
                     when (status) {
                         is DownloadStatus.DownloadStarted -> {
                             bytesToDownload = status.bytesToDownload

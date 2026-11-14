@@ -26,6 +26,13 @@ class HomeController extends State<HomeRoute> {
   /// Whether a check is currently running.
   bool isChecking = false;
 
+  /// The Gemini Nano release to check and download. The example targets the preview release, which is where Gemini
+  /// Nano 4 is offered. Only Android offers a choice, so other platforms ignore it.
+  OnDeviceModelCategory category = OnDeviceModelCategory.preview;
+
+  /// Whether the platform lets the user choose a model release, which only Android does.
+  bool get supportsCategory => !kIsWeb && defaultTargetPlatform == TargetPlatform.android;
+
   /// Whether a model download is currently running.
   bool isDownloading = false;
 
@@ -79,17 +86,17 @@ class HomeController extends State<HomeRoute> {
       errorMessage = null;
     });
 
-    _log('Checking the on-device model.');
+    _log('Checking the on-device model$_categorySuffix.');
 
     try {
-      final OnDeviceModelStatus result = await hybridAi.checkOnDeviceStatus();
+      final OnDeviceModelStatus result = await hybridAi.checkOnDeviceStatus(category: category);
 
       if (!mounted) {
         return;
       }
 
       final String modelSuffix = result.modelName == null ? '' : ' (${result.modelName})';
-      _log('On-device model is ${result.availability.name}$modelSuffix.');
+      _log('On-device model$_categorySuffix is ${result.availability.name}$modelSuffix.');
 
       setState(() {
         status = result;
@@ -129,13 +136,13 @@ class HomeController extends State<HomeRoute> {
       errorMessage = null;
     });
 
-    _log('Downloading the on-device model.');
+    _log('Downloading the on-device model$_categorySuffix.');
 
     bool succeeded = false;
     double shownFraction = 0;
 
     try {
-      await for (final OnDeviceModelDownloadProgress progress in hybridAi.downloadOnDeviceModel()) {
+      await for (final OnDeviceModelDownloadProgress progress in hybridAi.downloadOnDeviceModel(category: category)) {
         if (!mounted) {
           return;
         }
@@ -171,6 +178,22 @@ class HomeController extends State<HomeRoute> {
       await onCheckPressed();
     }
   }
+
+  /// Switches to the given model release and checks its status, because availability differs between releases.
+  ///
+  /// The previous result is cleared first, so the screen never shows the status of a different release.
+  Future<void> onCategorySelected(OnDeviceModelCategory selected) async {
+    setState(() {
+      category = selected;
+      status = null;
+      checkedAt = null;
+    });
+
+    await onCheckPressed();
+  }
+
+  /// A phrase naming the selected release for the activity log, or nothing on platforms with no choice.
+  String get _categorySuffix => supportsCategory ? ' (${category.name})' : '';
 
   /// Adds an entry to the top of the activity log.
   void _log(String message, {bool isError = false}) {

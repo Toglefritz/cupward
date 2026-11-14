@@ -59,7 +59,7 @@ void main() {
 
       // Assert
       expect(find.text('Downloadable'), findsOneWidget);
-      expect(find.text('On-device model is downloadable.'), findsOneWidget);
+      expect(find.text('On-device model (preview) is downloadable.'), findsOneWidget);
     });
 
     /// A failure must be shown to the user instead of leaving the screen blank or crashing the app.
@@ -76,6 +76,62 @@ void main() {
       expect(find.text('Failed'), findsOneWidget);
       expect(find.text('Firebase is not initialized.'), findsOneWidget);
       expect(find.text('Check failed: Firebase is not initialized.'), findsOneWidget);
+    });
+  });
+
+  group('category', () {
+    /// The example targets Gemini Nano 4, which is offered as the preview release, so that is what it asks for first.
+    testWidgets('checks the preview release when it opens', (WidgetTester tester) async {
+      // Arrange
+      final _FakePlatform platform = _FakePlatform(
+        result: OnDeviceModelStatus(availability: OnDeviceModelAvailability.available),
+      );
+      FirebaseHybridAiPlatform.instance = platform;
+
+      // Act
+      await openHome(tester);
+
+      // Assert
+      expect(platform.categories, <OnDeviceModelCategory>[OnDeviceModelCategory.preview]);
+      expect(find.text('Gemini Nano release'), findsOneWidget);
+    });
+
+    /// Availability differs between releases, so choosing another release must check that release, and the log must
+    /// say which one was checked.
+    testWidgets('checks the release the user selects', (WidgetTester tester) async {
+      // Arrange
+      final _FakePlatform platform = _FakePlatform(
+        result: OnDeviceModelStatus(availability: OnDeviceModelAvailability.downloadable),
+      );
+      FirebaseHybridAiPlatform.instance = platform;
+      await openHome(tester);
+
+      // Act
+      await tester.tap(find.text('Stable'));
+      await tester.pumpAndSettle();
+
+      // Assert
+      expect(platform.categories, <OnDeviceModelCategory>[OnDeviceModelCategory.preview, OnDeviceModelCategory.stable]);
+      expect(find.text('On-device model (stable) is downloadable.'), findsOneWidget);
+    });
+
+    /// A download must fetch the release that the screen is showing, not a different one.
+    testWidgets('downloads the selected release', (WidgetTester tester) async {
+      // Arrange
+      final _FakePlatform platform = _FakePlatform(
+        result: OnDeviceModelStatus(availability: OnDeviceModelAvailability.downloadable),
+      );
+      FirebaseHybridAiPlatform.instance = platform;
+      await openHome(tester);
+      await tester.tap(find.text('Fast'));
+      await tester.pumpAndSettle();
+
+      // Act
+      await tester.tap(find.text('Download model'));
+      await tester.pump();
+
+      // Assert
+      expect(platform.categories.last, OnDeviceModelCategory.previewFast);
     });
   });
 
@@ -162,11 +218,18 @@ class _FakePlatform extends FirebaseHybridAiPlatform {
   /// The exception thrown by [checkOnDeviceStatus], if any.
   final Exception? error;
 
+  /// The category of every call, in order, so tests can check which release the screen asked for.
+  final List<OnDeviceModelCategory> categories = <OnDeviceModelCategory>[];
+
   /// The source of the events returned by [downloadOnDeviceModel].
   final StreamController<OnDeviceModelDownloadProgress> progress = StreamController<OnDeviceModelDownloadProgress>();
 
   @override
-  Future<OnDeviceModelStatus> checkOnDeviceStatus() async {
+  Future<OnDeviceModelStatus> checkOnDeviceStatus({
+    OnDeviceModelCategory category = OnDeviceModelCategory.stable,
+  }) async {
+    categories.add(category);
+
     if (error != null) {
       throw error!;
     }
@@ -175,5 +238,11 @@ class _FakePlatform extends FirebaseHybridAiPlatform {
   }
 
   @override
-  Stream<OnDeviceModelDownloadProgress> downloadOnDeviceModel() => progress.stream;
+  Stream<OnDeviceModelDownloadProgress> downloadOnDeviceModel({
+    OnDeviceModelCategory category = OnDeviceModelCategory.stable,
+  }) {
+    categories.add(category);
+
+    return progress.stream;
+  }
 }

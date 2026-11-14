@@ -203,6 +203,25 @@ enum OnDeviceModelAvailability: Int, CaseIterable {
   case unavailable = 3
 }
 
+/// Which on-device model the platform should use, when it offers a choice.
+///
+/// Only Android offers a choice. Gemini Nano is available in a stable release
+/// and in preview releases that are newer and not yet widely deployed. Other
+/// platforms ignore this value.
+enum OnDeviceModelCategory: Int, CaseIterable {
+  /// The latest stable model, fully tested and available on consumer devices.
+  /// This is the default.
+  case stable = 0
+  /// The latest preview model with full performance, such as Gemini Nano 4
+  /// Full. It is designed for higher reasoning power and complex tasks.
+  /// Preview models may need the AICore Developer Preview on the device.
+  case preview = 1
+  /// The latest preview model that is optimized for speed and lower latency,
+  /// such as Gemini Nano 4 Fast. It may need the AICore Developer Preview on
+  /// the device.
+  case previewFast = 2
+}
+
 /// The state of the on-device model on the current device or browser.
 ///
 /// Generated class from Pigeon that represents data sent in messages.
@@ -304,8 +323,14 @@ private class MessagesPigeonCodecReader: FlutterStandardReader {
       }
       return nil
     case 130:
-      return OnDeviceModelStatus.fromList(self.readValue() as! [Any?])
+      let enumResultAsInt: Int? = nilOrValue(self.readValue() as! Int?)
+      if let enumResultAsInt = enumResultAsInt {
+        return OnDeviceModelCategory(rawValue: enumResultAsInt)
+      }
+      return nil
     case 131:
+      return OnDeviceModelStatus.fromList(self.readValue() as! [Any?])
+    case 132:
       return OnDeviceModelDownloadProgress.fromList(self.readValue() as! [Any?])
     default:
       return super.readValue(ofType: type)
@@ -318,11 +343,14 @@ private class MessagesPigeonCodecWriter: FlutterStandardWriter {
     if let value = value as? OnDeviceModelAvailability {
       super.writeByte(129)
       super.writeValue(value.rawValue)
-    } else if let value = value as? OnDeviceModelStatus {
+    } else if let value = value as? OnDeviceModelCategory {
       super.writeByte(130)
+      super.writeValue(value.rawValue)
+    } else if let value = value as? OnDeviceModelStatus {
+      super.writeByte(131)
       super.writeValue(value.toList())
     } else if let value = value as? OnDeviceModelDownloadProgress {
-      super.writeByte(131)
+      super.writeByte(132)
       super.writeValue(value.toList())
     } else {
       super.writeValue(value)
@@ -351,8 +379,9 @@ var messagesPigeonMethodCodec = FlutterStandardMethodCodec(readerWriter: Message
 ///
 /// Generated protocol from Pigeon that represents a handler of messages from Flutter.
 protocol FirebaseHybridAiHostApi {
-  /// Returns the state of the on-device model on this device.
-  func checkOnDeviceStatus() async throws -> OnDeviceModelStatus
+  /// Returns the state of the on-device model on this device, for the given
+  /// [category] of model where the platform offers a choice.
+  func checkOnDeviceStatus(category: OnDeviceModelCategory) async throws -> OnDeviceModelStatus
 }
 
 /// Generated setup class from Pigeon to handle messages through the `binaryMessenger`.
@@ -361,13 +390,16 @@ class FirebaseHybridAiHostApiSetup {
   /// Sets up an instance of `FirebaseHybridAiHostApi` to handle messages through the `binaryMessenger`.
   static func setUp(binaryMessenger: FlutterBinaryMessenger, api: FirebaseHybridAiHostApi?, messageChannelSuffix: String = "") {
     let channelSuffix = messageChannelSuffix.count > 0 ? ".\(messageChannelSuffix)" : ""
-    /// Returns the state of the on-device model on this device.
+    /// Returns the state of the on-device model on this device, for the given
+    /// [category] of model where the platform offers a choice.
     let checkOnDeviceStatusChannel = FlutterBasicMessageChannel(name: "dev.flutter.pigeon.firebase_hybrid_ai.FirebaseHybridAiHostApi.checkOnDeviceStatus\(channelSuffix)", binaryMessenger: binaryMessenger, codec: codec)
     if let api = api {
-      checkOnDeviceStatusChannel.setMessageHandler { _, reply in
+      checkOnDeviceStatusChannel.setMessageHandler { message, reply in
+        let args = message as! [Any?]
+        let categoryArg = args[0] as! OnDeviceModelCategory
         Task { @MainActor in
           do {
-            let result = try await api.checkOnDeviceStatus()
+            let result = try await api.checkOnDeviceStatus(category: categoryArg)
             reply(wrapResult(result))
           } catch {
             reply(wrapError(error))

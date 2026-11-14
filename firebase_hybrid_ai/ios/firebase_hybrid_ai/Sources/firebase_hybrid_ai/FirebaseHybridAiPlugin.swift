@@ -10,13 +10,17 @@ public class FirebaseHybridAiPlugin: NSObject, FlutterPlugin, FirebaseHybridAiHo
   public static func register(with registrar: FlutterPluginRegistrar) {
     let instance = FirebaseHybridAiPlugin()
     FirebaseHybridAiHostApiSetup.setUp(binaryMessenger: registrar.messenger(), api: instance)
-    DownloadOnDeviceModelStreamHandler.register(
-      with: registrar.messenger(),
-      streamHandler: UnimplementedDownloadHandler()
-    )
+    // Each category has its own channel, named after the category, because event channels cannot take parameters.
+    for instanceName in ["stable", "preview", "previewFast"] {
+      DownloadOnDeviceModelStreamHandler.register(
+        with: registrar.messenger(),
+        instanceName: instanceName,
+        streamHandler: UnimplementedDownloadHandler()
+      )
+    }
   }
 
-  func checkOnDeviceStatus() async throws -> OnDeviceModelStatus {
+  func checkOnDeviceStatus(category: OnDeviceModelCategory) async throws -> OnDeviceModelStatus {
     throw PigeonError(
       code: "unimplemented",
       message: "On-device model status is not implemented on iOS.",

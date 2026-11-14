@@ -14,38 +14,51 @@ import io.flutter.embedding.engine.plugins.FlutterPlugin
 class FirebaseHybridAiPlugin :
     FlutterPlugin,
     FirebaseHybridAiHostApi {
-    /** Streams download progress to Dart. Created when the plugin attaches and disposed when it detaches. */
-    private var downloadHandler: OnDeviceModelDownloadHandler? = null
+    /**
+     * Streams download progress to Dart, one handler for each model category. They are created when the plugin
+     * attaches and disposed when it detaches.
+     */
+    private var downloadHandlers: List<OnDeviceModelDownloadHandler> = emptyList()
 
     override fun onAttachedToEngine(flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
         FirebaseHybridAiHostApi.setUp(flutterPluginBinding.binaryMessenger, this)
 
-        val handler = OnDeviceModelDownloadHandler()
-        downloadHandler = handler
-        DownloadOnDeviceModelStreamHandler.register(flutterPluginBinding.binaryMessenger, handler)
+        // Event channels cannot take parameters, so each category gets its own channel, named after the category.
+        downloadHandlers = OnDeviceModelCategory.values().map { category ->
+            OnDeviceModelDownloadHandler(category).also { handler ->
+                DownloadOnDeviceModelStreamHandler.register(
+                    flutterPluginBinding.binaryMessenger,
+                    handler,
+                    category.channelInstanceName,
+                )
+            }
+        }
     }
 
     override fun onDetachedFromEngine(binding: FlutterPlugin.FlutterPluginBinding) {
         FirebaseHybridAiHostApi.setUp(binding.binaryMessenger, null)
 
-        // Passing null removes the handler registration for this channel.
-        DownloadOnDeviceModelEventChannel(binding.binaryMessenger).setStreamHandler(null)
-        downloadHandler?.dispose()
-        downloadHandler = null
+        // Passing null removes the handler registration for a channel.
+        OnDeviceModelCategory.values().forEach { category ->
+            DownloadOnDeviceModelEventChannel(binding.binaryMessenger, category.channelInstanceName)
+                .setStreamHandler(null)
+        }
+        downloadHandlers.forEach { it.dispose() }
+        downloadHandlers = emptyList()
     }
 
     /**
      * Reports whether the on-device model can be used, using the Firebase AI Logic SDK.
      *
      * The SDK exposes the on-device status through a `GenerativeModel`, so this builds one in
-     * `PREFER_ON_DEVICE` mode. Creating the model sends no request, which means the cloud model name is never
-     * contacted. This requires a default `FirebaseApp`, so a missing one is reported as
+     * `PREFER_ON_DEVICE` mode with the given [category] of model. Creating the model sends no request, which means
+     * the cloud model name is never contacted. This requires a default `FirebaseApp`, so a missing one is reported as
      * [ERROR_FIREBASE_NOT_INITIALIZED].
      *
      * @throws FlutterError if Firebase is not initialized or the SDK reports a failure.
      */
-    override suspend fun checkOnDeviceStatus(): OnDeviceModelStatus {
-        val extension = createOnDeviceExtension()
+    override suspend fun checkOnDeviceStatus(category: OnDeviceModelCategory): OnDeviceModelStatus {
+        val extension = createOnDeviceExtension(category)
 
         return try {
             val availability = extension.checkStatus().toAvailability()

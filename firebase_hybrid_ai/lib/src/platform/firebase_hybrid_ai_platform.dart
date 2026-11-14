@@ -32,18 +32,24 @@ abstract class FirebaseHybridAiPlatform extends PlatformInterface {
 
   /// Returns the state of the on-device model on the current device or browser.
   ///
+  /// [category] selects which model to check where the platform offers a choice, and is ignored elsewhere.
+  ///
   /// Throws a [FirebaseNotInitializedException] if the platform needs Firebase and it is not initialized, and a
   /// [HybridAiNotSupportedException] if the platform does not provide the capability.
-  Future<OnDeviceModelStatus> checkOnDeviceStatus() {
+  Future<OnDeviceModelStatus> checkOnDeviceStatus({OnDeviceModelCategory category = OnDeviceModelCategory.stable}) {
     throw UnimplementedError('checkOnDeviceStatus() has not been implemented.');
   }
 
   /// Downloads the on-device model and reports progress.
   ///
+  /// [category] selects which model to download where the platform offers a choice, and is ignored elsewhere.
+  ///
   /// The download starts when the returned stream is listened to. The stream emits the progress as it advances,
   /// then completes when the model is installed. Failures are emitted as errors of type
   /// [FirebaseHybridAiException], including [HybridAiNotSupportedException] on platforms that cannot download.
-  Stream<OnDeviceModelDownloadProgress> downloadOnDeviceModel() {
+  Stream<OnDeviceModelDownloadProgress> downloadOnDeviceModel({
+    OnDeviceModelCategory category = OnDeviceModelCategory.stable,
+  }) {
     throw UnimplementedError('downloadOnDeviceModel() has not been implemented.');
   }
 }

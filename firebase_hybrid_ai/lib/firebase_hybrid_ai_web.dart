@@ -11,7 +11,8 @@ import 'src/web/chrome_language_model.dart';
 /// The [FirebaseHybridAiPlatform] implementation for web browsers.
 ///
 /// On-device inference in the browser uses Chrome's built-in Prompt API, the same API that the Firebase AI Logic web
-/// SDK uses. Browsers that do not provide it report the on-device model as unavailable.
+/// SDK uses. Browsers that do not provide it report the on-device model as unavailable. Chrome chooses and updates
+/// the model itself, so the `category` arguments are ignored.
 class FirebaseHybridAiWeb extends FirebaseHybridAiPlatform {
   /// Creates the implementation.
   ///
@@ -34,7 +35,9 @@ class FirebaseHybridAiWeb extends FirebaseHybridAiPlatform {
   }
 
   @override
-  Future<OnDeviceModelStatus> checkOnDeviceStatus() async {
+  Future<OnDeviceModelStatus> checkOnDeviceStatus({
+    OnDeviceModelCategory category = OnDeviceModelCategory.stable,
+  }) async {
     final String? rawAvailability;
 
     try {
@@ -52,7 +55,9 @@ class FirebaseHybridAiWeb extends FirebaseHybridAiPlatform {
   }
 
   @override
-  Stream<OnDeviceModelDownloadProgress> downloadOnDeviceModel() async* {
+  Stream<OnDeviceModelDownloadProgress> downloadOnDeviceModel({
+    OnDeviceModelCategory category = OnDeviceModelCategory.stable,
+  }) async* {
     // A browser without the Prompt API has no model to download, so this is reported as unsupported and not as a
     // failed download.
     final String? rawAvailability;

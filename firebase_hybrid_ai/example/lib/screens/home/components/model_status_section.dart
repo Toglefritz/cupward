@@ -4,6 +4,7 @@ import 'package:material_ui/material_ui.dart';
 import '../../../theme/insets.dart';
 import '../home_controller.dart';
 import 'availability_figure.dart';
+import 'category_selector.dart';
 import 'download_progress_bar.dart';
 import 'status_stats.dart';
 
@@ -42,6 +43,11 @@ class ModelStatusSection extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.only(top: Insets.small),
             child: DownloadProgressBar(fraction: state.downloadFraction),
+          ),
+        if (state.supportsCategory)
+          Padding(
+            padding: const EdgeInsets.only(top: Insets.medium),
+            child: CategorySelector(selected: state.category, onSelected: isBusy ? null : state.onCategorySelected),
           ),
         Padding(
           padding: const EdgeInsets.only(top: Insets.small),

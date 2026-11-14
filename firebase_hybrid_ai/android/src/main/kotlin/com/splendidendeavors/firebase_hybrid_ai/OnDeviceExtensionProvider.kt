@@ -21,20 +21,24 @@ internal const val ERROR_ON_DEVICE_UNSUPPORTED = "on-device-unsupported"
 private const val PLACEHOLDER_CLOUD_MODEL_NAME = "gemini-3.5-flash-lite"
 
 /**
- * Returns the Firebase AI Logic extension that checks and downloads the on-device model.
+ * Returns the Firebase AI Logic extension that checks and downloads the on-device model of the given [category].
  *
  * The SDK exposes these operations only through a `GenerativeModel`, so this builds one in `PREFER_ON_DEVICE` mode.
- * Creating the model sends no request. This requires a default `FirebaseApp`.
+ * The [category] is passed as the model option, which decides the release stage and size of the model that AICore
+ * checks and downloads. Creating the model sends no request. This requires a default `FirebaseApp`.
  *
  * @throws FlutterError with [ERROR_FIREBASE_NOT_INITIALIZED] if Firebase is not initialized, or with
  * [ERROR_ON_DEVICE_UNSUPPORTED] if the SDK provides no extension.
  */
 @OptIn(PublicPreviewAPI::class)
-internal fun createOnDeviceExtension(): OnDeviceExtension {
+internal fun createOnDeviceExtension(category: OnDeviceModelCategory): OnDeviceExtension {
     val model = try {
         Firebase.ai(backend = GenerativeBackend.googleAI()).generativeModel(
             modelName = PLACEHOLDER_CLOUD_MODEL_NAME,
-            onDeviceConfig = OnDeviceConfig(mode = InferenceMode.PREFER_ON_DEVICE),
+            onDeviceConfig = OnDeviceConfig(
+                mode = InferenceMode.PREFER_ON_DEVICE,
+                modelOption = category.toModelOption(),
+            ),
         )
     } catch (exception: IllegalStateException) {
         throw FlutterError(
