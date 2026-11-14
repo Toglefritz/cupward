@@ -2,6 +2,8 @@ package com.splendidendeavors.firebase_hybrid_ai
 
 import com.google.firebase.ai.type.PublicPreviewAPI
 import io.flutter.embedding.engine.plugins.FlutterPlugin
+import io.flutter.plugin.common.BinaryMessenger
+import java.util.UUID
 
 /**
  * Android host implementation of the plugin.
@@ -20,8 +22,18 @@ class FirebaseHybridAiPlugin :
      */
     private var downloadHandlers: List<OnDeviceModelDownloadHandler> = emptyList()
 
+    /** The messenger of the attached engine, which is needed to register event channels while the plugin runs. */
+    private var messenger: BinaryMessenger? = null
+
+    /**
+     * The streamed generations that are prepared or running, by token. A request is added by [prepareTextStream]
+     * and removed when its stream ends, fails, or is cancelled, or when the plugin detaches.
+     */
+    private val textStreams: MutableMap<String, TextStreamHandler> = mutableMapOf()
+
     override fun onAttachedToEngine(flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
         FirebaseHybridAiHostApi.setUp(flutterPluginBinding.binaryMessenger, this)
+        messenger = flutterPluginBinding.binaryMessenger
 
         // Event channels cannot take parameters, so each category gets its own channel, named after the category.
         downloadHandlers = OnDeviceModelCategory.values().map { category ->
@@ -45,6 +57,9 @@ class FirebaseHybridAiPlugin :
         }
         downloadHandlers.forEach { it.dispose() }
         downloadHandlers = emptyList()
+
+        textStreams.keys.toList().forEach { token -> finishTextStream(token) }
+        messenger = null
     }
 
     /**
@@ -88,6 +103,44 @@ class FirebaseHybridAiPlugin :
         cloudModelName: String,
     ): TextGenerationResult =
         generateTextWithFirebaseAi(prompt, mode, category, cloudModelName)
+
+    /**
+     * Prepares a streamed generation and returns the token that names its event channel.
+     *
+     * The model is created here so that a missing Firebase app is reported to the caller right away. The handler is
+     * registered under a new token and starts generating only when Dart listens to the channel.
+     */
+    override suspend fun prepareTextStream(
+        prompt: String,
+        mode: InferenceMode,
+        category: OnDeviceModelCategory,
+        cloudModelName: String,
+    ): String {
+        val binaryMessenger = messenger
+            ?: throw FlutterError(ERROR_GENERATION_FAILED, "The plugin is not attached to a Flutter engine.", null)
+
+        val model = createGenerativeModel(cloudModelName, mode.toSdkMode(), category)
+        val token = UUID.randomUUID().toString()
+
+        val handler = TextStreamHandler(model, prompt) { finishTextStream(token) }
+        textStreams[token] = handler
+        StreamTextGenerationStreamHandler.register(binaryMessenger, handler, token)
+
+        return token
+    }
+
+    /**
+     * Ends the streamed generation with the given [token]: stops it, unregisters its channel, and forgets it.
+     *
+     * This is safe to call more than once for the same token, because the stream can finish and be cancelled at
+     * nearly the same time.
+     */
+    private fun finishTextStream(token: String) {
+        val handler = textStreams.remove(token) ?: return
+
+        messenger?.let { StreamTextGenerationEventChannel(it, token).setStreamHandler(null) }
+        handler.dispose()
+    }
 
     private companion object {
         /** Error code returned to Dart when the SDK throws while checking the model status. */

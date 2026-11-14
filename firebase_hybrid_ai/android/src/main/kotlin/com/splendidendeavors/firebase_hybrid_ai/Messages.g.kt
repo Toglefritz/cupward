@@ -472,6 +472,56 @@ data class TextGenerationResult (
     return "TextGenerationResult(text=$text, source=$source)"
   }
 }
+
+/**
+ * One piece of a streamed response and where it was generated.
+ *
+ * Generated class from Pigeon that represents data sent in messages.
+ */
+data class TextGenerationChunk (
+  /**
+   * The text that this chunk adds to the response. Chunks are not cumulative,
+   * so the full response is every chunk's text joined in order.
+   */
+  val text: String,
+  /** Whether the on-device model or the cloud model generated this chunk. */
+  val source: InferenceSource
+)
+ {
+  companion object {
+    fun fromList(pigeonVar_list: List<Any?>): TextGenerationChunk {
+      val text = pigeonVar_list[0] as String
+      val source = pigeonVar_list[1] as InferenceSource
+      return TextGenerationChunk(text, source)
+    }
+  }
+  fun toList(): List<Any?> {
+    return listOf(
+      text,
+      source,
+    )
+  }
+  override fun equals(other: Any?): Boolean {
+    if (other == null || other.javaClass != javaClass) {
+      return false
+    }
+    if (this === other) {
+      return true
+    }
+    val other = other as TextGenerationChunk
+    return MessagesPigeonUtils.deepEquals(this.text, other.text) && MessagesPigeonUtils.deepEquals(this.source, other.source)
+  }
+
+  override fun hashCode(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + MessagesPigeonUtils.deepHash(this.text)
+    result = 31 * result + MessagesPigeonUtils.deepHash(this.source)
+    return result
+  }
+  override fun toString(): String {
+    return "TextGenerationChunk(text=$text, source=$source)"
+  }
+}
 private open class MessagesPigeonCodec : StandardMessageCodec() {
   override fun readValueOfType(type: Byte, buffer: ByteBuffer): Any? {
     return when (type) {
@@ -510,6 +560,11 @@ private open class MessagesPigeonCodec : StandardMessageCodec() {
           TextGenerationResult.fromList(it)
         }
       }
+      136.toByte() -> {
+        (readValue(buffer) as? List<Any?>)?.let {
+          TextGenerationChunk.fromList(it)
+        }
+      }
       else -> super.readValueOfType(type, buffer)
     }
   }
@@ -543,6 +598,10 @@ private open class MessagesPigeonCodec : StandardMessageCodec() {
         stream.write(135)
         writeValue(stream, value.toList())
       }
+      is TextGenerationChunk -> {
+        stream.write(136)
+        writeValue(stream, value.toList())
+      }
       else -> super.writeValue(stream, value)
     }
   }
@@ -571,6 +630,17 @@ interface FirebaseHybridAiHostApi {
    * inference.
    */
   suspend fun generateText(prompt: String, mode: InferenceMode, category: OnDeviceModelCategory, cloudModelName: String): TextGenerationResult
+  /**
+   * Prepares a streamed text generation and returns the token that names its
+   * event channel.
+   *
+   * The arguments are the same as for [generateText]. Nothing is generated
+   * until Dart listens to the `streamTextGeneration` event channel whose
+   * instance name is the returned token. The host unregisters the channel when
+   * the stream ends, fails, or is cancelled. This host call fails if Firebase
+   * is not initialized.
+   */
+  suspend fun prepareTextStream(prompt: String, mode: InferenceMode, category: OnDeviceModelCategory, cloudModelName: String): String
 
   companion object {
     /** The codec used by FirebaseHybridAiHostApi. */
@@ -612,6 +682,28 @@ interface FirebaseHybridAiHostApi {
             CoroutineScope(Dispatchers.Main).launch {
               val wrapped: List<Any?> = try {
                 listOf(api.generateText(promptArg, modeArg, categoryArg, cloudModelNameArg))
+              } catch (exception: Throwable) {
+                MessagesPigeonUtils.wrapError(exception)
+              }
+              reply.reply(wrapped)
+            }
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.firebase_hybrid_ai.FirebaseHybridAiHostApi.prepareTextStream$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { message, reply ->
+            val args = message as List<Any?>
+            val promptArg = args[0] as String
+            val modeArg = args[1] as InferenceMode
+            val categoryArg = args[2] as OnDeviceModelCategory
+            val cloudModelNameArg = args[3] as String
+            CoroutineScope(Dispatchers.Main).launch {
+              val wrapped: List<Any?> = try {
+                listOf(api.prepareTextStream(promptArg, modeArg, categoryArg, cloudModelNameArg))
               } catch (exception: Throwable) {
                 MessagesPigeonUtils.wrapError(exception)
               }
@@ -704,6 +796,51 @@ abstract class DownloadOnDeviceModelStreamHandler : MessagesPigeonEventChannelWr
 
   // Implement methods from MessagesPigeonEventChannelWrapper
   override fun onListen(p0: Any?, sink: PigeonEventSink<OnDeviceModelDownloadProgress>) {}
+
+  override fun onCancel(p0: Any?) {}
+}
+      
+/** A typed channel for communicating with the Flutter application using asynchronous event streams. */
+class StreamTextGenerationEventChannel(messenger: BinaryMessenger, instanceName: String = "") {
+  private val channel: EventChannel
+
+  init {
+    var channelName = "dev.flutter.pigeon.firebase_hybrid_ai.FirebaseHybridAiEventsApi.streamTextGeneration"
+    if (instanceName.isNotEmpty()) {
+      channelName += ".$instanceName"
+    }
+    channel = EventChannel(messenger, channelName, MessagesPigeonMethodCodec)
+  }
+
+  /**
+   * Sets the stream handler for this channel, replacing any previous handler.
+   *
+   * Pass `null` to remove the event channel registration.
+   */
+  fun setStreamHandler(streamHandler: StreamTextGenerationStreamHandler?) {
+    val internalHandler = streamHandler?.let { MessagesPigeonStreamHandler<TextGenerationChunk>(it) }
+    channel.setStreamHandler(internalHandler)
+  }
+}
+
+abstract class StreamTextGenerationStreamHandler : MessagesPigeonEventChannelWrapper<TextGenerationChunk> {
+  companion object {
+    /**
+     * Creates and returns a new event channel that calls the provided stream handler.
+     *
+     * The returned channel can be stored to allow changing or removing the stream handler.
+     * If the handler will not be changed for the lifetime of the engine associated with the messenger,
+     * the return value can be ignored.
+     */
+    fun register(messenger: BinaryMessenger, streamHandler: StreamTextGenerationStreamHandler, instanceName: String = ""): StreamTextGenerationEventChannel {
+      val channel = StreamTextGenerationEventChannel(messenger, instanceName)
+      channel.setStreamHandler(streamHandler)
+      return channel
+    }
+  }
+
+  // Implement methods from MessagesPigeonEventChannelWrapper
+  override fun onListen(p0: Any?, sink: PigeonEventSink<TextGenerationChunk>) {}
 
   override fun onCancel(p0: Any?) {}
 }

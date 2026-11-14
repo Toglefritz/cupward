@@ -387,6 +387,51 @@ struct TextGenerationResult: Hashable, CustomStringConvertible {
   }
 }
 
+/// One piece of a streamed response and where it was generated.
+///
+/// Generated class from Pigeon that represents data sent in messages.
+struct TextGenerationChunk: Hashable, CustomStringConvertible {
+  /// The text that this chunk adds to the response. Chunks are not cumulative,
+  /// so the full response is every chunk's text joined in order.
+  var text: String
+  /// Whether the on-device model or the cloud model generated this chunk.
+  var source: InferenceSource
+
+
+  // swift-format-ignore: AlwaysUseLowerCamelCase
+  static func fromList(_ pigeonVar_list: [Any?]) -> TextGenerationChunk? {
+    let text = pigeonVar_list[0] as! String
+    let source = pigeonVar_list[1] as! InferenceSource
+
+    return TextGenerationChunk(
+      text: text,
+      source: source
+    )
+  }
+  func toList() -> [Any?] {
+    return [
+      text,
+      source,
+    ]
+  }
+  static func == (lhs: TextGenerationChunk, rhs: TextGenerationChunk) -> Bool {
+    if Swift.type(of: lhs) != Swift.type(of: rhs) {
+      return false
+    }
+    return MessagesPigeonInternal.deepEquals(lhs.text, rhs.text) && MessagesPigeonInternal.deepEquals(lhs.source, rhs.source)
+  }
+
+  func hash(into hasher: inout Hasher) {
+    hasher.combine("TextGenerationChunk")
+    MessagesPigeonInternal.deepHash(value: text, hasher: &hasher)
+    MessagesPigeonInternal.deepHash(value: source, hasher: &hasher)
+  }
+
+  public var description: String {
+    return "TextGenerationChunk(text: \(String(describing: text)), source: \(String(describing: source)))"
+  }
+}
+
 private class MessagesPigeonCodecReader: FlutterStandardReader {
   override func readValue(ofType type: UInt8) -> Any? {
     switch type {
@@ -420,6 +465,8 @@ private class MessagesPigeonCodecReader: FlutterStandardReader {
       return OnDeviceModelDownloadProgress.fromList(self.readValue() as! [Any?])
     case 135:
       return TextGenerationResult.fromList(self.readValue() as! [Any?])
+    case 136:
+      return TextGenerationChunk.fromList(self.readValue() as! [Any?])
     default:
       return super.readValue(ofType: type)
     }
@@ -448,6 +495,9 @@ private class MessagesPigeonCodecWriter: FlutterStandardWriter {
       super.writeValue(value.toList())
     } else if let value = value as? TextGenerationResult {
       super.writeByte(135)
+      super.writeValue(value.toList())
+    } else if let value = value as? TextGenerationChunk {
+      super.writeByte(136)
       super.writeValue(value.toList())
     } else {
       super.writeValue(value)
@@ -486,6 +536,15 @@ protocol FirebaseHybridAiHostApi {
   /// choice, and [cloudModelName] names the Gemini model used for cloud
   /// inference.
   func generateText(prompt: String, mode: InferenceMode, category: OnDeviceModelCategory, cloudModelName: String) async throws -> TextGenerationResult
+  /// Prepares a streamed text generation and returns the token that names its
+  /// event channel.
+  ///
+  /// The arguments are the same as for [generateText]. Nothing is generated
+  /// until Dart listens to the `streamTextGeneration` event channel whose
+  /// instance name is the returned token. The host unregisters the channel when
+  /// the stream ends, fails, or is cancelled. This host call fails if Firebase
+  /// is not initialized.
+  func prepareTextStream(prompt: String, mode: InferenceMode, category: OnDeviceModelCategory, cloudModelName: String) async throws -> String
 }
 
 /// Generated setup class from Pigeon to handle messages through the `binaryMessenger`.
@@ -538,6 +597,34 @@ class FirebaseHybridAiHostApiSetup {
       }
     } else {
       generateTextChannel.setMessageHandler(nil)
+    }
+    /// Prepares a streamed text generation and returns the token that names its
+    /// event channel.
+    ///
+    /// The arguments are the same as for [generateText]. Nothing is generated
+    /// until Dart listens to the `streamTextGeneration` event channel whose
+    /// instance name is the returned token. The host unregisters the channel when
+    /// the stream ends, fails, or is cancelled. This host call fails if Firebase
+    /// is not initialized.
+    let prepareTextStreamChannel = FlutterBasicMessageChannel(name: "dev.flutter.pigeon.firebase_hybrid_ai.FirebaseHybridAiHostApi.prepareTextStream\(channelSuffix)", binaryMessenger: binaryMessenger, codec: codec)
+    if let api = api {
+      prepareTextStreamChannel.setMessageHandler { message, reply in
+        let args = message as! [Any?]
+        let promptArg = args[0] as! String
+        let modeArg = args[1] as! InferenceMode
+        let categoryArg = args[2] as! OnDeviceModelCategory
+        let cloudModelNameArg = args[3] as! String
+        Task { @MainActor in
+          do {
+            let result = try await api.prepareTextStream(prompt: promptArg, mode: modeArg, category: categoryArg, cloudModelName: cloudModelNameArg)
+            reply(wrapResult(result))
+          } catch {
+            reply(wrapError(error))
+          }
+        }
+      }
+    } else {
+      prepareTextStreamChannel.setMessageHandler(nil)
     }
   }
 }
@@ -625,6 +712,44 @@ class DownloadOnDeviceModelStreamHandler: PigeonEventChannelWrapper<OnDeviceMode
     streamHandler: DownloadOnDeviceModelStreamHandler
   ) -> DownloadOnDeviceModelEventChannel {
     let channel = DownloadOnDeviceModelEventChannel(messenger: messenger, instanceName: instanceName)
+    channel.setStreamHandler(streamHandler)
+    return channel
+  }
+}
+      
+/// A typed channel for communicating with the Flutter application using asynchronous event streams.
+class StreamTextGenerationEventChannel {
+  private let channel: FlutterEventChannel
+
+  init(messenger: FlutterBinaryMessenger, instanceName: String = "") {
+    var channelName = "dev.flutter.pigeon.firebase_hybrid_ai.FirebaseHybridAiEventsApi.streamTextGeneration"
+    if !instanceName.isEmpty {
+      channelName += ".\(instanceName)"
+    }
+    channel = FlutterEventChannel(name: channelName, binaryMessenger: messenger, codec: messagesPigeonMethodCodec)
+  }
+
+  /// Sets the stream handler for this channel, replacing any previous handler.
+  /// 
+  /// Pass `nil` to remove the event channel registration.
+  func setStreamHandler(_ streamHandler: StreamTextGenerationStreamHandler?) {
+    let internalHandler = streamHandler.map({ PigeonStreamHandler<TextGenerationChunk>(wrapper: $0) })
+    channel.setStreamHandler(internalHandler)
+  }
+}
+
+class StreamTextGenerationStreamHandler: PigeonEventChannelWrapper<TextGenerationChunk> {
+  /// Creates and returns a new event channel that calls the provided stream handler.
+  /// 
+  /// The returned channel can be stored to allow changing or removing the stream handler.
+  /// If the handler will not be changed for the lifetime of the engine associated with the messenger,
+  /// the return value can be ignored.
+  @discardableResult static func register(
+    with messenger: FlutterBinaryMessenger,
+    instanceName: String = "",
+    streamHandler: StreamTextGenerationStreamHandler
+  ) -> StreamTextGenerationEventChannel {
+    let channel = StreamTextGenerationEventChannel(messenger: messenger, instanceName: instanceName)
     channel.setStreamHandler(streamHandler)
     return channel
   }

@@ -352,4 +352,128 @@ void main() {
       expect(web.generateText('Hi'), throwsA(isA<FirebaseNotInitializedException>()));
     });
   });
+
+  group('FirebaseHybridAiWeb.generateTextStream', () {
+    /// The arguments of each call to the fake streamer.
+    late List<Map<String, Object?>> calls;
+
+    /// Creates the web implementation with a browser availability string and a stream of SDK chunks.
+    FirebaseHybridAiWeb build({
+      required String? availability,
+      List<WebGenerationResponse> chunks = const <WebGenerationResponse>[
+        WebGenerationResponse(text: 'Hel', source: 'ON_DEVICE'),
+        WebGenerationResponse(text: 'lo', source: 'ON_DEVICE'),
+      ],
+      Exception? error,
+    }) {
+      calls = <Map<String, Object?>>[];
+
+      return FirebaseHybridAiWeb(
+        availabilityReader: () async => availability,
+        streamer:
+            ({
+              required String prompt,
+              required InferenceMode mode,
+              required String cloudModel,
+              required bool initializeDeviceModel,
+            }) async* {
+              calls.add(<String, Object?>{
+                'prompt': prompt,
+                'mode': mode,
+                'cloudModel': cloudModel,
+                'initializeDeviceModel': initializeDeviceModel,
+              });
+
+              yield* Stream<WebGenerationResponse>.fromIterable(chunks);
+
+              if (error != null) {
+                throw error;
+              }
+            },
+      );
+    }
+
+    /// Each chunk keeps its own text and source, so that the caller can rebuild the response and show its origin.
+    test('emits each chunk with its source', () async {
+      // Arrange
+      final FirebaseHybridAiWeb web = build(
+        availability: 'available',
+        chunks: const <WebGenerationResponse>[
+          WebGenerationResponse(text: 'Hel', source: 'ON_DEVICE'),
+          WebGenerationResponse(text: 'lo', source: 'IN_CLOUD'),
+        ],
+      );
+
+      // Act
+      final List<TextGenerationChunk> chunks = await web.generateTextStream('Hi').toList();
+
+      // Assert
+      expect(chunks.map((TextGenerationChunk chunk) => chunk.text).join(), 'Hello');
+      expect(chunks.first.source, InferenceSource.onDevice);
+      expect(chunks.last.source, InferenceSource.inCloud);
+    });
+
+    /// The prompt, mode, and cloud model must reach the SDK as given.
+    test('passes the prompt, mode, and cloud model to the SDK', () async {
+      // Arrange
+      final FirebaseHybridAiWeb web = build(availability: 'available');
+
+      // Act
+      await web.generateTextStream('Question', mode: InferenceMode.preferInCloud, cloudModel: 'gemini-test').toList();
+
+      // Assert
+      expect(calls.single['prompt'], 'Question');
+      expect(calls.single['mode'], InferenceMode.preferInCloud);
+      expect(calls.single['cloudModel'], 'gemini-test');
+    });
+
+    /// An installed model is initialized, and one that is not installed is left alone, as for a single response.
+    test('initializes the device model only when it is installed', () async {
+      // Act
+      await build(availability: 'available').generateTextStream('Hi').toList();
+      final bool installedFlag = calls.single['initializeDeviceModel']! as bool;
+
+      await build(availability: 'downloadable').generateTextStream('Hi').toList();
+      final bool downloadableFlag = calls.single['initializeDeviceModel']! as bool;
+
+      // Assert
+      expect(installedFlag, isTrue);
+      expect(downloadableFlag, isFalse);
+    });
+
+    /// A request that must run on the device fails fast with a specific type and never reaches the SDK.
+    test('throws OnDeviceModelUnavailableException for an only-on-device request without the model', () async {
+      // Arrange
+      final FirebaseHybridAiWeb web = build(availability: 'downloadable');
+
+      // Act and assert
+      await expectLater(
+        web.generateTextStream('Hi', mode: InferenceMode.onlyOnDevice).toList(),
+        throwsA(isA<OnDeviceModelUnavailableException>()),
+      );
+      expect(calls, isEmpty);
+    });
+
+    /// SDK failures must surface as the plugin's exception, with chunks that arrived before it still delivered.
+    test('wraps an SDK failure in FirebaseHybridAiException after delivering earlier chunks', () async {
+      // Arrange
+      final FirebaseHybridAiWeb web = build(availability: 'available', error: Exception('blocked'));
+      final List<String> received = <String>[];
+      FirebaseHybridAiException? caught;
+
+      // Act
+      try {
+        await for (final TextGenerationChunk chunk in web.generateTextStream('Hi')) {
+          received.add(chunk.text);
+        }
+      } on FirebaseHybridAiException catch (exception) {
+        caught = exception;
+      }
+
+      // Assert
+      expect(received, <String>['Hel', 'lo']);
+      expect(caught?.code, 'generation-failed');
+      expect(caught?.details, contains('blocked'));
+    });
+  });
 }

@@ -142,6 +142,18 @@ class TextGenerationResult {
   final InferenceSource source;
 }
 
+/// One piece of a streamed response and where it was generated.
+class TextGenerationChunk {
+  TextGenerationChunk({required this.text, required this.source});
+
+  /// The text that this chunk adds to the response. Chunks are not cumulative,
+  /// so the full response is every chunk's text joined in order.
+  final String text;
+
+  /// Whether the on-device model or the cloud model generated this chunk.
+  final InferenceSource source;
+}
+
 /// Calls from Dart into the Android and iOS host code.
 @HostApi()
 abstract class FirebaseHybridAiHostApi {
@@ -163,6 +175,22 @@ abstract class FirebaseHybridAiHostApi {
     OnDeviceModelCategory category,
     String cloudModelName,
   );
+
+  /// Prepares a streamed text generation and returns the token that names its
+  /// event channel.
+  ///
+  /// The arguments are the same as for [generateText]. Nothing is generated
+  /// until Dart listens to the `streamTextGeneration` event channel whose
+  /// instance name is the returned token. The host unregisters the channel when
+  /// the stream ends, fails, or is cancelled. This host call fails if Firebase
+  /// is not initialized.
+  @async
+  String prepareTextStream(
+    String prompt,
+    InferenceMode mode,
+    OnDeviceModelCategory category,
+    String cloudModelName,
+  );
 }
 
 /// Streams from the Android and iOS host code to Dart.
@@ -178,4 +206,14 @@ abstract class FirebaseHybridAiEventsApi {
   /// registers one channel for each [OnDeviceModelCategory], named after the
   /// category's `name`, and Dart opens the matching one.
   OnDeviceModelDownloadProgress downloadOnDeviceModel();
+
+  /// Streams the text of a generation that was prepared with
+  /// `prepareTextStream`.
+  ///
+  /// Pigeon event channels cannot take parameters, so the prepared request is
+  /// found through the channel's instance name, which is the token that
+  /// `prepareTextStream` returned. Each token is for one use. The stream ends
+  /// when the response is complete and emits an error if generation fails.
+  /// Cancelling the subscription stops the generation.
+  TextGenerationChunk streamTextGeneration();
 }

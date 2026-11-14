@@ -80,4 +80,33 @@ class FirebaseHybridAi {
     OnDeviceModelCategory category = OnDeviceModelCategory.stable,
     String cloudModel = defaultCloudModel,
   }) => FirebaseHybridAiPlatform.instance.generateText(prompt, mode: mode, category: category, cloudModel: cloudModel);
+
+  /// Sends [prompt] to the hybrid AI system and emits the response in chunks as the model produces it.
+  ///
+  /// The arguments and the routing behave as for [generateText]. Streaming shows the first words sooner than waiting
+  /// for the whole response, which suits long answers. Each [TextGenerationChunk] holds only the text that it adds,
+  /// so build the response by appending each chunk's text in order. Every chunk names its own [InferenceSource].
+  ///
+  /// Generation starts when the stream is listened to, and the stream completes when the response is complete.
+  /// Cancelling the subscription stops the generation. Failures arrive as errors on the stream, with the same
+  /// exception types that [generateText] throws, and a missing Firebase app is reported before any chunk.
+  ///
+  /// ```dart
+  /// final StringBuffer response = StringBuffer();
+  ///
+  /// await for (final TextGenerationChunk chunk in hybridAi.generateTextStream('Tell me a story.')) {
+  ///   response.write(chunk.text);
+  /// }
+  /// ```
+  Stream<TextGenerationChunk> generateTextStream(
+    String prompt, {
+    InferenceMode mode = InferenceMode.preferOnDevice,
+    OnDeviceModelCategory category = OnDeviceModelCategory.stable,
+    String cloudModel = defaultCloudModel,
+  }) => FirebaseHybridAiPlatform.instance.generateTextStream(
+    prompt,
+    mode: mode,
+    category: category,
+    cloudModel: cloudModel,
+  );
 }

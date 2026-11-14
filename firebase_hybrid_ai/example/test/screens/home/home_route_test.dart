@@ -30,6 +30,12 @@ void main() {
     await tester.pumpAndSettle();
   }
 
+  /// Turns the "Stream the response" switch off, for tests of the whole-response path.
+  Future<void> turnStreamingOff(WidgetTester tester) async {
+    await tester.tap(find.byType(Switch));
+    await tester.pump();
+  }
+
   group('status', () {
     /// The screen checks the status as soon as it opens, so the result must appear without any interaction.
     testWidgets('shows the model status and name after opening', (WidgetTester tester) async {
@@ -182,6 +188,7 @@ void main() {
       final _FakePlatform platform = readyPlatform();
       FirebaseHybridAiPlatform.instance = platform;
       await openHome(tester);
+      await turnStreamingOff(tester);
 
       // Act
       await tester.enterText(find.byType(TextField), 'What is the airspeed velocity of an unladen swallow?');
@@ -202,6 +209,7 @@ void main() {
         generation: TextGenerationResult(text: 'From the cloud', source: InferenceSource.inCloud),
       );
       await openHome(tester);
+      await turnStreamingOff(tester);
 
       // Act
       await tester.enterText(find.byType(TextField), 'Hello');
@@ -220,6 +228,7 @@ void main() {
       final _FakePlatform platform = readyPlatform();
       FirebaseHybridAiPlatform.instance = platform;
       await openHome(tester);
+      await turnStreamingOff(tester);
 
       // Act
       await tester.tap(find.text('Cloud only'));
@@ -240,6 +249,7 @@ void main() {
         generationError: const OnDeviceModelUnavailableException(message: 'The model is not installed.'),
       );
       await openHome(tester);
+      await turnStreamingOff(tester);
 
       // Act
       await tester.enterText(find.byType(TextField), 'Hello');
@@ -251,6 +261,124 @@ void main() {
       expect(find.text('The model is not installed.'), findsOneWidget);
       expect(find.text('Generation failed: The model is not installed.'), findsOneWidget);
       expect(tester.widget<FilledButton>(find.widgetWithText(FilledButton, 'Send prompt')).onPressed, isNotNull);
+    });
+  });
+
+  group('streaming', () {
+    /// A platform that is ready to answer, with chunks that the test releases one at a time.
+    _FakePlatform readyPlatform() {
+      return _FakePlatform(
+        result: OnDeviceModelStatus(availability: OnDeviceModelAvailability.available, modelName: 'nano-v4-full'),
+      );
+    }
+
+    /// Types a prompt and taps the send button.
+    Future<void> sendPrompt(WidgetTester tester) async {
+      await tester.enterText(find.byType(TextField), 'Tell me a story');
+      await tester.pump();
+      await tester.tap(find.text('Send prompt'));
+      await tester.pump();
+    }
+
+    /// Streaming is the default, so the response must grow on screen as chunks arrive, and the source and the time
+    /// to the first chunk must be shown.
+    testWidgets('shows the response growing as chunks arrive', (WidgetTester tester) async {
+      // Arrange
+      final _FakePlatform platform = readyPlatform();
+      FirebaseHybridAiPlatform.instance = platform;
+      await openHome(tester);
+
+      // Act
+      await sendPrompt(tester);
+      platform.chunks.add(TextGenerationChunk(text: 'Once ', source: InferenceSource.onDevice));
+      await tester.pump();
+
+      // Assert: the first words are visible while the request is still running, with a way to stop it.
+      expect(find.text('Once '), findsOneWidget);
+      expect(find.text('Stop'), findsOneWidget);
+
+      // Act
+      platform.chunks.add(TextGenerationChunk(text: 'upon a time', source: InferenceSource.onDevice));
+      await tester.pump();
+
+      // Assert: later chunks are appended to the text.
+      expect(find.text('Once upon a time'), findsOneWidget);
+
+      // Act
+      await platform.chunks.close();
+      await tester.pumpAndSettle();
+
+      // Assert: the request is over, and the screen reports both timings.
+      expect(find.text('Send prompt'), findsOneWidget);
+      expect(find.text('On-device'), findsOneWidget);
+      expect(find.textContaining('first chunk'), findsOneWidget);
+      expect(find.textContaining('total'), findsOneWidget);
+      expect(platform.streamedPrompts, <String>['Tell me a story']);
+    });
+
+    /// Stopping must cancel the subscription, because that is what tells the host to stop generating, and the words
+    /// that already arrived must stay.
+    testWidgets('stops the generation and keeps the text that arrived', (WidgetTester tester) async {
+      // Arrange
+      final _FakePlatform platform = readyPlatform();
+      FirebaseHybridAiPlatform.instance = platform;
+      await openHome(tester);
+      await sendPrompt(tester);
+      platform.chunks.add(TextGenerationChunk(text: 'Partial', source: InferenceSource.onDevice));
+      await tester.pump();
+
+      // Act
+      await tester.tap(find.text('Stop'));
+      await tester.pumpAndSettle();
+
+      // Assert
+      expect(platform.wasCancelled, isTrue);
+      expect(find.text('Partial'), findsOneWidget);
+      expect(find.text('Send prompt'), findsOneWidget);
+      expect(find.text('Stopped by the user.'), findsOneWidget);
+    });
+
+    /// A failure partway through must keep the text that arrived and explain the failure after it.
+    testWidgets('shows the error after the text that arrived when the stream fails', (WidgetTester tester) async {
+      // Arrange
+      final _FakePlatform platform = readyPlatform();
+      FirebaseHybridAiPlatform.instance = platform;
+      await openHome(tester);
+      await sendPrompt(tester);
+      platform.chunks.add(TextGenerationChunk(text: 'Partial', source: InferenceSource.inCloud));
+      await tester.pump();
+
+      // Act
+      platform.chunks.addError(const FirebaseHybridAiException(code: 'generation-failed', message: 'Connection lost.'));
+      await tester.pumpAndSettle();
+
+      // Assert
+      expect(find.text('Partial'), findsOneWidget);
+      expect(find.text('Connection lost.'), findsOneWidget);
+      expect(find.text('Send prompt'), findsOneWidget);
+    });
+
+    /// The switch chooses the path, so turning it off must use the single-response call.
+    testWidgets('uses the single-response call when streaming is off', (WidgetTester tester) async {
+      // Arrange
+      final _FakePlatform platform = _FakePlatform(
+        result: OnDeviceModelStatus(availability: OnDeviceModelAvailability.available),
+        generation: TextGenerationResult(text: 'Whole', source: InferenceSource.onDevice),
+      );
+      FirebaseHybridAiPlatform.instance = platform;
+      await openHome(tester);
+      await turnStreamingOff(tester);
+
+      // Act
+      await tester.enterText(find.byType(TextField), 'Hello');
+      await tester.pump();
+      await tester.tap(find.text('Send prompt'));
+      await tester.pumpAndSettle();
+
+      // Assert
+      expect(platform.prompts, <String>['Hello']);
+      expect(platform.streamedPrompts, isEmpty);
+      expect(find.text('Whole'), findsOneWidget);
     });
   });
 
@@ -348,6 +476,18 @@ class _FakePlatform extends FirebaseHybridAiPlatform {
   final List<InferenceMode> modes = <InferenceMode>[];
   final List<OnDeviceModelCategory> generationCategories = <OnDeviceModelCategory>[];
 
+  /// The prompts of the [generateTextStream] calls, in order.
+  final List<String> streamedPrompts = <String>[];
+
+  /// The source of the chunks that [generateTextStream] returns. Tests add chunks to it, and close it to end the
+  /// stream.
+  late final StreamController<TextGenerationChunk> chunks = StreamController<TextGenerationChunk>(
+    onCancel: () => wasCancelled = true,
+  );
+
+  /// Whether a listener cancelled the stream of [chunks].
+  bool wasCancelled = false;
+
   /// The category of every call, in order, so tests can check which release the screen asked for.
   final List<OnDeviceModelCategory> categories = <OnDeviceModelCategory>[];
 
@@ -392,5 +532,19 @@ class _FakePlatform extends FirebaseHybridAiPlatform {
     }
 
     return generation!;
+  }
+
+  @override
+  Stream<TextGenerationChunk> generateTextStream(
+    String prompt, {
+    InferenceMode mode = InferenceMode.preferOnDevice,
+    OnDeviceModelCategory category = OnDeviceModelCategory.stable,
+    String cloudModel = FirebaseHybridAi.defaultCloudModel,
+  }) {
+    streamedPrompts.add(prompt);
+    modes.add(mode);
+    generationCategories.add(category);
+
+    return chunks.stream;
   }
 }

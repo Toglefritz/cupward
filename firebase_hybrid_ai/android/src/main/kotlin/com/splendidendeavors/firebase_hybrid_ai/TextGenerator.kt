@@ -15,6 +15,22 @@ internal const val ERROR_GENERATION_FAILED = "generation-failed"
 internal const val ERROR_EMPTY_RESPONSE = "empty-response"
 
 /**
+ * Converts a failure from the Firebase AI Logic SDK into the error that Dart receives.
+ *
+ * A [FlutterError] is returned unchanged, because it already carries the code that Dart expects. An on-device model
+ * that cannot serve the request becomes [ERROR_ON_DEVICE_UNAVAILABLE], so Dart can tell that case apart from other
+ * failures. Everything else becomes [ERROR_GENERATION_FAILED], with the original exception text in the details.
+ */
+@OptIn(PublicPreviewAPI::class)
+internal fun Throwable.toGenerationError(): FlutterError =
+    when (this) {
+        is FlutterError -> this
+        is FirebaseAIOnDeviceNotAvailableException -> FlutterError(ERROR_ON_DEVICE_UNAVAILABLE, message, toString())
+        is FirebaseAIException -> FlutterError(ERROR_GENERATION_FAILED, message, toString())
+        else -> FlutterError(ERROR_GENERATION_FAILED, message, toString())
+    }
+
+/**
  * Sends [prompt] through the Firebase AI Logic SDK and returns the text with the source that produced it.
  *
  * The [mode] decides whether the on-device model of the given [category], the cloud model named [cloudModelName], or
@@ -37,10 +53,8 @@ internal suspend fun generateTextWithFirebaseAi(
         model.generateContent(prompt)
     } catch (exception: CancellationException) {
         throw exception
-    } catch (exception: FirebaseAIOnDeviceNotAvailableException) {
-        throw FlutterError(ERROR_ON_DEVICE_UNAVAILABLE, exception.message, exception.toString())
-    } catch (exception: FirebaseAIException) {
-        throw FlutterError(ERROR_GENERATION_FAILED, exception.message, exception.toString())
+    } catch (exception: Exception) {
+        throw exception.toGenerationError()
     }
 
     val text = response.text

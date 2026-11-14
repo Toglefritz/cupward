@@ -64,6 +64,19 @@ class HomeController extends State<HomeRoute> {
   /// A description of the last failed request, or null if the last request succeeded.
   String? generationError;
 
+  /// Whether the response is streamed, so that it grows on the screen as the model writes it.
+  bool streamResponse = true;
+
+  /// How long the first chunk of the last streamed response took to arrive, or null if there was none yet. A streamed
+  /// response shows its first words after this time, even though the whole response takes longer.
+  Duration? firstChunkTime;
+
+  /// The running streamed request, kept so that the Stop button can cancel it. Null when nothing is streaming.
+  StreamSubscription<TextGenerationChunk>? _generationSubscription;
+
+  /// Whether a streamed response is being received and can be stopped.
+  bool get canStop => isGenerating && _generationSubscription != null;
+
   /// Whether the prompt can be sent now: it has text, and nothing else is running.
   bool get canSend => promptController.text.trim().isNotEmpty && !isGenerating && !isChecking && !isDownloading;
 
@@ -107,6 +120,7 @@ class HomeController extends State<HomeRoute> {
 
   @override
   void dispose() {
+    unawaited(_generationSubscription?.cancel());
     promptController.dispose();
     super.dispose();
   }
@@ -223,22 +237,57 @@ class HomeController extends State<HomeRoute> {
     setState(() => mode = selected);
   }
 
+  /// Chooses whether the next response is streamed or arrives all at once.
+  void onStreamToggled(bool value) {
+    setState(() => streamResponse = value);
+  }
+
   /// Sends the prompt to the hybrid AI system and shows the response, or the failure.
   ///
-  /// The model release, the routing mode, and the cloud model come from the screen's current selections. The time is
-  /// measured around the plugin call, so it includes any model loading that the first on-device request needs.
+  /// The model release, the routing mode, and the cloud model come from the screen's current selections. A streamed
+  /// response is shown as it arrives and a whole response is shown at the end. The time is measured around the
+  /// plugin call, so it includes any model loading that the first on-device request needs.
   Future<void> onSendPressed() async {
     final String prompt = promptController.text.trim();
-    final Stopwatch stopwatch = Stopwatch()..start();
 
     setState(() {
       isGenerating = true;
       generation = null;
       generationTime = null;
+      firstChunkTime = null;
       generationError = null;
     });
 
-    _log('Sending a prompt (${mode.name}$_categorySuffix).');
+    _log('Sending a prompt (${mode.name}$_categorySuffix${streamResponse ? ', streamed' : ''}).');
+
+    if (streamResponse) {
+      _streamPrompt(prompt);
+    } else {
+      await _sendPrompt(prompt);
+    }
+  }
+
+  /// Cancels the running streamed response and keeps the text that has arrived.
+  ///
+  /// The screen is updated before the cancellation finishes, so the button responds at once. Cancelling the
+  /// subscription reaches the host, which stops the model from generating more.
+  Future<void> onStopPressed() async {
+    final StreamSubscription<TextGenerationChunk>? subscription = _generationSubscription;
+
+    if (subscription == null) {
+      return;
+    }
+
+    _generationSubscription = null;
+    _log('Stopped by the user.');
+    setState(() => isGenerating = false);
+
+    await subscription.cancel();
+  }
+
+  /// Sends [prompt] and shows the whole response when it arrives.
+  Future<void> _sendPrompt(String prompt) async {
+    final Stopwatch stopwatch = Stopwatch()..start();
 
     try {
       final TextGenerationResult result = await hybridAi.generateText(prompt, mode: mode, category: category);
@@ -255,21 +304,75 @@ class HomeController extends State<HomeRoute> {
         generationTime = stopwatch.elapsed;
       });
     } on FirebaseHybridAiException catch (exception) {
-      debugPrint('Text generation failed: $exception');
-
-      if (!mounted) {
-        return;
-      }
-
-      final String message = exception.message ?? exception.code;
-      _log('Generation failed: $message', isError: true);
-
-      setState(() => generationError = message);
+      _onGenerationFailed(exception);
     } finally {
       if (mounted) {
         setState(() => isGenerating = false);
       }
     }
+  }
+
+  /// Sends [prompt] and shows the response as its chunks arrive.
+  ///
+  /// The chunks only add text, so they are appended to a buffer and the screen shows the buffer so far. The source of
+  /// the latest chunk is shown, because a fallback mode could in principle change it.
+  void _streamPrompt(String prompt) {
+    final Stopwatch stopwatch = Stopwatch()..start();
+    final StringBuffer buffer = StringBuffer();
+
+    _generationSubscription = hybridAi
+        .generateTextStream(prompt, mode: mode, category: category)
+        .listen(
+          (TextGenerationChunk chunk) {
+            if (buffer.isEmpty) {
+              _log('First chunk from ${chunk.source.name} in ${stopwatch.elapsedMilliseconds} ms.');
+              firstChunkTime = stopwatch.elapsed;
+            }
+
+            buffer.write(chunk.text);
+
+            setState(() {
+              generation = TextGenerationResult(text: buffer.toString(), source: chunk.source);
+            });
+          },
+          onError: (Object error) {
+            _generationSubscription = null;
+
+            if (error is FirebaseHybridAiException) {
+              _onGenerationFailed(error);
+            } else {
+              _onGenerationFailed(FirebaseHybridAiException(code: 'generation-failed', message: error.toString()));
+            }
+
+            setState(() => isGenerating = false);
+          },
+          onDone: () {
+            _generationSubscription = null;
+            stopwatch.stop();
+
+            _log('Streamed response finished in ${stopwatch.elapsedMilliseconds} ms.');
+
+            setState(() {
+              generationTime = stopwatch.elapsed;
+              isGenerating = false;
+            });
+          },
+          cancelOnError: true,
+        );
+  }
+
+  /// Shows a failed request on the screen and records it in the activity log.
+  void _onGenerationFailed(FirebaseHybridAiException exception) {
+    debugPrint('Text generation failed: $exception');
+
+    if (!mounted) {
+      return;
+    }
+
+    final String message = exception.message ?? exception.code;
+    _log('Generation failed: $message', isError: true);
+
+    setState(() => generationError = message);
   }
 
   /// Switches to the given model release and checks its status, because availability differs between releases.

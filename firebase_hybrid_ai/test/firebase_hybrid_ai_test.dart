@@ -91,6 +91,62 @@ void main() {
     });
   });
 
+  group('generateTextStream', () {
+    /// Chunks must reach the caller in order with their sources, so the response can be rebuilt by appending them.
+    test('emits the chunks from the platform in order', () async {
+      // Arrange
+      final _FakePlatform platform = _FakePlatform(
+        chunks: <TextGenerationChunk>[
+          TextGenerationChunk(text: 'Hel', source: InferenceSource.onDevice),
+          TextGenerationChunk(text: 'lo', source: InferenceSource.onDevice),
+        ],
+      );
+      FirebaseHybridAiPlatform.instance = platform;
+
+      // Act
+      final List<TextGenerationChunk> chunks = await FirebaseHybridAi().generateTextStream('Hi').toList();
+
+      // Assert
+      expect(chunks.map((TextGenerationChunk chunk) => chunk.text).join(), 'Hello');
+      expect(chunks.every((TextGenerationChunk chunk) => chunk.source == InferenceSource.onDevice), isTrue);
+    });
+
+    /// The options are the same as for a single response, and each one changes where the prompt is processed.
+    test('forwards the prompt, mode, category, and cloud model', () async {
+      // Arrange
+      final _FakePlatform platform = _FakePlatform(chunks: <TextGenerationChunk>[]);
+      FirebaseHybridAiPlatform.instance = platform;
+
+      // Act
+      await FirebaseHybridAi()
+          .generateTextStream(
+            'Question',
+            mode: InferenceMode.preferInCloud,
+            category: OnDeviceModelCategory.previewFast,
+            cloudModel: 'gemini-test',
+          )
+          .toList();
+
+      // Assert
+      expect(platform.lastPrompt, 'Question');
+      expect(platform.lastMode, InferenceMode.preferInCloud);
+      expect(platform.lastCategory, OnDeviceModelCategory.previewFast);
+      expect(platform.lastCloudModel, 'gemini-test');
+    });
+
+    /// An error on the stream must reach the caller with its own type.
+    test('emits platform errors on the stream', () {
+      // Arrange
+      FirebaseHybridAiPlatform.instance = _FakePlatform(error: const OnDeviceModelUnavailableException());
+
+      // Act and assert
+      expect(
+        FirebaseHybridAi().generateTextStream('Hi', mode: InferenceMode.onlyOnDevice).toList(),
+        throwsA(isA<OnDeviceModelUnavailableException>()),
+      );
+    });
+  });
+
   group('category', () {
     /// Callers that do not choose a category get the stable model, so existing behavior does not change.
     test('defaults to the stable category', () async {
@@ -156,7 +212,10 @@ void main() {
 /// A platform implementation that returns a preset [result] or throws a preset [error].
 class _FakePlatform extends FirebaseHybridAiPlatform {
   /// Creates a fake that returns [result], or throws [error] when one is given.
-  new({this.result, this.error, this.progress = const <double>[], this.generation});
+  new({this.result, this.error, this.progress = const <double>[], this.generation, this.chunks});
+
+  /// The chunks emitted by [generateTextStream], when no [error] is set.
+  final List<TextGenerationChunk>? chunks;
 
   /// The category received by the most recent call, so tests can check that the public class forwards it.
   OnDeviceModelCategory? lastCategory;
@@ -219,5 +278,24 @@ class _FakePlatform extends FirebaseHybridAiPlatform {
     }
 
     return generation!;
+  }
+
+  @override
+  Stream<TextGenerationChunk> generateTextStream(
+    String prompt, {
+    InferenceMode mode = InferenceMode.preferOnDevice,
+    OnDeviceModelCategory category = OnDeviceModelCategory.stable,
+    String cloudModel = FirebaseHybridAi.defaultCloudModel,
+  }) async* {
+    lastPrompt = prompt;
+    lastMode = mode;
+    lastCategory = category;
+    lastCloudModel = cloudModel;
+
+    if (error != null) {
+      throw error!;
+    }
+
+    yield* Stream<TextGenerationChunk>.fromIterable(chunks!);
   }
 }

@@ -16,5 +16,6 @@ export 'src/messages.g.dart'
         OnDeviceModelCategory,
         OnDeviceModelDownloadProgress,
         OnDeviceModelStatus,
+        TextGenerationChunk,
         TextGenerationResult;
 export 'src/platform/firebase_hybrid_ai_platform.dart';

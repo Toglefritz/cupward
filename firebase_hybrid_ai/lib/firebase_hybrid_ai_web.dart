@@ -22,7 +22,7 @@ import 'src/web/web_generation_response.dart';
 class FirebaseHybridAiWeb extends FirebaseHybridAiPlatform {
   /// Creates the implementation.
   ///
-  /// [availabilityReader], [downloader], and [generator] can be supplied to replace the browser calls in tests.
+  /// [availabilityReader], [downloader], [generator], and [streamer] can be supplied to replace the browser calls in tests.
   new({
     @visibleForTesting Future<String?> Function()? availabilityReader,
     @visibleForTesting Stream<double> Function()? downloader,
@@ -34,9 +34,18 @@ class FirebaseHybridAiWeb extends FirebaseHybridAiPlatform {
       required bool initializeDeviceModel,
     })?
     generator,
+    @visibleForTesting
+    Stream<WebGenerationResponse> Function({
+      required String prompt,
+      required InferenceMode mode,
+      required String cloudModel,
+      required bool initializeDeviceModel,
+    })?
+    streamer,
   }) : _availabilityReader = availabilityReader ?? readChromeLanguageModelAvailability,
        _downloader = downloader ?? downloadChromeLanguageModel,
-       _generator = generator ?? generateWithFirebaseAiJs;
+       _generator = generator ?? generateWithFirebaseAiJs,
+       _streamer = streamer ?? streamWithFirebaseAiJs;
 
   /// Reads the raw availability string from the browser.
   final Future<String?> Function() _availabilityReader;
@@ -52,6 +61,15 @@ class FirebaseHybridAiWeb extends FirebaseHybridAiPlatform {
     required bool initializeDeviceModel,
   })
   _generator;
+
+  /// Sends a prompt through the Firebase AI Logic JavaScript SDK and streams the response.
+  final Stream<WebGenerationResponse> Function({
+    required String prompt,
+    required InferenceMode mode,
+    required String cloudModel,
+    required bool initializeDeviceModel,
+  })
+  _streamer;
 
   /// Registers this implementation as the active one. Called by the Flutter tooling at startup on web.
   ///
@@ -89,29 +107,46 @@ class FirebaseHybridAiWeb extends FirebaseHybridAiPlatform {
     OnDeviceModelCategory category = OnDeviceModelCategory.stable,
     String cloudModel = FirebaseHybridAi.defaultCloudModel,
   }) async {
-    final bool usesDevice = mode != InferenceMode.onlyInCloud;
-    final String? rawAvailability = usesDevice ? await _readAvailabilityForGeneration() : null;
-    final bool isInstalled = rawAvailability == 'available';
-
-    // A request that must run on the device cannot succeed without the model, so it fails here with a specific
-    // error and does not wait for a browser error.
-    if (mode == InferenceMode.onlyOnDevice && !isInstalled) {
-      throw OnDeviceModelUnavailableException(
-        message: 'The on-device model is not installed in this browser (${rawAvailability ?? 'no Prompt API'}).',
-      );
-    }
+    final bool initializeDeviceModel = await _prepareForGeneration(mode);
 
     try {
       final WebGenerationResponse response = await _generator(
         prompt: prompt,
         mode: mode,
         cloudModel: cloudModel,
-        // The SDK requires this call before on-device inference. It is skipped when the model is not installed,
-        // because it would start a download, and the fallback modes should use the cloud instead of waiting for one.
-        initializeDeviceModel: usesDevice && isInstalled,
+        initializeDeviceModel: initializeDeviceModel,
       );
 
       return TextGenerationResult(text: response.text, source: _sourceFromSdk(response.source));
+    } on FirebaseHybridAiException {
+      rethrow;
+    } on Object catch (error) {
+      throw FirebaseHybridAiException(
+        code: 'generation-failed',
+        message: 'The Firebase AI Logic SDK could not generate a response.',
+        details: error.toString(),
+      );
+    }
+  }
+
+  @override
+  Stream<TextGenerationChunk> generateTextStream(
+    String prompt, {
+    InferenceMode mode = InferenceMode.preferOnDevice,
+    OnDeviceModelCategory category = OnDeviceModelCategory.stable,
+    String cloudModel = FirebaseHybridAi.defaultCloudModel,
+  }) async* {
+    final bool initializeDeviceModel = await _prepareForGeneration(mode);
+
+    try {
+      await for (final WebGenerationResponse chunk in _streamer(
+        prompt: prompt,
+        mode: mode,
+        cloudModel: cloudModel,
+        initializeDeviceModel: initializeDeviceModel,
+      )) {
+        yield TextGenerationChunk(text: chunk.text, source: _sourceFromSdk(chunk.source));
+      }
     } on FirebaseHybridAiException {
       rethrow;
     } on Object catch (error) {
@@ -156,6 +191,28 @@ class FirebaseHybridAiWeb extends FirebaseHybridAiPlatform {
         details: error.toString(),
       );
     }
+  }
+
+  /// Checks that a request in [mode] can run and decides whether the on-device model must be initialized first.
+  ///
+  /// A request that must run on the device cannot succeed without the model, so it fails here with a specific error
+  /// and does not wait for a browser error. The on-device model is initialized only when it is installed. The SDK
+  /// requires that call before on-device inference, but it would start a download for a model that is not installed,
+  /// and the fallback modes should use the cloud instead of waiting for one.
+  ///
+  /// Returns whether the caller should ask the SDK to initialize the on-device model.
+  Future<bool> _prepareForGeneration(InferenceMode mode) async {
+    final bool usesDevice = mode != InferenceMode.onlyInCloud;
+    final String? rawAvailability = usesDevice ? await _readAvailabilityForGeneration() : null;
+    final bool isInstalled = rawAvailability == 'available';
+
+    if (mode == InferenceMode.onlyOnDevice && !isInstalled) {
+      throw OnDeviceModelUnavailableException(
+        message: 'The on-device model is not installed in this browser (${rawAvailability ?? 'no Prompt API'}).',
+      );
+    }
+
+    return usesDevice && isInstalled;
   }
 
   /// Reads the browser's availability string, treating a browser failure as "not installed".

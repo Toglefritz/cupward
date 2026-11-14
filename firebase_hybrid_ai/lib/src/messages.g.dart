@@ -336,6 +336,61 @@ class TextGenerationResult {
   }
 }
 
+/// One piece of a streamed response and where it was generated.
+class TextGenerationChunk {
+  TextGenerationChunk({
+    required this.text,
+    required this.source,
+  });
+
+  /// The text that this chunk adds to the response. Chunks are not cumulative,
+  /// so the full response is every chunk's text joined in order.
+  String text;
+
+  /// Whether the on-device model or the cloud model generated this chunk.
+  InferenceSource source;
+
+  List<Object?> _toList() {
+    return <Object?>[
+      text,
+      source,
+    ];
+  }
+
+  Object encode() {
+    return _toList();
+  }
+
+  static TextGenerationChunk decode(Object result) {
+    result as List<Object?>;
+    return TextGenerationChunk(
+      text: result[0]! as String,
+      source: result[1]! as InferenceSource,
+    );
+  }
+
+  @override
+  // ignore: avoid_equals_and_hash_code_on_mutable_classes
+  bool operator ==(Object other) {
+    if (other is! TextGenerationChunk || other.runtimeType != runtimeType) {
+      return false;
+    }
+    if (identical(this, other)) {
+      return true;
+    }
+    return _deepEquals(text, other.text) && _deepEquals(source, other.source);
+  }
+
+  @override
+  // ignore: avoid_equals_and_hash_code_on_mutable_classes
+  int get hashCode => _deepHash(<Object?>[runtimeType, ..._toList()]);
+
+  @override
+  String toString() {
+    return 'TextGenerationChunk(text: $text, source: $source)';
+  }
+}
+
 class _PigeonCodec extends StandardMessageCodec {
   const _PigeonCodec();
   @override
@@ -364,6 +419,9 @@ class _PigeonCodec extends StandardMessageCodec {
     } else if (value is TextGenerationResult) {
       buffer.putUint8(135);
       writeValue(buffer, value.encode());
+    } else if (value is TextGenerationChunk) {
+      buffer.putUint8(136);
+      writeValue(buffer, value.encode());
     } else {
       super.writeValue(buffer, value);
     }
@@ -390,6 +448,8 @@ class _PigeonCodec extends StandardMessageCodec {
         return OnDeviceModelDownloadProgress.decode(readValue(buffer)!);
       case 135:
         return TextGenerationResult.decode(readValue(buffer)!);
+      case 136:
+        return TextGenerationChunk.decode(readValue(buffer)!);
       default:
         return super.readValueOfType(type, buffer);
     }
@@ -467,6 +527,42 @@ class FirebaseHybridAiHostApi {
     );
     return pigeonVar_replyValue! as TextGenerationResult;
   }
+
+  /// Prepares a streamed text generation and returns the token that names its
+  /// event channel.
+  ///
+  /// The arguments are the same as for [generateText]. Nothing is generated
+  /// until Dart listens to the `streamTextGeneration` event channel whose
+  /// instance name is the returned token. The host unregisters the channel when
+  /// the stream ends, fails, or is cancelled. This host call fails if Firebase
+  /// is not initialized.
+  Future<String> prepareTextStream(
+    String prompt,
+    InferenceMode mode,
+    OnDeviceModelCategory category,
+    String cloudModelName,
+  ) async {
+    final pigeonVar_channelName =
+        'dev.flutter.pigeon.firebase_hybrid_ai.FirebaseHybridAiHostApi.prepareTextStream$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channel = BasicMessageChannel<Object?>(
+      pigeonVar_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: pigeonVar_binaryMessenger,
+    );
+    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[
+      prompt,
+      mode,
+      category,
+      cloudModelName,
+    ]);
+    final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
+    final Object? pigeonVar_replyValue = _extractReplyValueOrThrow(
+      pigeonVar_replyList,
+      pigeonVar_channelName,
+      isNullValid: false,
+    );
+    return pigeonVar_replyValue! as String;
+  }
 }
 
 /// Streams from the Android and iOS host code to Dart.
@@ -496,5 +592,33 @@ Stream<OnDeviceModelDownloadProgress> downloadOnDeviceModel({String instanceName
   );
   return downloadOnDeviceModelChannel.receiveBroadcastStream().map((dynamic event) {
     return event as OnDeviceModelDownloadProgress;
+  });
+}
+
+/// Streams the text of a generation that was prepared with
+/// `prepareTextStream`.
+///
+/// Pigeon event channels cannot take parameters, so the prepared request is
+/// found through the channel's instance name, which is the token that
+/// `prepareTextStream` returned. Each token is for one use. The stream ends
+/// when the response is complete and emits an error if generation fails.
+/// Cancelling the subscription stops the generation.
+///
+/// Returns a broadcast [Stream] of events from the `streamTextGeneration` event channel.
+///
+/// Each call to this method creates a new [EventChannel], so it should
+/// not be called multiple times for the same `instanceName`. To deliver
+/// events to multiple listeners, call this method once and listen to the
+/// returned broadcast stream multiple times instead.
+Stream<TextGenerationChunk> streamTextGeneration({String instanceName = ''}) {
+  if (instanceName.isNotEmpty) {
+    instanceName = '.$instanceName';
+  }
+  final EventChannel streamTextGenerationChannel = EventChannel(
+    'dev.flutter.pigeon.firebase_hybrid_ai.FirebaseHybridAiEventsApi.streamTextGeneration$instanceName',
+    pigeonMethodCodec,
+  );
+  return streamTextGenerationChannel.receiveBroadcastStream().map((dynamic event) {
+    return event as TextGenerationChunk;
   });
 }

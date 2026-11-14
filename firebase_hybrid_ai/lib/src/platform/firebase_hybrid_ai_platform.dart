@@ -72,4 +72,19 @@ abstract class FirebaseHybridAiPlatform extends PlatformInterface {
   }) {
     throw UnimplementedError('generateText() has not been implemented.');
   }
+
+  /// Generates text for [prompt] and emits it in chunks as the model produces it.
+  ///
+  /// The arguments are the same as for [generateText]. Generation starts when the returned stream is listened to,
+  /// and each [TextGenerationChunk] holds the text that it adds to the response. The stream completes when the
+  /// response is complete, and cancelling the subscription stops the generation. Failures are emitted as errors,
+  /// with the same exception types that [generateText] throws.
+  Stream<TextGenerationChunk> generateTextStream(
+    String prompt, {
+    InferenceMode mode = InferenceMode.preferOnDevice,
+    OnDeviceModelCategory category = OnDeviceModelCategory.stable,
+    String cloudModel = FirebaseHybridAi.defaultCloudModel,
+  }) {
+    throw UnimplementedError('generateTextStream() has not been implemented.');
+  }
 }

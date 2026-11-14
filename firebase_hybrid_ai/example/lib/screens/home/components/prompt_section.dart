@@ -7,6 +7,7 @@ import 'option_chips.dart';
 import 'response_panel.dart';
 import 'sample_prompts.dart';
 import 'section_header.dart';
+import 'stream_toggle.dart';
 
 /// Sends a prompt to the hybrid AI system and shows the response.
 ///
@@ -39,6 +40,15 @@ class PromptSection extends StatelessWidget {
       case InferenceMode.onlyInCloud:
         return 'Never uses the on-device model.';
     }
+  }
+
+  /// The label of the main button, which sends the prompt, or stops a streamed response that is running.
+  String get _buttonLabel {
+    if (state.canStop) {
+      return 'Stop';
+    }
+
+    return state.isGenerating ? 'Generating' : 'Send prompt';
   }
 
   @override
@@ -92,21 +102,34 @@ class PromptSection extends StatelessWidget {
           ),
         ),
         Padding(
-          padding: const EdgeInsets.only(top: Insets.medium),
+          padding: const EdgeInsets.only(top: Insets.xSmall),
+          child: StreamToggle(value: state.streamResponse, onChanged: isEnabled ? state.onStreamToggled : null),
+        ),
+        Padding(
+          padding: const EdgeInsets.only(top: Insets.small),
           child: FilledButton(
-            onPressed: state.canSend ? state.onSendPressed : null,
-            child: Text(state.isGenerating ? 'Generating' : 'Send prompt'),
+            onPressed: state.canStop ? state.onStopPressed : (state.canSend ? state.onSendPressed : null),
+            child: Text(_buttonLabel),
           ),
         ),
         Padding(
           padding: const EdgeInsets.only(top: Insets.medium),
-          child: state.isGenerating
-              ? const LinearProgressIndicator()
-              : ResponsePanel(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: <Widget>[
+              // Before the first text arrives there is nothing to show yet, so a progress bar says the request is
+              // running. Once text arrives it replaces the bar, and a streamed response keeps growing in place.
+              if (state.isGenerating && state.generation == null)
+                const LinearProgressIndicator()
+              else
+                ResponsePanel(
                   result: state.generation,
                   elapsed: state.generationTime,
+                  firstChunk: state.firstChunkTime,
                   errorMessage: state.generationError,
                 ),
+            ],
+          ),
         ),
       ],
     );

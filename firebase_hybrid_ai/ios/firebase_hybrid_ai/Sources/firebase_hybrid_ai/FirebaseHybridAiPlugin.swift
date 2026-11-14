@@ -20,6 +20,19 @@ public class FirebaseHybridAiPlugin: NSObject, FlutterPlugin, FirebaseHybridAiHo
     }
   }
 
+  func prepareTextStream(
+    prompt: String,
+    mode: InferenceMode,
+    category: OnDeviceModelCategory,
+    cloudModelName: String
+  ) async throws -> String {
+    throw PigeonError(
+      code: "unimplemented",
+      message: "Streaming text generation is not implemented on iOS.",
+      details: nil
+    )
+  }
+
   func generateText(
     prompt: String,
     mode: InferenceMode,

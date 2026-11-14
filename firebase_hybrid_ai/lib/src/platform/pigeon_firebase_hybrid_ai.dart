@@ -9,7 +9,7 @@ import '../exceptions/hybrid_ai_not_supported_exception.dart';
 import '../exceptions/on_device_model_unavailable_exception.dart';
 import '../firebase_hybrid_ai.dart';
 import '../messages.g.dart';
-import '../messages.g.dart' as pigeon show downloadOnDeviceModel;
+import '../messages.g.dart' as pigeon show downloadOnDeviceModel, streamTextGeneration;
 import 'firebase_hybrid_ai_platform.dart';
 
 /// The [FirebaseHybridAiPlatform] implementation for Android and iOS.
@@ -20,22 +20,27 @@ import 'firebase_hybrid_ai_platform.dart';
 class PigeonFirebaseHybridAi extends FirebaseHybridAiPlatform {
   /// Creates the implementation.
   ///
-  /// [api] and [downloadStream] can be supplied to replace the generated host API and download event stream in
+  /// [api], [downloadStream], and [textStream] can be supplied to replace the generated host API and event streams in
   /// tests.
   new({
     @visibleForTesting FirebaseHybridAiHostApi? api,
     @visibleForTesting Stream<OnDeviceModelDownloadProgress> Function(OnDeviceModelCategory category)? downloadStream,
+    @visibleForTesting Stream<TextGenerationChunk> Function(String token)? textStream,
   }) : _hostApi = api ?? FirebaseHybridAiHostApi(),
        _downloadStream =
            downloadStream ??
            // The category is the channel's instance name, because event channels cannot take parameters.
-           ((OnDeviceModelCategory category) => pigeon.downloadOnDeviceModel(instanceName: category.name));
+           ((OnDeviceModelCategory category) => pigeon.downloadOnDeviceModel(instanceName: category.name)),
+       _textStream = textStream ?? ((String token) => pigeon.streamTextGeneration(instanceName: token));
 
   /// The generated client that sends messages to the native code.
   final FirebaseHybridAiHostApi _hostApi;
 
   /// Opens the generated event stream that carries download progress for a category from the native code.
   final Stream<OnDeviceModelDownloadProgress> Function(OnDeviceModelCategory category) _downloadStream;
+
+  /// Opens the generated event stream that carries the chunks of the prepared request with a token.
+  final Stream<TextGenerationChunk> Function(String token) _textStream;
 
   @override
   Future<OnDeviceModelStatus> checkOnDeviceStatus({
@@ -60,6 +65,35 @@ class PigeonFirebaseHybridAi extends FirebaseHybridAiPlatform {
     } on PlatformException catch (exception) {
       throw _exceptionFromPlatform(exception);
     }
+  }
+
+  @override
+  Stream<TextGenerationChunk> generateTextStream(
+    String prompt, {
+    InferenceMode mode = InferenceMode.preferOnDevice,
+    OnDeviceModelCategory category = OnDeviceModelCategory.stable,
+    String cloudModel = FirebaseHybridAi.defaultCloudModel,
+  }) async* {
+    // Pigeon event channels cannot take parameters, so the host first stores the request and returns a token. The
+    // token names the event channel that streams this request. The host call runs when the stream is listened to,
+    // so a request that nobody listens to leaves nothing registered on the host.
+    final String token;
+
+    try {
+      token = await _hostApi.prepareTextStream(prompt, mode, category, cloudModel);
+    } on PlatformException catch (exception) {
+      throw _exceptionFromPlatform(exception);
+    }
+
+    // Errors from the event channel arrive as PlatformExceptions and are translated one by one. Cancelling this
+    // stream cancels the event channel subscription, which stops the generation on the host.
+    yield* _textStream(token).transform(
+      StreamTransformer<TextGenerationChunk, TextGenerationChunk>.fromHandlers(
+        handleError: (Object error, StackTrace stackTrace, EventSink<TextGenerationChunk> sink) {
+          sink.addError(error is PlatformException ? _exceptionFromPlatform(error) : error, stackTrace);
+        },
+      ),
+    );
   }
 
   @override

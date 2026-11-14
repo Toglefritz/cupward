@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:firebase_hybrid_ai/firebase_hybrid_ai.dart';
 import 'package:firebase_hybrid_ai/src/messages.g.dart';
 import 'package:firebase_hybrid_ai/src/platform/pigeon_firebase_hybrid_ai.dart';
@@ -12,6 +14,7 @@ void main() {
 
   _downloadTests();
   _generationTests();
+  _streamingTests();
 
   group('checkOnDeviceStatus', () {
     /// The status from the host, including the optional model name, must reach the caller unchanged.
@@ -257,10 +260,131 @@ void _generationTests() {
   });
 }
 
+/// Verifies how [PigeonFirebaseHybridAi] prepares a streamed request, opens its channel, and translates errors.
+void _streamingTests() {
+  group('generateTextStream', () {
+    /// The host stores the request and returns a token, and the event channel must be opened with that token, because
+    /// the token is the only link between the channel and the prepared request.
+    test('prepares the request and streams the channel named by the token', () async {
+      // Arrange
+      final _FakeHostApi api = _FakeHostApi(token: 'token-1');
+      String? openedToken;
+      final PigeonFirebaseHybridAi platform = PigeonFirebaseHybridAi(
+        api: api,
+        textStream: (String token) {
+          openedToken = token;
+
+          return Stream<TextGenerationChunk>.fromIterable(<TextGenerationChunk>[
+            TextGenerationChunk(text: 'a', source: InferenceSource.onDevice),
+            TextGenerationChunk(text: 'b', source: InferenceSource.inCloud),
+          ]);
+        },
+      );
+
+      // Act
+      final List<TextGenerationChunk> chunks = await platform
+          .generateTextStream(
+            'Hi',
+            mode: InferenceMode.preferInCloud,
+            category: OnDeviceModelCategory.preview,
+            cloudModel: 'gemini-test',
+          )
+          .toList();
+
+      // Assert
+      expect(openedToken, 'token-1');
+      expect(chunks.map((TextGenerationChunk chunk) => chunk.text).toList(), <String>['a', 'b']);
+      expect(chunks.last.source, InferenceSource.inCloud);
+      expect(api.lastPrompt, 'Hi');
+      expect(api.lastMode, InferenceMode.preferInCloud);
+      expect(api.lastCategory, OnDeviceModelCategory.preview);
+      expect(api.lastCloudModel, 'gemini-test');
+    });
+
+    /// A request that nobody listens to must not leave anything registered on the host, so the host call waits for the
+    /// listener.
+    test('does not call the host until the stream is listened to', () async {
+      // Arrange
+      final _FakeHostApi api = _FakeHostApi(token: 'token-1');
+      final PigeonFirebaseHybridAi platform = PigeonFirebaseHybridAi(
+        api: api,
+        textStream: (String token) => const Stream<TextGenerationChunk>.empty(),
+      );
+
+      // Act
+      final Stream<TextGenerationChunk> stream = platform.generateTextStream('Hi');
+
+      // Assert
+      expect(api.lastPrompt, isNull);
+
+      await stream.toList();
+
+      expect(api.lastPrompt, 'Hi');
+    });
+
+    /// A missing Firebase app is found when the request is prepared, which is before any chunk.
+    test('emits FirebaseNotInitializedException when preparing fails', () {
+      // Arrange
+      final PigeonFirebaseHybridAi platform = PigeonFirebaseHybridAi(
+        api: _FakeHostApi(error: PlatformException(code: 'firebase-not-initialized')),
+        textStream: (String token) => const Stream<TextGenerationChunk>.empty(),
+      );
+
+      // Act and assert
+      expect(platform.generateTextStream('Hi').toList(), throwsA(isA<FirebaseNotInitializedException>()));
+    });
+
+    /// Errors that arrive on the channel are translated, so callers see the same types as for a single response.
+    test('translates channel errors', () {
+      // Arrange
+      final PigeonFirebaseHybridAi platform = PigeonFirebaseHybridAi(
+        api: _FakeHostApi(token: 'token-1'),
+        textStream: (String token) => Stream<TextGenerationChunk>.error(
+          PlatformException(code: 'on-device-unavailable', message: 'No model'),
+        ),
+      );
+
+      // Act and assert
+      expect(platform.generateTextStream('Hi').toList(), throwsA(isA<OnDeviceModelUnavailableException>()));
+    });
+
+    /// Cancelling must reach the channel subscription, because that is what stops the generation on the host.
+    test('cancels the channel subscription when the caller cancels', () async {
+      // Arrange
+      bool wasCancelled = false;
+      final StreamController<TextGenerationChunk> channel = StreamController<TextGenerationChunk>(
+        onCancel: () => wasCancelled = true,
+      );
+      final PigeonFirebaseHybridAi platform = PigeonFirebaseHybridAi(
+        api: _FakeHostApi(token: 'token-1'),
+        textStream: (String token) => channel.stream,
+      );
+      final Completer<void> gotFirstChunk = Completer<void>();
+
+      // Act
+      final StreamSubscription<TextGenerationChunk> subscription = platform.generateTextStream('Hi').listen((
+        TextGenerationChunk chunk,
+      ) {
+        gotFirstChunk.complete();
+      });
+      await Future<void>.delayed(Duration.zero);
+      channel.add(TextGenerationChunk(text: 'a', source: InferenceSource.onDevice));
+      await gotFirstChunk.future;
+      await subscription.cancel();
+
+      // Assert
+      expect(wasCancelled, isTrue);
+    });
+  });
+}
+
 /// A host API that returns a preset [status] or throws a preset [error] without using a message channel.
 class _FakeHostApi extends FirebaseHybridAiHostApi {
   /// Creates a fake that returns [status], or throws [error] when one is given.
-  new({this.status, this.error, this.generation});
+  new({this.status, this.error, this.generation, this.token = 'token'});
+
+  /// The token returned by [prepareTextStream], when no [error] is set.
+  final String token;
 
   /// The value returned by [generateText], when no [error] is set.
   final TextGenerationResult? generation;
@@ -307,5 +431,24 @@ class _FakeHostApi extends FirebaseHybridAiHostApi {
     }
 
     return generation!;
+  }
+
+  @override
+  Future<String> prepareTextStream(
+    String prompt,
+    InferenceMode mode,
+    OnDeviceModelCategory category,
+    String cloudModelName,
+  ) async {
+    lastPrompt = prompt;
+    lastMode = mode;
+    lastCategory = category;
+    lastCloudModel = cloudModelName;
+
+    if (error != null) {
+      throw error!;
+    }
+
+    return token;
   }
 }

@@ -1,6 +1,7 @@
 @TestOn('browser')
 library;
 
+import 'dart:async';
 import 'dart:js_interop';
 import 'dart:js_interop_unsafe';
 
@@ -18,8 +19,21 @@ void main() {
   /// Installs `firebase_core` and `firebase_ai` stand-ins that record their calls in `window.__calls`.
   ///
   /// [generateBody] is the JavaScript body of `generateContent`, which receives the prompt as `prompt`.
+  ///
+  /// [streamBody] is the JavaScript body of an async generator that `generateContentStream` returns as its `stream`.
+  /// The default yields two chunks and an empty one. The stand-in sets `window.__streamClosed` when the generator
+  /// is closed, which happens when it finishes or when `return` is called on it.
   void installFirebase({
     String generateBody = "return { response: { text: () => 'The answer', inferenceSource: 'ON_DEVICE' } };",
+    String streamBody = '''
+      try {
+        yield { text: () => 'Hel', inferenceSource: 'ON_DEVICE' };
+        yield { text: () => '', inferenceSource: 'ON_DEVICE' };
+        yield { text: () => 'lo', inferenceSource: 'ON_DEVICE' };
+      } finally {
+        window.__streamClosed = true;
+      }
+    ''',
   }) {
     globalContext.callMethod<JSAny?>(
       'eval'.toJS,
@@ -43,6 +57,11 @@ void main() {
           return {
             initializeDeviceModel: async () => { window.__calls.push('initializeDeviceModel'); },
             generateContent: async (prompt) => { window.__calls.push('generateContent:' + prompt); $generateBody },
+            generateContentStream: async (prompt) => {
+              window.__calls.push('generateContentStream:' + prompt);
+              window.__streamClosed = false;
+              return { stream: (async function* () { $streamBody })(), response: Promise.resolve({}) };
+            },
           };
         },
       };
@@ -62,7 +81,8 @@ void main() {
     globalContext
       ..delete('firebase_core'.toJS)
       ..delete('firebase_ai'.toJS)
-      ..delete('__calls'.toJS);
+      ..delete('__calls'.toJS)
+      ..delete('__streamClosed'.toJS);
   });
 
   group('generateWithFirebaseAiJs', () {
@@ -184,6 +204,112 @@ void main() {
           cloudModel: 'm',
           initializeDeviceModel: false,
         ),
+        throwsA(isA<FirebaseNotInitializedException>()),
+      );
+    });
+  });
+
+  group('streamWithFirebaseAiJs', () {
+    /// Chunks must arrive in order with their sources. A chunk with no text, such as the usage-only chunk at the end
+    /// of a stream, carries nothing for the caller and must be skipped.
+    test('emits the text chunks in order and skips empty ones', () async {
+      // Arrange
+      installFirebase();
+
+      // Act
+      final List<WebGenerationResponse> chunks = await streamWithFirebaseAiJs(
+        prompt: 'Hello',
+        mode: InferenceMode.preferOnDevice,
+        cloudModel: 'gemini-test',
+        initializeDeviceModel: false,
+      ).toList();
+
+      // Assert
+      expect(chunks.map((WebGenerationResponse chunk) => chunk.text).toList(), <String>['Hel', 'lo']);
+      expect(chunks.every((WebGenerationResponse chunk) => chunk.source == 'ON_DEVICE'), isTrue);
+      expect(recordedCalls(), contains('generateContentStream:Hello'));
+    });
+
+    /// The stream uses the same model setup as a single response, including the mode and the cloud model.
+    test('sets up the model the same way as a single response', () async {
+      // Arrange
+      installFirebase();
+
+      // Act
+      await streamWithFirebaseAiJs(
+        prompt: 'Hello',
+        mode: InferenceMode.preferInCloud,
+        cloudModel: 'gemini-test',
+        initializeDeviceModel: true,
+      ).toList();
+
+      // Assert
+      final List<String> calls = recordedCalls();
+      expect(calls.take(3), <String>[
+        'getApp',
+        'getAI:GoogleAIBackend',
+        'getGenerativeModel:prefer_in_cloud:gemini-test',
+      ]);
+      expect(calls.indexOf('initializeDeviceModel'), lessThan(calls.indexOf('generateContentStream:Hello')));
+    });
+
+    /// Cancelling must stop the SDK's generator, because that is what stops the generation and releases the model.
+    test('closes the SDK stream when the subscription is cancelled', () async {
+      // Arrange
+      installFirebase();
+      final Completer<void> gotFirstChunk = Completer<void>();
+
+      // Act
+      final StreamSubscription<WebGenerationResponse> subscription =
+          streamWithFirebaseAiJs(
+            prompt: 'Hello',
+            mode: InferenceMode.onlyInCloud,
+            cloudModel: 'gemini-test',
+            initializeDeviceModel: false,
+          ).listen((WebGenerationResponse chunk) {
+            if (!gotFirstChunk.isCompleted) {
+              gotFirstChunk.complete();
+            }
+          });
+      await gotFirstChunk.future;
+      await subscription.cancel();
+
+      // Assert
+      expect((globalContext['__streamClosed']! as JSBoolean).toDart, isTrue);
+    });
+
+    /// A failure while reading the stream, such as a blocked response, must reach the caller.
+    test('emits an error thrown by the SDK stream', () {
+      // Arrange
+      installFirebase(
+        streamBody: '''
+          yield { text: () => 'Hel', inferenceSource: 'ON_DEVICE' };
+          throw new Error('Response blocked');
+        ''',
+      );
+
+      // Act and assert
+      expect(
+        streamWithFirebaseAiJs(
+          prompt: 'Hello',
+          mode: InferenceMode.onlyInCloud,
+          cloudModel: 'gemini-test',
+          initializeDeviceModel: false,
+        ).toList(),
+        throwsA(anything),
+      );
+    });
+
+    /// Missing Firebase scripts mean that Firebase was never initialized, which callers can fix.
+    test('throws FirebaseNotInitializedException when the Firebase scripts are not loaded', () {
+      // Act and assert
+      expect(
+        streamWithFirebaseAiJs(
+          prompt: 'Hi',
+          mode: InferenceMode.onlyInCloud,
+          cloudModel: 'm',
+          initializeDeviceModel: false,
+        ).toList(),
         throwsA(isA<FirebaseNotInitializedException>()),
       );
     });
