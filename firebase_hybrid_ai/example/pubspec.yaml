@@ -1,0 +1,37 @@
+name: firebase_hybrid_ai_example
+description: "Demonstrates how to use the firebase_hybrid_ai plugin."
+publish_to: 'none'
+
+environment:
+  sdk: ^3.14.0
+
+dependencies:
+  firebase_app_check: ^0.5.1
+  firebase_core: ^5.1.0
+  # The example is bundled with the plugin, so it depends on the plugin by path.
+  firebase_hybrid_ai:
+    path: ../
+  flutter:
+    sdk: flutter
+  material_ui: ^1.1.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  integration_test:
+    sdk: flutter
+  very_good_analysis: ^11.0.0
+
+flutter:
+  uses-material-design: true
+
+  # The fonts are bundled so the example does not fetch anything at runtime. Each family's license is in its folder.
+  fonts:
+    - family: DM Serif Display
+      fonts:
+        - asset: assets/fonts/dm_serif_display/DMSerifDisplay-Regular.ttf
+    - family: IBM Plex Mono
+      fonts:
+        - asset: assets/fonts/ibm_plex_mono/IBMPlexMono-Regular.ttf
+        - asset: assets/fonts/ibm_plex_mono/IBMPlexMono-Medium.ttf
+          weight: 500
