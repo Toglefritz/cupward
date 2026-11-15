@@ -2,167 +2,166 @@ part of '../app.dart';
 
 /// Provides theme configuration for the application.
 ///
-/// The look is a warm, coffee-inspired palette: cream surfaces, espresso text, and caramel brown actions, with DM Serif
-/// Display used for headings and numeric readouts.
+/// The look is warm paper, dark ink, and a deep green accent, with DM Serif Display for headline figures and IBM Plex
+/// Mono for live values. Both fonts are bundled under `assets/fonts`, so nothing is fetched at run time.
+///
+/// Widgets read everything here through `context.theme`. The text theme assigns each role to one kind of content, so
+/// this mapping is the reference for which style to use:
+///
+/// | Role | Font | Used for |
+/// | --- | --- | --- |
+/// | `displayLarge` | Serif | The main figure on a screen, such as a live weight |
+/// | `headlineLarge` | Serif | Screen titles |
+/// | `headlineMedium` | Serif | A unit beside the main figure |
+/// | `headlineSmall` | Mono | Secondary live values, such as flow rate and time |
+/// | `titleLarge` | Sans, semibold | Section headings |
+/// | `titleMedium` | Sans | Status lines and labels |
+/// | `bodyLarge` | Sans | Running text, such as log messages and responses |
+/// | `bodyMedium` | Sans | Captions and hints |
+/// | `labelLarge` | Sans, semibold | Primary buttons |
+/// | `labelMedium` | Sans, spaced | The subtitle under a screen title |
+/// | `labelSmall` | Mono | Timestamps and other small readouts |
 class _AppTheme {
-  /// Font family declared in pubspec.yaml for headings and readouts.
-  static const String _serifFamily = 'DMSerifDisplay';
+  /// The family name of the bundled display serif, as declared in pubspec.yaml.
+  static const String _serif = 'DM Serif Display';
 
-  /// Light color scheme: cream background with espresso text and a caramel brown primary.
-  static const ColorScheme _lightScheme = ColorScheme(
-    brightness: Brightness.light,
-    primary: Color(0xFF9A5428),
-    onPrimary: Color(0xFFFFFFFF),
-    primaryContainer: Color(0xFFF9E1C6),
-    onPrimaryContainer: Color(0xFF3A1D0A),
-    secondary: Color(0xFF7A5A45),
-    onSecondary: Color(0xFFFFFFFF),
-    secondaryContainer: Color(0xFFF9E1C6),
-    onSecondaryContainer: Color(0xFF3A1D0A),
-    tertiary: Color(0xFFB5651D),
-    onTertiary: Color(0xFFFFFFFF),
-    error: Color(0xFFB3261E),
-    onError: Color(0xFFFFFFFF),
-    surface: Color(0xFFFDF4E9),
-    onSurface: Color(0xFF2B1810),
-    onSurfaceVariant: Color(0xFF5E4A3E),
-    surfaceContainerLowest: Color(0xFFFFFFFF),
-    surfaceContainerLow: Color(0xFFFFF9F2),
-    surfaceContainer: Color(0xFFFBEFE1),
-    surfaceContainerHigh: Color(0xFFF7E8D6),
-    surfaceContainerHighest: Color(0xFFF2E0CB),
-    outline: Color(0xFFC9AE97),
-    outlineVariant: Color(0xFFE6D3C0),
-    shadow: Color(0xFF2B1810),
-    scrim: Color(0xFF000000),
-    inverseSurface: Color(0xFF3A2A20),
-    onInverseSurface: Color(0xFFFDF4E9),
-    inversePrimary: Color(0xFFE6A878),
-  );
+  /// The family name of the bundled monospace face, as declared in pubspec.yaml.
+  static const String _mono = 'IBM Plex Mono';
 
-  /// Dark color scheme: roasted espresso surfaces with a lightened caramel primary.
-  static const ColorScheme _darkScheme = ColorScheme(
-    brightness: Brightness.dark,
-    primary: Color(0xFFE0955B),
-    onPrimary: Color(0xFF3A1D0A),
-    primaryContainer: Color(0xFF5A3219),
-    onPrimaryContainer: Color(0xFFF9E1C6),
-    secondary: Color(0xFFD2B49C),
-    onSecondary: Color(0xFF38281D),
-    secondaryContainer: Color(0xFF4A3426),
-    onSecondaryContainer: Color(0xFFF9E1C6),
-    tertiary: Color(0xFFE09A5B),
-    onTertiary: Color(0xFF3A1D0A),
-    error: Color(0xFFF2B8B5),
-    onError: Color(0xFF601410),
-    surface: Color(0xFF1C130E),
-    onSurface: Color(0xFFF6E8D8),
-    onSurfaceVariant: Color(0xFFCDB8A5),
-    surfaceContainerLowest: Color(0xFF150D09),
-    surfaceContainerLow: Color(0xFF241812),
-    surfaceContainer: Color(0xFF2A1D16),
-    surfaceContainerHigh: Color(0xFF342419),
-    surfaceContainerHighest: Color(0xFF3F2E22),
-    outline: Color(0xFF8C7260),
-    outlineVariant: Color(0xFF4A3A2E),
-    shadow: Color(0xFF000000),
-    scrim: Color(0xFF000000),
-    inverseSurface: Color(0xFFF6E8D8),
-    onInverseSurface: Color(0xFF2B1810),
-    inversePrimary: Color(0xFF9A5428),
-  );
+  /// Background paper.
+  static const Color _paper = Color(0xFFF8F0E5);
 
-  /// Light theme configuration for the application.
-  static ThemeData get lightTheme => _build(_lightScheme, CupwardColors.light);
+  /// Primary text.
+  static const Color _ink = Color(0xFF1C1B19);
 
-  /// Dark theme configuration for the application.
-  static ThemeData get darkTheme => _build(_darkScheme, CupwardColors.dark);
+  /// Secondary text.
+  static const Color _mutedInk = Color(0xFF6B655C);
 
-  /// Builds a complete [ThemeData] from a [scheme] and its matching app-specific [colors].
-  static ThemeData _build(ColorScheme scheme, CupwardColors colors) {
-    final ThemeData base = ThemeData(colorScheme: scheme, useMaterial3: true);
-    final TextTheme textTheme = _textTheme(base.textTheme, scheme);
+  /// Accent for actions and healthy states, such as a connected scale.
+  static const Color _green = Color(0xFF1F4D32);
 
-    return base.copyWith(
-      scaffoldBackgroundColor: scheme.surface,
-      textTheme: textTheme,
-      extensions: <ThemeExtension<dynamic>>[colors],
-      appBarTheme: AppBarTheme(
-        backgroundColor: Colors.transparent,
-        foregroundColor: scheme.onSurface,
-        surfaceTintColor: Colors.transparent,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        centerTitle: true,
-        titleTextStyle: textTheme.headlineSmall,
+  /// Rules between major sections.
+  static const Color _copper = Color(0xFFD29A6E);
+
+  /// Rules between rows inside a section, and idle status indicators.
+  static const Color _hairline = Color(0xFFE6DACB);
+
+  /// In-progress status indicators.
+  static const Color _amber = Color(0xFFC98A2B);
+
+  /// Errors.
+  static const Color _red = Color(0xFFA63A2B);
+
+  /// The theme used by the app.
+  static ThemeData get light {
+    const ColorScheme colors = ColorScheme(
+      brightness: Brightness.light,
+      primary: _green,
+      onPrimary: Colors.white,
+      secondary: _green,
+      onSecondary: Colors.white,
+      tertiary: _amber,
+      onTertiary: Colors.white,
+      error: _red,
+      onError: Colors.white,
+      surface: _paper,
+      onSurface: _ink,
+      onSurfaceVariant: _mutedInk,
+      outline: _copper,
+      outlineVariant: _hairline,
+    );
+
+    final TextTheme base = ThemeData(brightness: Brightness.light).textTheme.apply(bodyColor: _ink, displayColor: _ink);
+
+    final TextTheme text = base.copyWith(
+      displayLarge: const TextStyle(
+        fontFamily: _serif,
+        fontSize: 112,
+        height: 1,
+        color: _ink,
+        fontFeatures: <FontFeature>[FontFeature.tabularFigures()],
       ),
-      cardTheme: CardThemeData(
-        color: scheme.surfaceContainerLow,
-        elevation: 0,
-        margin: EdgeInsets.zero,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-          side: BorderSide(color: colors.cardBorder),
-        ),
+      headlineLarge: const TextStyle(
+        fontFamily: _serif,
+        fontSize: 48,
+        height: 1.05,
+        color: _ink,
       ),
-      dividerTheme: DividerThemeData(color: colors.cardBorder, thickness: 1, space: 1),
+      headlineMedium: const TextStyle(
+        fontFamily: _serif,
+        fontSize: 40,
+        height: 1,
+        color: _ink,
+      ),
+      headlineSmall: const TextStyle(
+        fontFamily: _mono,
+        fontSize: 28,
+        height: 1.2,
+        color: _ink,
+      ),
+      titleLarge: base.titleLarge?.copyWith(
+        fontSize: 22,
+        fontWeight: FontWeight.w600,
+      ),
+      titleMedium: base.titleMedium?.copyWith(
+        fontSize: 18,
+        fontWeight: FontWeight.w400,
+      ),
+      bodyLarge: base.bodyLarge?.copyWith(fontSize: 16),
+      bodyMedium: base.bodyMedium?.copyWith(fontSize: 15, color: _ink),
+      labelLarge: base.labelLarge?.copyWith(
+        fontSize: 22,
+        fontWeight: FontWeight.w600,
+        letterSpacing: 0.2,
+      ),
+      labelMedium: base.labelMedium?.copyWith(
+        fontSize: 16,
+        letterSpacing: 1.6,
+        color: _ink,
+      ),
+      labelSmall: const TextStyle(
+        fontFamily: _mono,
+        fontSize: 13,
+        letterSpacing: 0.4,
+        color: _mutedInk,
+      ),
+    );
+
+    return ThemeData(
+      colorScheme: colors,
+      scaffoldBackgroundColor: _paper,
+      textTheme: text,
+      extensions: const <ThemeExtension<dynamic>>[CupwardColors.light],
+      dividerTheme: const DividerThemeData(
+        color: _copper,
+        thickness: 1,
+        space: 1,
+      ),
+      progressIndicatorTheme: const ProgressIndicatorThemeData(color: _green),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
-          backgroundColor: scheme.primary,
-          foregroundColor: scheme.onPrimary,
-          minimumSize: const Size.fromHeight(60),
-          shape: const StadiumBorder(),
-          textStyle: textTheme.titleMedium,
-        ),
-      ),
-      elevatedButtonTheme: ElevatedButtonThemeData(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: scheme.secondaryContainer,
-          foregroundColor: scheme.onSecondaryContainer,
-          elevation: 0,
-          minimumSize: const Size(0, 52),
-          shape: const StadiumBorder(),
-          textStyle: textTheme.titleMedium,
-        ),
-      ),
-      outlinedButtonTheme: OutlinedButtonThemeData(
-        style: OutlinedButton.styleFrom(
-          foregroundColor: scheme.primary,
-          side: BorderSide(color: scheme.outline),
-          minimumSize: const Size(0, 52),
-          shape: const StadiumBorder(),
+          backgroundColor: _green,
+          foregroundColor: Colors.white,
+          disabledBackgroundColor: _green.withValues(alpha: 0.45),
+          disabledForegroundColor: Colors.white,
+          minimumSize: const Size.fromHeight(68),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+          textStyle: text.labelLarge,
         ),
       ),
       textButtonTheme: TextButtonThemeData(
-        style: TextButton.styleFrom(foregroundColor: scheme.primary, shape: const StadiumBorder()),
+        style: TextButton.styleFrom(
+          foregroundColor: _green,
+          textStyle: text.titleMedium?.copyWith(
+            decoration: TextDecoration.underline,
+            decorationColor: _green,
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 4),
+          minimumSize: const Size(0, 40),
+        ),
       ),
-      iconTheme: IconThemeData(color: scheme.onSurface),
-      progressIndicatorTheme: ProgressIndicatorThemeData(
-        color: scheme.primary,
-        linearTrackColor: scheme.outlineVariant,
-      ),
-    );
-  }
-
-  /// Applies DM Serif Display to headings, titles, and numeric readouts while keeping the platform font for body and
-  /// label text. Colors come from the [scheme] so both brightness modes stay consistent.
-  static TextTheme _textTheme(TextTheme base, ColorScheme scheme) {
-    TextStyle? serif(TextStyle? style) => style?.copyWith(fontFamily: _serifFamily, fontWeight: FontWeight.w400);
-
-    final TextTheme colored = base.apply(bodyColor: scheme.onSurface, displayColor: scheme.onSurface);
-
-    return colored.copyWith(
-      displayLarge: serif(colored.displayLarge),
-      displayMedium: serif(colored.displayMedium),
-      displaySmall: serif(colored.displaySmall),
-      headlineLarge: serif(colored.headlineLarge),
-      headlineMedium: serif(colored.headlineMedium),
-      headlineSmall: serif(colored.headlineSmall),
-      titleLarge: serif(colored.titleLarge),
-      titleMedium: colored.titleMedium?.copyWith(fontWeight: FontWeight.w600),
-      bodyLarge: colored.bodyLarge?.copyWith(color: scheme.onSurfaceVariant, height: 1.4),
-      bodyMedium: colored.bodyMedium?.copyWith(color: scheme.onSurfaceVariant),
-      labelLarge: colored.labelLarge?.copyWith(fontWeight: FontWeight.w600),
     );
   }
 }

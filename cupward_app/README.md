@@ -66,12 +66,8 @@ lib/
 ├── l10n/            # Localized strings
 ├── screens/         # One folder per screen: route, controller, and view
 ├── services/        # Integrations with Firebase and other external services
-└── theme/           # Light and dark themes, theme extensions, spacing
+└── theme/           # Theme, theme extensions, spacing
 ```
-
-### Theming
-
-Light and dark themes are defined in `lib/theme` and attached to the app in `app.dart`. Widgets read styling through `Theme.of(context)`, or the `context.theme` shortcut, and never hardcode colors or fonts. Fixed, app-specific colors are provided by the `CupwardColors` theme extension. Headings and numeric readouts use DM Serif Display, which is declared in `pubspec.yaml`.
 
 ## Conventions
 

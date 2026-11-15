@@ -9,7 +9,7 @@ import 'firebase_options.dart';
 /// Application entry point that initializes Firebase and runs the Flutter app.
 ///
 /// Firebase is initialized first, followed by Firebase App Check, so that every Firebase service added later is
-/// protected from the first request. All other application configuration is handled by the Cupward widget in 
+/// protected from the first request. All other application configuration is handled by the Cupward widget in
 /// `app.dart`.
 ///
 /// When running the app in debug mode, the Firebase Emulator Suite should be used since debug builds are not signed

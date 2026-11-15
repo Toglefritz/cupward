@@ -7,77 +7,30 @@ import 'package:material_ui/material_ui.dart';
 @immutable
 class CupwardColors extends ThemeExtension<CupwardColors> {
   /// Creates a set of app-specific colors.
-  const CupwardColors({
-    required this.accent,
-    required this.success,
-    required this.cardBorder,
-    required this.brandGradient,
-    required this.scale,
-    required this.scaleEdge,
-  });
+  const CupwardColors({required this.accent, required this.success, required this.cardBorder});
 
-  /// Warm orange used for eyebrow labels such as "STEP 1 OF 6" and the active step marker.
+  /// The warm copper accent, used for eyebrow labels such as "STEP 1 OF 6" and for active markers.
   final Color accent;
 
   /// Indicates a healthy state, such as a connected scale.
   final Color success;
 
-  /// Hairline border color used around cards and panels.
+  /// Hairline border color used around cards and panels, and between rows inside a section.
   final Color cardBorder;
 
-  /// Gradient used by prominent brand-colored surfaces like the primary action button.
-  final Gradient brandGradient;
-
-  /// Top surface color of the scale illustration.
-  final Color scale;
-
-  /// Edge highlight color of the scale illustration.
-  final Color scaleEdge;
-
-  /// Colors for the light theme.
+  /// Colors for the app's theme.
   static const CupwardColors light = CupwardColors(
-    accent: Color(0xFFB5651D),
-    success: Color(0xFF22B04B),
-    cardBorder: Color(0xFFEFE0D0),
-    brandGradient: LinearGradient(
-      begin: Alignment.topCenter,
-      end: Alignment.bottomCenter,
-      colors: [Color(0xFFB0653A), Color(0xFF86441C)],
-    ),
-    scale: Color(0xFF8A6A52),
-    scaleEdge: Color(0xFFEAD8C4),
-  );
-
-  /// Colors for the dark theme.
-  static const CupwardColors dark = CupwardColors(
-    accent: Color(0xFFE09A5B),
-    success: Color(0xFF4CD27A),
-    cardBorder: Color(0xFF3D2C22),
-    brandGradient: LinearGradient(
-      begin: Alignment.topCenter,
-      end: Alignment.bottomCenter,
-      colors: [Color(0xFFD08A55), Color(0xFFA9622F)],
-    ),
-    scale: Color(0xFF6B523F),
-    scaleEdge: Color(0xFF8C7260),
+    accent: Color(0xFFD29A6E),
+    success: Color(0xFF1F4D32),
+    cardBorder: Color(0xFFE6DACB),
   );
 
   @override
-  CupwardColors copyWith({
-    Color? accent,
-    Color? success,
-    Color? cardBorder,
-    Gradient? brandGradient,
-    Color? scale,
-    Color? scaleEdge,
-  }) {
+  CupwardColors copyWith({Color? accent, Color? success, Color? cardBorder}) {
     return CupwardColors(
       accent: accent ?? this.accent,
       success: success ?? this.success,
       cardBorder: cardBorder ?? this.cardBorder,
-      brandGradient: brandGradient ?? this.brandGradient,
-      scale: scale ?? this.scale,
-      scaleEdge: scaleEdge ?? this.scaleEdge,
     );
   }
 
@@ -86,13 +39,11 @@ class CupwardColors extends ThemeExtension<CupwardColors> {
     if (other is! CupwardColors) {
       return this;
     }
+
     return CupwardColors(
       accent: Color.lerp(accent, other.accent, t)!,
       success: Color.lerp(success, other.success, t)!,
       cardBorder: Color.lerp(cardBorder, other.cardBorder, t)!,
-      brandGradient: Gradient.lerp(brandGradient, other.brandGradient, t)!,
-      scale: Color.lerp(scale, other.scale, t)!,
-      scaleEdge: Color.lerp(scaleEdge, other.scaleEdge, t)!,
     );
   }
 }
