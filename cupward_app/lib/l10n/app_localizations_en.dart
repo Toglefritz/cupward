@@ -56,4 +56,35 @@ class AppLocalizationsEn extends AppLocalizations {
   String brewPhaseProgress(int current, int total, String phase) {
     return 'Step $current of $total, $phase';
   }
+
+  @override
+  String brewStepCount(int current, int total) {
+    return 'STEP $current OF $total';
+  }
+
+  @override
+  String get brewStepTitlePrepare => 'Prepare to Brew';
+
+  @override
+  String get brewStepTitleBloom => 'Bloom';
+
+  @override
+  String brewStepTitlePour(int number) {
+    return 'Pour $number';
+  }
+
+  @override
+  String get brewStepTitleComplete => 'Enjoy Your Coffee';
+
+  @override
+  String get brewStepInstructionsPrepare => 'Set up your brewer, place it on the scale, and tare.';
+
+  @override
+  String get brewStepInstructionsBloom => 'Wet all the grounds with a little water, then let them rest.';
+
+  @override
+  String get brewStepInstructionsPour => 'Pour slowly and evenly to the next target.';
+
+  @override
+  String get brewStepInstructionsComplete => 'Let it finish draining, then swirl and serve.';
 }

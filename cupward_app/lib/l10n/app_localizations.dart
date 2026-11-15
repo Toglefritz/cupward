@@ -169,6 +169,60 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Step {current} of {total}, {phase}'**
   String brewPhaseProgress(int current, int total, String phase);
+
+  /// Small, spaced capital label above the current step's title on the brewing screen, such as "STEP 1 OF 6". Written in capitals here because the design shows it that way.
+  ///
+  /// In en, this message translates to:
+  /// **'STEP {current} OF {total}'**
+  String brewStepCount(int current, int total);
+
+  /// Large title of the setup step of a brew
+  ///
+  /// In en, this message translates to:
+  /// **'Prepare to Brew'**
+  String get brewStepTitlePrepare;
+
+  /// Large title of the bloom step, the first small pour that wets the coffee grounds
+  ///
+  /// In en, this message translates to:
+  /// **'Bloom'**
+  String get brewStepTitleBloom;
+
+  /// Large title of one of a recipe's pours, numbered in order, such as "Pour 2"
+  ///
+  /// In en, this message translates to:
+  /// **'Pour {number}'**
+  String brewStepTitlePour(int number);
+
+  /// Large title of the final step of a brew, after the water has drained through
+  ///
+  /// In en, this message translates to:
+  /// **'Enjoy Your Coffee'**
+  String get brewStepTitleComplete;
+
+  /// Short reminder under the title of the setup step. Kept brief because the user is brewing and has done it before.
+  ///
+  /// In en, this message translates to:
+  /// **'Set up your brewer, place it on the scale, and tare.'**
+  String get brewStepInstructionsPrepare;
+
+  /// Short reminder under the title of the bloom step
+  ///
+  /// In en, this message translates to:
+  /// **'Wet all the grounds with a little water, then let them rest.'**
+  String get brewStepInstructionsBloom;
+
+  /// Short reminder under the title of each pour step
+  ///
+  /// In en, this message translates to:
+  /// **'Pour slowly and evenly to the next target.'**
+  String get brewStepInstructionsPour;
+
+  /// Short reminder under the title of the final step of a brew
+  ///
+  /// In en, this message translates to:
+  /// **'Let it finish draining, then swirl and serve.'**
+  String get brewStepInstructionsComplete;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

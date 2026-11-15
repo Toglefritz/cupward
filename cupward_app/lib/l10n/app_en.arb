@@ -82,5 +82,57 @@
         "description": "The name of the current phase"
       }
     }
+  },
+  "brewStepCount": "STEP {current} OF {total}",
+  "@brewStepCount": {
+    "description": "Small, spaced capital label above the current step's title on the brewing screen, such as \"STEP 1 OF 6\". Written in capitals here because the design shows it that way.",
+    "placeholders": {
+      "current": {
+        "type": "int",
+        "description": "The position of the current step, starting at 1"
+      },
+      "total": {
+        "type": "int",
+        "description": "The number of steps in the brew"
+      }
+    }
+  },
+  "brewStepTitlePrepare": "Prepare to Brew",
+  "@brewStepTitlePrepare": {
+    "description": "Large title of the setup step of a brew"
+  },
+  "brewStepTitleBloom": "Bloom",
+  "@brewStepTitleBloom": {
+    "description": "Large title of the bloom step, the first small pour that wets the coffee grounds"
+  },
+  "brewStepTitlePour": "Pour {number}",
+  "@brewStepTitlePour": {
+    "description": "Large title of one of a recipe's pours, numbered in order, such as \"Pour 2\"",
+    "placeholders": {
+      "number": {
+        "type": "int",
+        "description": "The position of the pour among the recipe's pours, starting at 1"
+      }
+    }
+  },
+  "brewStepTitleComplete": "Enjoy Your Coffee",
+  "@brewStepTitleComplete": {
+    "description": "Large title of the final step of a brew, after the water has drained through"
+  },
+  "brewStepInstructionsPrepare": "Set up your brewer, place it on the scale, and tare.",
+  "@brewStepInstructionsPrepare": {
+    "description": "Short reminder under the title of the setup step. Kept brief because the user is brewing and has done it before."
+  },
+  "brewStepInstructionsBloom": "Wet all the grounds with a little water, then let them rest.",
+  "@brewStepInstructionsBloom": {
+    "description": "Short reminder under the title of the bloom step"
+  },
+  "brewStepInstructionsPour": "Pour slowly and evenly to the next target.",
+  "@brewStepInstructionsPour": {
+    "description": "Short reminder under the title of each pour step"
+  },
+  "brewStepInstructionsComplete": "Let it finish draining, then swirl and serve.",
+  "@brewStepInstructionsComplete": {
+    "description": "Short reminder under the title of the final step of a brew"
   }
 }
