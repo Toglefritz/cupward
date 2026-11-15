@@ -4,6 +4,7 @@ import '../../l10n/app_localizations.dart';
 import '../../theme/insets.dart';
 import 'brew_controller.dart';
 import 'components/brew_action_button.dart';
+import 'components/brew_advance_notice.dart';
 import 'components/brew_phase_indicator.dart';
 import 'components/brew_phase_labels.dart';
 import 'components/brew_step_heading.dart';
@@ -70,13 +71,23 @@ class BrewView extends StatelessWidget {
                 ),
                 Padding(
                   padding: const EdgeInsets.fromLTRB(Insets.small, 0, Insets.small, Insets.small),
-                  child: BrewActionButton(
-                    label: BrewPhaseLabels.actionLabelFor(
-                      state.recipe.phases,
-                      state.currentPhaseIndex,
-                      AppLocalizations.of(context)!,
-                    ),
-                    onPressed: state.onActionPressed,
+                  child: Column(
+                    children: <Widget>[
+                      BrewAdvanceNotice(
+                        restRemaining: state.restRemaining,
+                        advanceRemaining: state.advanceRemaining,
+                        onCancel: state.onCancelAdvancePressed,
+                      ),
+                      BrewActionButton(
+                        label: BrewPhaseLabels.actionLabelFor(
+                          state.recipe.phases,
+                          state.currentPhaseIndex,
+                          AppLocalizations.of(context)!,
+                        ),
+                        onPressed: state.onActionPressed,
+                        isProminent: !state.isAdvancingAutomatically,
+                      ),
+                    ],
                   ),
                 ),
               ],

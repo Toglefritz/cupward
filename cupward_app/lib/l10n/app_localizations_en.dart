@@ -89,6 +89,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get brewStepInstructionsComplete => 'Let it finish draining, then swirl and serve.';
 
   @override
+  String brewStepTarget(String weight) {
+    return 'Target $weight g';
+  }
+
+  @override
   String get brewActionContinue => 'Continue';
 
   @override
@@ -96,6 +101,19 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get brewActionDone => 'Done';
+
+  @override
+  String brewAdvanceCountdown(int seconds) {
+    return 'Next step in $seconds';
+  }
+
+  @override
+  String get brewAdvanceCancel => 'Cancel';
+
+  @override
+  String brewRestRemaining(String time) {
+    return 'Rest $time';
+  }
 
   @override
   String get scaleTitle => 'Scale';

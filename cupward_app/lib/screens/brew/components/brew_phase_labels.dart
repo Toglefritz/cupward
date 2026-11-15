@@ -54,6 +54,20 @@ abstract final class BrewPhaseLabels {
     }
   }
 
+  /// Returns the target line for the phase at [index] in [phases], such as "Target 160 g", or null if the phase has no
+  /// target weight.
+  ///
+  /// The weight is the total on the scale, not the amount to add in this phase. A whole number of grams is shown
+  /// without a decimal point.
+  static String? targetFor(List<BrewPhase> phases, int index, AppLocalizations strings) {
+    final double? target = phases[index].targetWeightGrams;
+    if (target == null) {
+      return null;
+    }
+    final String weight = target == target.roundToDouble() ? target.round().toString() : target.toStringAsFixed(1);
+    return strings.brewStepTarget(weight);
+  }
+
   /// Returns the label of the main action button for the phase at [index] in [phases]: "Continue" to start the brew,
   /// "Next step" during the bloom and pours, and "Done" at the end.
   static String actionLabelFor(List<BrewPhase> phases, int index, AppLocalizations strings) {

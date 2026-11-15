@@ -143,5 +143,36 @@ void main() {
         }
       }
     });
+
+    /// Each step with a target weight names it, so the user does not have to remember the number from the recipe.
+    testWidgets('shows the target weight of the bloom and each pour', (WidgetTester tester) async {
+      // Act and assert
+      for (final MapEntry<int, String> expected in <int, String>{
+        1: 'Target 60 g',
+        2: 'Target 160 g',
+        3: 'Target 240 g',
+        4: 'Target 320 g',
+      }.entries) {
+        await showHeading(tester, expected.key);
+        expect(find.text(expected.value), findsOneWidget, reason: 'step ${expected.key}');
+      }
+    });
+
+    /// Preparation and completion have no weight to pour to, so no target line is shown.
+    testWidgets('shows no target for steps without one', (WidgetTester tester) async {
+      for (final int index in <int>[0, 5]) {
+        await showHeading(tester, index);
+        expect(find.textContaining('Target'), findsNothing, reason: 'step $index');
+      }
+    });
+
+    /// A target that is not a whole number keeps one decimal place, instead of being rounded to a misleading figure.
+    test('shows a fractional target with one decimal place', () {
+      const List<BrewPhase> custom = <BrewPhase>[
+        BrewPhase(id: 'pour-1', kind: BrewPhaseKind.pour, targetWeightGrams: 62.5),
+      ];
+
+      expect(BrewPhaseLabels.targetFor(custom, 0, AppLocalizationsEn()), 'Target 62.5 g');
+    });
   });
 }

@@ -7,7 +7,8 @@ import '../../../theme/insets.dart';
 import 'brew_phase_labels.dart';
 
 /// The text for the current step of a brew: a count such as "STEP 1 OF 6", a large serif title, and a one-sentence
-/// reminder of what to do.
+/// reminder of what to do. A step with a target weight, such as a pour, adds a line such as "Target 160 g" under the
+/// reminder, so the user does not have to remember the number.
 ///
 /// The three lines are centered. The count uses the spaced label style in the copper accent, the title uses the
 /// theme's screen-title face at a size that leaves room for the rest of the step on a phone screen, and the instructions use running text in the secondary ink color. The title is marked
@@ -34,6 +35,7 @@ class BrewStepHeading extends StatelessWidget {
   Widget build(BuildContext context) {
     final ThemeData theme = context.theme;
     final AppLocalizations strings = AppLocalizations.of(context)!;
+    final String? target = BrewPhaseLabels.targetFor(phases, currentIndex, strings);
 
     return Column(
       children: <Widget>[
@@ -70,6 +72,16 @@ class BrewStepHeading extends StatelessWidget {
             ),
           ),
         ),
+        if (target != null)
+          Padding(
+            padding: const EdgeInsets.only(top: Insets.xSmall),
+            child: Text(
+              target,
+              textAlign: TextAlign.center,
+              style: theme.textTheme.titleLarge
+                  ?.copyWith(color: context.cupwardColors.accent, fontWeight: FontWeight.w600),
+            ),
+          ),
       ],
     );
   }

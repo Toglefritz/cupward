@@ -135,6 +135,13 @@
   "@brewStepInstructionsComplete": {
     "description": "Short reminder under the title of the final step of a brew"
   },
+  "brewStepTarget": "Target {weight} g",
+  "@brewStepTarget": {
+    "description": "Line under the instructions of a step that has a weight target, such as \"Target 160 g\". The weight is the total on the scale, counting all the water poured so far.",
+    "placeholders": {
+      "weight": { "type": "String", "description": "The target weight in grams, without a unit, such as \"160\" or \"62.5\"" }
+    }
+  },
   "brewActionContinue": "Continue",
   "@brewActionContinue": {
     "description": "Label of the main button at the bottom of the brewing screen during the setup step. Tapping it tares the scale and starts the brew."
@@ -146,6 +153,24 @@
   "brewActionDone": "Done",
   "@brewActionDone": {
     "description": "Label of the main button at the bottom of the brewing screen during the final step. Tapping it leaves the brewing screen."
+  },
+  "brewAdvanceCountdown": "Next step in {seconds}",
+  "@brewAdvanceCountdown": {
+    "description": "Message above the main button while the brew is about to move to the next step by itself, such as \"Next step in 3\". The user can cancel until it reaches zero.",
+    "placeholders": {
+      "seconds": { "type": "int", "description": "Whole seconds left before the brew moves on" }
+    }
+  },
+  "brewAdvanceCancel": "Cancel",
+  "@brewAdvanceCancel": {
+    "description": "Label of the button next to the countdown that stops the brew from moving to the next step by itself"
+  },
+  "brewRestRemaining": "Rest {time}",
+  "@brewRestRemaining": {
+    "description": "Message above the main button while the grounds rest after the bloom water is added, such as \"Rest 0:32\"",
+    "placeholders": {
+      "time": { "type": "String", "description": "The time left in the rest, as minutes and seconds" }
+    }
   },
   "scaleTitle": "Scale",
   "@scaleTitle": {

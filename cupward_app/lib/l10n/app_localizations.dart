@@ -224,6 +224,12 @@ abstract class AppLocalizations {
   /// **'Let it finish draining, then swirl and serve.'**
   String get brewStepInstructionsComplete;
 
+  /// Line under the instructions of a step that has a weight target, such as "Target 160 g". The weight is the total on the scale, counting all the water poured so far.
+  ///
+  /// In en, this message translates to:
+  /// **'Target {weight} g'**
+  String brewStepTarget(String weight);
+
   /// Label of the main button at the bottom of the brewing screen during the setup step. Tapping it tares the scale and starts the brew.
   ///
   /// In en, this message translates to:
@@ -241,6 +247,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Done'**
   String get brewActionDone;
+
+  /// Message above the main button while the brew is about to move to the next step by itself, such as "Next step in 3". The user can cancel until it reaches zero.
+  ///
+  /// In en, this message translates to:
+  /// **'Next step in {seconds}'**
+  String brewAdvanceCountdown(int seconds);
+
+  /// Label of the button next to the countdown that stops the brew from moving to the next step by itself
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get brewAdvanceCancel;
+
+  /// Message above the main button while the grounds rest after the bloom water is added, such as "Rest 0:32"
+  ///
+  /// In en, this message translates to:
+  /// **'Rest {time}'**
+  String brewRestRemaining(String time);
 
   /// Heading of the scale panel on the brewing screen
   ///
