@@ -13,8 +13,9 @@ class BrewStepIllustration extends StatelessWidget {
   /// The image for the current step.
   final BrewStepImage image;
 
-  /// The widest the illustration grows, so that it does not dominate the page on wide screens.
-  static const double _maxWidth = 360;
+  /// The tallest the illustration grows. Its height, rather than its width, is limited, so that the recipe, the step,
+  /// and the scale readings fit on one phone screen.
+  static const double _maxHeight = 240;
 
   /// How long the fade between two steps' images takes.
   static const Duration _fadeDuration = Duration(milliseconds: 250);
@@ -23,7 +24,7 @@ class BrewStepIllustration extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: _maxWidth),
+        constraints: const BoxConstraints(maxHeight: _maxHeight),
         child: AspectRatio(
           aspectRatio: BrewStepImage.aspectRatio,
           child: AnimatedSwitcher(

@@ -10,7 +10,7 @@ import 'brew_phase_labels.dart';
 /// reminder of what to do.
 ///
 /// The three lines are centered. The count uses the spaced label style in the copper accent, the title uses the
-/// theme's screen-title style, and the instructions use running text in the secondary ink color. The title is marked
+/// theme's screen-title face at a size that leaves room for the rest of the step on a phone screen, and the instructions use running text in the secondary ink color. The title is marked
 /// as a heading for screen readers. The count repeats what the phase indicator already announces, so it is left out of
 /// the announcement.
 class BrewStepHeading extends StatelessWidget {
@@ -25,6 +25,10 @@ class BrewStepHeading extends StatelessWidget {
 
   /// The widest the instructions grow, so that they wrap into short lines on wide screens instead of one long one.
   static const double _maxInstructionsWidth = 440;
+
+  /// The size of the title. It is smaller than the theme's screen-title size, because the brewing screen fits the
+  /// recipe, the step, and the scale readings on one phone screen.
+  static const double _titleFontSize = 40;
 
   @override
   Widget build(BuildContext context) {
@@ -45,18 +49,18 @@ class BrewStepHeading extends StatelessWidget {
           ),
         ),
         Padding(
-          padding: const EdgeInsets.only(top: Insets.xSmall),
+          padding: const EdgeInsets.only(top: Insets.xxSmall),
           child: Semantics(
             header: true,
             child: Text(
               BrewPhaseLabels.titleFor(phases, currentIndex, strings),
               textAlign: TextAlign.center,
-              style: theme.textTheme.headlineLarge,
+              style: theme.textTheme.headlineLarge?.copyWith(fontSize: _titleFontSize),
             ),
           ),
         ),
         Padding(
-          padding: const EdgeInsets.only(top: Insets.small),
+          padding: const EdgeInsets.only(top: Insets.xSmall),
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: _maxInstructionsWidth),
             child: Text(

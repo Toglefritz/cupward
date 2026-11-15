@@ -66,7 +66,7 @@ class BrewPhaseStep extends StatelessWidget {
           ),
         ),
         Padding(
-          padding: const EdgeInsets.only(top: Insets.xSmall, left: Insets.micro, right: Insets.micro),
+          padding: const EdgeInsets.only(top: Insets.xxSmall, left: Insets.micro, right: Insets.micro),
           child: FittedBox(
             fit: BoxFit.scaleDown,
             child: Text(

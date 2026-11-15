@@ -11,8 +11,7 @@ import 'components/scale_panel.dart';
 
 /// Layout for the brewing screen. Contains no logic.
 ///
-/// The recipe summary card sits at the top of a content column of limited width, below an app bar with a back button,
-/// and the phase indicator, the current step's heading, its illustration, and the scale panel follow it. The scale
+/// The recipe summary card sits at the top of a content column of limited width, and the phase indicator, the current step's heading, its illustration, and the scale panel follow it. The scale
 /// panel is left out on platforms that cannot use a scale, such as the web.
 class BrewView extends StatelessWidget {
   /// Creates the view for [state].
@@ -27,33 +26,31 @@ class BrewView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(),
       body: SafeArea(
-        top: false,
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: _maxContentWidth),
             child: ListView(
-              padding: const EdgeInsets.fromLTRB(Insets.small, Insets.xSmall, Insets.small, Insets.large),
+              padding: const EdgeInsets.fromLTRB(Insets.small, Insets.xSmall, Insets.small, Insets.small),
               children: <Widget>[
                 RecipeSummaryCard(recipe: state.recipe),
                 Padding(
-                  padding: const EdgeInsets.only(top: Insets.medium),
+                  padding: const EdgeInsets.only(top: Insets.small),
                   child: BrewPhaseIndicator(phases: state.recipe.phases, currentIndex: state.currentPhaseIndex),
                 ),
                 Padding(
-                  padding: const EdgeInsets.only(top: Insets.large),
+                  padding: const EdgeInsets.only(top: Insets.small),
                   child: BrewStepHeading(phases: state.recipe.phases, currentIndex: state.currentPhaseIndex),
                 ),
                 Padding(
-                  padding: const EdgeInsets.only(top: Insets.medium),
+                  padding: const EdgeInsets.only(top: Insets.xSmall),
                   child: BrewStepIllustration(
                     image: BrewPhaseLabels.imageFor(state.recipe.phases, state.currentPhaseIndex),
                   ),
                 ),
                 if (state.isScaleSupported)
                   Padding(
-                    padding: const EdgeInsets.only(top: Insets.medium),
+                    padding: const EdgeInsets.only(top: Insets.small),
                     child: ScalePanel(
                       status: state.scale.status,
                       reading: state.scale.reading,
