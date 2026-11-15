@@ -2,6 +2,7 @@ import 'package:cupward/l10n/app_localizations.dart';
 import 'package:cupward/models/recipes/built_in_recipes.dart';
 import 'package:cupward/screens/brew/brew_controller.dart';
 import 'package:cupward/screens/brew/brew_route.dart';
+import 'package:cupward/screens/brew/components/brew_action_button.dart';
 import 'package:cupward/screens/brew/components/recipe_summary_card.dart';
 import 'package:cupward/screens/brew/components/scale_panel.dart';
 import 'package:cupward/services/scale/scale_service.dart';
@@ -351,6 +352,7 @@ void main() {
       // Assert: the bloom advances by itself, so the button is outlined.
       expect(find.byType(OutlinedButton), findsOneWidget);
       expect(find.byType(FilledButton), findsNothing);
+      expect(tester.getSize(find.byType(OutlinedButton)).height, BrewActionButton.quietHeight);
 
       // Act: cancelling gives the step back to the user.
       await pourBloom(tester, service);

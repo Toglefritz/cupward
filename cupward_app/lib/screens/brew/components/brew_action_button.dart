@@ -6,9 +6,10 @@ import '../../../theme/context_theme_extension.dart';
 ///
 /// It comes in two weights. The prominent form is the theme's solid green filled button, for steps that only the user
 /// can end. The quiet form is an outlined button with no fill, for steps that the scale ends by itself, where the
-/// button is only a manual override and should not draw the eye from the pour. Both have the same size, so the screen
-/// does not shift when one replaces the other. The label changes with the phase, for example "Continue" before the
-/// brew starts and "Done" at the end, so the caller supplies it.
+/// button is only a manual override and should not draw the eye from the pour. The quiet form is also shorter than the
+/// filled button, which leaves more room for the step and the scale readings while the user pours. Because the heights
+/// differ, the content above shifts slightly when one form replaces the other. The label changes with the phase, for
+/// example "Continue" before the brew starts and "Done" at the end, so the caller supplies it.
 class BrewActionButton extends StatelessWidget {
   /// Creates a button with [label] that calls [onPressed] when tapped.
   ///
@@ -20,6 +21,9 @@ class BrewActionButton extends StatelessWidget {
 
   /// Called when the button is tapped.
   final VoidCallback onPressed;
+
+  /// The height of the quiet form, which is also the minimum touch target size.
+  static const double quietHeight = 48;
 
   /// Whether the button is the solid green form (true) or the quiet outlined form (false).
   final bool isProminent;
@@ -38,7 +42,7 @@ class BrewActionButton extends StatelessWidget {
       style: OutlinedButton.styleFrom(
         foregroundColor: theme.colorScheme.primary,
         side: BorderSide(color: context.cupwardColors.cardBorder, width: 1.5),
-        minimumSize: const Size.fromHeight(68),
+        minimumSize: const Size.fromHeight(quietHeight),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         textStyle: theme.textTheme.labelLarge,
       ),
