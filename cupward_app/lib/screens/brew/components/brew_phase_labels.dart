@@ -54,6 +54,20 @@ abstract final class BrewPhaseLabels {
     }
   }
 
+  /// Returns the label of the main action button for the phase at [index] in [phases]: "Continue" to start the brew,
+  /// "Next step" during the bloom and pours, and "Done" at the end.
+  static String actionLabelFor(List<BrewPhase> phases, int index, AppLocalizations strings) {
+    switch (phases[index].kind) {
+      case BrewPhaseKind.prepare:
+        return strings.brewActionContinue;
+      case BrewPhaseKind.bloom:
+      case BrewPhaseKind.pour:
+        return strings.brewActionNextStep;
+      case BrewPhaseKind.complete:
+        return strings.brewActionDone;
+    }
+  }
+
   /// Returns the illustration for the phase at [index] in [phases].
   ///
   /// Pours use the image for their position among the pours. There are images for three pours, so a recipe with more

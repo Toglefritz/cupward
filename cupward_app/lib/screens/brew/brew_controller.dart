@@ -84,19 +84,47 @@ class BrewController extends State<BrewRoute> {
     unawaited(scale.startScan());
   }
 
+  /// Whether the current phase is the last one, so there is nothing after it to advance to.
+  bool get isLastPhase => currentPhaseIndex == recipe.phases.length - 1;
+
+  /// Handles a tap on the main action button at the bottom of the screen.
+  ///
+  /// In the last phase this leaves the screen. In any other phase it moves to the next one. Leaving the preparation
+  /// phase first tares the scale, so the weights in the later phases count water only. If the tare command fails, the
+  /// brew stays in preparation and a message says so, because continuing with a wrong zero would make every target
+  /// wrong. Without a connected scale there is nothing to tare, and the brew advances.
+  Future<void> onActionPressed() async {
+    if (isLastPhase) {
+      Navigator.pop(context);
+      return;
+    }
+    if (currentPhaseKind == BrewPhaseKind.prepare && scale.isConnected) {
+      final bool tared = await _tare();
+      if (!tared || !mounted) {
+        return;
+      }
+    }
+    setState(() => currentPhaseIndex++);
+  }
+
   /// Handles a tap on Tare by zeroing the scale, and briefly says so if the command could not be sent.
   Future<void> onTarePressed() async {
+    await _tare();
+  }
+
+  /// Zeroes the scale and returns whether that worked. If the command could not be sent, a message says so briefly.
+  Future<bool> _tare() async {
     try {
       await scale.tare();
+      return true;
     } on ThemisException catch (error) {
       debugPrint('Tare failed: $error');
 
-      if (!mounted) {
-        return;
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.scaleTareFailed)));
       }
-
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.scaleTareFailed)));
+      return false;
     }
   }
 

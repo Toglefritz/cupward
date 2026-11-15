@@ -89,6 +89,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get brewStepInstructionsComplete => 'Let it finish draining, then swirl and serve.';
 
   @override
+  String get brewActionContinue => 'Continue';
+
+  @override
+  String get brewActionNextStep => 'Next step';
+
+  @override
+  String get brewActionDone => 'Done';
+
+  @override
   String get scaleTitle => 'Scale';
 
   @override

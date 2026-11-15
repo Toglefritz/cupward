@@ -224,6 +224,24 @@ abstract class AppLocalizations {
   /// **'Let it finish draining, then swirl and serve.'**
   String get brewStepInstructionsComplete;
 
+  /// Label of the main button at the bottom of the brewing screen during the setup step. Tapping it tares the scale and starts the brew.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue'**
+  String get brewActionContinue;
+
+  /// Label of the main button at the bottom of the brewing screen during the bloom and pours. Tapping it moves to the next step.
+  ///
+  /// In en, this message translates to:
+  /// **'Next step'**
+  String get brewActionNextStep;
+
+  /// Label of the main button at the bottom of the brewing screen during the final step. Tapping it leaves the brewing screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get brewActionDone;
+
   /// Heading of the scale panel on the brewing screen
   ///
   /// In en, this message translates to:

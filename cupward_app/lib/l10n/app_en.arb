@@ -135,6 +135,18 @@
   "@brewStepInstructionsComplete": {
     "description": "Short reminder under the title of the final step of a brew"
   },
+  "brewActionContinue": "Continue",
+  "@brewActionContinue": {
+    "description": "Label of the main button at the bottom of the brewing screen during the setup step. Tapping it tares the scale and starts the brew."
+  },
+  "brewActionNextStep": "Next step",
+  "@brewActionNextStep": {
+    "description": "Label of the main button at the bottom of the brewing screen during the bloom and pours. Tapping it moves to the next step."
+  },
+  "brewActionDone": "Done",
+  "@brewActionDone": {
+    "description": "Label of the main button at the bottom of the brewing screen during the final step. Tapping it leaves the brewing screen."
+  },
   "scaleTitle": "Scale",
   "@scaleTitle": {
     "description": "Heading of the scale panel on the brewing screen"
