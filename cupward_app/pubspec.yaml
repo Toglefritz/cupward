@@ -15,6 +15,9 @@ dependencies:
     path: ../firebase_hybrid_ai
   flutter:
     sdk: flutter
+  # Developed in this repository and depended on by path until it is published.
+  flutter_bookoo:
+    path: ../flutter_bookoo
   flutter_localizations:
     sdk: flutter
   intl: any

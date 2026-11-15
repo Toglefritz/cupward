@@ -66,5 +66,9 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>NSBluetoothAlwaysUsageDescription</key>
+	<string>Cupward connects to your BOOKOO scale over Bluetooth to measure your brew.</string>
+	<key>NSBluetoothPeripheralUsageDescription</key>
+	<string>Cupward connects to your BOOKOO scale over Bluetooth to measure your brew.</string>
 </dict>
 </plist>

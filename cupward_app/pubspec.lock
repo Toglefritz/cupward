@@ -125,11 +125,26 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
+  flutter_bookoo:
+    dependency: "direct main"
+    description:
+      path: "../flutter_bookoo"
+      relative: true
+    source: path
+    version: "0.0.1"
   flutter_localizations:
     dependency: "direct main"
     description: flutter
     source: sdk
     version: "0.0.0"
+  flutter_splendid_ble:
+    dependency: transitive
+    description:
+      name: flutter_splendid_ble
+      sha256: "934802c3e9c23c1bd413f297b3e5c676ee163094a93acbceb39ad430d7c434ce"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.8.0"
   flutter_test:
     dependency: "direct dev"
     description: flutter

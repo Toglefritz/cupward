@@ -26,6 +26,8 @@ Requests that reach the cloud are protected with Firebase App Check, which verif
 
 The app targets Android, iOS, macOS, and the web. Firebase is configured for each of these platforms. In a browser, the on-device model is the one built into Chrome on desktop. On-device inference depends on what the platform and device provide, so the cloud fallback is what guarantees a consistent experience everywhere.
 
+The scale connects over Bluetooth on Android, iOS, and macOS, which ask for Bluetooth permission the first time the app looks for a scale. Browsers cannot connect to the scale, so on the web the brewing screen leaves out the scale panel. Recipes and AI feedback on a brew work the same way, without scale readings.
+
 ## Technology
 
 - **Flutter and Dart** for the cross-platform user interface.

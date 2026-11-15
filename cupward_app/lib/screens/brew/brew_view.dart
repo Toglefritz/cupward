@@ -7,11 +7,13 @@ import 'components/brew_phase_labels.dart';
 import 'components/brew_step_heading.dart';
 import 'components/brew_step_illustration.dart';
 import 'components/recipe_summary_card.dart';
+import 'components/scale_panel.dart';
 
 /// Layout for the brewing screen. Contains no logic.
 ///
 /// The recipe summary card sits at the top of a content column of limited width, below an app bar with a back button,
-/// and the phase indicator, the current step's heading, and its illustration follow it.
+/// and the phase indicator, the current step's heading, its illustration, and the scale panel follow it. The scale
+/// panel is left out on platforms that cannot use a scale, such as the web.
 class BrewView extends StatelessWidget {
   /// Creates the view for [state].
   const BrewView(this.state, {super.key});
@@ -49,6 +51,17 @@ class BrewView extends StatelessWidget {
                     image: BrewPhaseLabels.imageFor(state.recipe.phases, state.currentPhaseIndex),
                   ),
                 ),
+                if (state.isScaleSupported)
+                  Padding(
+                    padding: const EdgeInsets.only(top: Insets.medium),
+                    child: ScalePanel(
+                      status: state.scale.status,
+                      reading: state.scale.reading,
+                      phaseKind: state.currentPhaseKind,
+                      onFindScalePressed: state.onFindScalePressed,
+                      onTarePressed: state.onTarePressed,
+                    ),
+                  ),
               ],
             ),
           ),

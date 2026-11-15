@@ -87,4 +87,86 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get brewStepInstructionsComplete => 'Let it finish draining, then swirl and serve.';
+
+  @override
+  String get scaleTitle => 'Scale';
+
+  @override
+  String get scaleStatusConnected => 'Connected';
+
+  @override
+  String get scaleStatusDisconnected => 'Not connected';
+
+  @override
+  String get scaleStatusScanning => 'Searching';
+
+  @override
+  String get scaleStatusConnecting => 'Connecting';
+
+  @override
+  String get scaleStatusUnsupported => 'Not available';
+
+  @override
+  String scaleBattery(int percent) {
+    return '$percent%';
+  }
+
+  @override
+  String scaleBatterySemantics(int percent) {
+    return 'Scale battery $percent percent';
+  }
+
+  @override
+  String scaleGrams(String grams) {
+    return '$grams g';
+  }
+
+  @override
+  String scaleFlowRate(String rate) {
+    return '$rate g/s';
+  }
+
+  @override
+  String get scaleFlowLabel => 'Flow';
+
+  @override
+  String get scaleNoReading => '–';
+
+  @override
+  String get buttonTare => 'Tare';
+
+  @override
+  String get buttonFindScale => 'Find scale';
+
+  @override
+  String get scalePickerTitle => 'Choose your scale';
+
+  @override
+  String get scalePickerSearching => 'Looking for BOOKOO scales. Make sure yours is on and nearby.';
+
+  @override
+  String get scalePickerNoneFound => 'No scales found. Wake your scale, then search again.';
+
+  @override
+  String scalePickerSignal(int rssi) {
+    return 'Signal $rssi dBm';
+  }
+
+  @override
+  String get buttonSearchAgain => 'Search again';
+
+  @override
+  String get scaleFailureBluetooth => 'Turn on Bluetooth and allow Cupward to use it, then try again.';
+
+  @override
+  String get scaleFailureConnection => 'Couldn\'t connect to the scale. Make sure it\'s on and nearby.';
+
+  @override
+  String get scaleFailureUnsupported => 'That device isn\'t a supported scale.';
+
+  @override
+  String get scaleFailureUnknown => 'Something went wrong with the scale. Try again.';
+
+  @override
+  String get scaleTareFailed => 'Couldn\'t tare the scale.';
 }

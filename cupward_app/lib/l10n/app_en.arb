@@ -134,5 +134,131 @@
   "brewStepInstructionsComplete": "Let it finish draining, then swirl and serve.",
   "@brewStepInstructionsComplete": {
     "description": "Short reminder under the title of the final step of a brew"
+  },
+  "scaleTitle": "Scale",
+  "@scaleTitle": {
+    "description": "Heading of the scale panel on the brewing screen"
+  },
+  "scaleStatusConnected": "Connected",
+  "@scaleStatusConnected": {
+    "description": "Status in the scale panel while a scale is connected"
+  },
+  "scaleStatusDisconnected": "Not connected",
+  "@scaleStatusDisconnected": {
+    "description": "Status in the scale panel while no scale is connected"
+  },
+  "scaleStatusScanning": "Searching",
+  "@scaleStatusScanning": {
+    "description": "Status in the scale panel while the app looks for nearby scales"
+  },
+  "scaleStatusConnecting": "Connecting",
+  "@scaleStatusConnecting": {
+    "description": "Status in the scale panel while the app connects to the chosen scale"
+  },
+  "scaleStatusUnsupported": "Not available",
+  "@scaleStatusUnsupported": {
+    "description": "Status in the scale panel on platforms that cannot use Bluetooth scales, such as a web browser"
+  },
+  "scaleBattery": "{percent}%",
+  "@scaleBattery": {
+    "description": "The scale's remaining battery charge, shown beside a battery icon, such as \"82%\"",
+    "placeholders": {
+      "percent": {
+        "type": "int",
+        "description": "The charge from 0 to 100"
+      }
+    }
+  },
+  "scaleBatterySemantics": "Scale battery {percent} percent",
+  "@scaleBatterySemantics": {
+    "description": "What screen readers announce for the scale's battery level",
+    "placeholders": {
+      "percent": {
+        "type": "int",
+        "description": "The charge from 0 to 100"
+      }
+    }
+  },
+  "scaleGrams": "{grams} g",
+  "@scaleGrams": {
+    "description": "The scale's live weight, such as \"0.0 g\". The number is already formatted.",
+    "placeholders": {
+      "grams": {
+        "type": "String",
+        "description": "The formatted weight"
+      }
+    }
+  },
+  "scaleFlowRate": "{rate} g/s",
+  "@scaleFlowRate": {
+    "description": "The rate at which water is being poured, in grams per second, such as \"3.2 g/s\"",
+    "placeholders": {
+      "rate": {
+        "type": "String",
+        "description": "The formatted rate"
+      }
+    }
+  },
+  "scaleFlowLabel": "Flow",
+  "@scaleFlowLabel": {
+    "description": "Caption under the pour rate in the scale panel"
+  },
+  "scaleNoReading": "–",
+  "@scaleNoReading": {
+    "description": "Placeholder for a scale value when no scale is connected or no reading has arrived"
+  },
+  "buttonTare": "Tare",
+  "@buttonTare": {
+    "description": "Label of the button that zeroes the scale, shown in the scale panel during setup"
+  },
+  "buttonFindScale": "Find scale",
+  "@buttonFindScale": {
+    "description": "Label of the button in the scale panel that starts looking for nearby BOOKOO scales"
+  },
+  "scalePickerTitle": "Choose your scale",
+  "@scalePickerTitle": {
+    "description": "Title of the sheet that lists nearby BOOKOO scales"
+  },
+  "scalePickerSearching": "Looking for BOOKOO scales. Make sure yours is on and nearby.",
+  "@scalePickerSearching": {
+    "description": "Shown in the scale sheet while searching and nothing has been found yet"
+  },
+  "scalePickerNoneFound": "No scales found. Wake your scale, then search again.",
+  "@scalePickerNoneFound": {
+    "description": "Shown in the scale sheet when a search ended without finding a scale"
+  },
+  "scalePickerSignal": "Signal {rssi} dBm",
+  "@scalePickerSignal": {
+    "description": "Signal strength of a nearby scale in the scale sheet, such as \"Signal -58 dBm\"",
+    "placeholders": {
+      "rssi": {
+        "type": "int",
+        "description": "The received signal strength in dBm, a negative number"
+      }
+    }
+  },
+  "buttonSearchAgain": "Search again",
+  "@buttonSearchAgain": {
+    "description": "Button in the scale sheet that restarts the search for scales"
+  },
+  "scaleFailureBluetooth": "Turn on Bluetooth and allow Cupward to use it, then try again.",
+  "@scaleFailureBluetooth": {
+    "description": "Shown when the scale search failed because Bluetooth is off or not permitted"
+  },
+  "scaleFailureConnection": "Couldn't connect to the scale. Make sure it's on and nearby.",
+  "@scaleFailureConnection": {
+    "description": "Shown when connecting to the chosen scale failed"
+  },
+  "scaleFailureUnsupported": "That device isn't a supported scale.",
+  "@scaleFailureUnsupported": {
+    "description": "Shown when the chosen device connected but is not a supported BOOKOO scale"
+  },
+  "scaleFailureUnknown": "Something went wrong with the scale. Try again.",
+  "@scaleFailureUnknown": {
+    "description": "Shown for any other scale failure"
+  },
+  "scaleTareFailed": "Couldn't tare the scale.",
+  "@scaleTareFailed": {
+    "description": "Shown briefly when the tare command could not be sent"
   }
 }
