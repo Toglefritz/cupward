@@ -8,7 +8,7 @@ plugins {
 }
 
 android {
-    namespace = "com.example.cupward"
+    namespace = "com.splendidendeavors.cupward"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -19,7 +19,7 @@ android {
 
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "com.example.cupward"
+        applicationId = "com.splendidendeavors.cupward"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         // firebase_hybrid_ai requires API 26, because its on-device SDK includes the ML Kit Prompt API.

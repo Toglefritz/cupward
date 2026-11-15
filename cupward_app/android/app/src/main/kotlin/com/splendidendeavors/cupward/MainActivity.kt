@@ -1,4 +1,4 @@
-package com.example.cupward
+package com.splendidendeavors.cupward
 
 import io.flutter.embedding.android.FlutterActivity
 
