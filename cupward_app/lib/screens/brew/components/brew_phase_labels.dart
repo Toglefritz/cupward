@@ -1,9 +1,10 @@
 import '../../../l10n/app_localizations.dart';
 import '../../../models/recipes/brew_phase.dart';
 import '../../../models/recipes/brew_phase_kind.dart';
+import '../../../theme/brew_step_image.dart';
 
-/// The display text for the phases of a brew: short names for the phase indicator, and a title and brief instructions
-/// for the current step.
+/// The display text and illustration for the phases of a brew: short names for the phase indicator, and a title, brief
+/// instructions, and an image for the current step.
 ///
 /// The text comes from each phase's kind and is localized, so recipes do not store display text for their phases. A
 /// pour is numbered by its position among the recipe's pours, which is why the whole list of phases is needed.
@@ -50,6 +51,30 @@ abstract final class BrewPhaseLabels {
         return strings.brewStepInstructionsPour;
       case BrewPhaseKind.complete:
         return strings.brewStepInstructionsComplete;
+    }
+  }
+
+  /// Returns the illustration for the phase at [index] in [phases].
+  ///
+  /// Pours use the image for their position among the pours. There are images for three pours, so a recipe with more
+  /// pours shows the third pour's image for the rest of them.
+  static BrewStepImage imageFor(List<BrewPhase> phases, int index) {
+    switch (phases[index].kind) {
+      case BrewPhaseKind.prepare:
+        return BrewStepImage.prepare;
+      case BrewPhaseKind.bloom:
+        return BrewStepImage.bloom;
+      case BrewPhaseKind.pour:
+        switch (pourNumber(phases, index)) {
+          case 1:
+            return BrewStepImage.pour1;
+          case 2:
+            return BrewStepImage.pour2;
+          default:
+            return BrewStepImage.pour3;
+        }
+      case BrewPhaseKind.complete:
+        return BrewStepImage.complete;
     }
   }
 

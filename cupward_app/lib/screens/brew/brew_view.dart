@@ -3,13 +3,15 @@ import 'package:material_ui/material_ui.dart';
 import '../../theme/insets.dart';
 import 'brew_controller.dart';
 import 'components/brew_phase_indicator.dart';
+import 'components/brew_phase_labels.dart';
 import 'components/brew_step_heading.dart';
+import 'components/brew_step_illustration.dart';
 import 'components/recipe_summary_card.dart';
 
 /// Layout for the brewing screen. Contains no logic.
 ///
 /// The recipe summary card sits at the top of a content column of limited width, below an app bar with a back button,
-/// and the phase indicator and the current step's heading follow it.
+/// and the phase indicator, the current step's heading, and its illustration follow it.
 class BrewView extends StatelessWidget {
   /// Creates the view for [state].
   const BrewView(this.state, {super.key});
@@ -40,6 +42,12 @@ class BrewView extends StatelessWidget {
                 Padding(
                   padding: const EdgeInsets.only(top: Insets.large),
                   child: BrewStepHeading(phases: state.recipe.phases, currentIndex: state.currentPhaseIndex),
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(top: Insets.medium),
+                  child: BrewStepIllustration(
+                    image: BrewPhaseLabels.imageFor(state.recipe.phases, state.currentPhaseIndex),
+                  ),
                 ),
               ],
             ),

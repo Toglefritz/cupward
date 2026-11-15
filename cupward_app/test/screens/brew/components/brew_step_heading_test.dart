@@ -1,9 +1,11 @@
 import 'package:cupward/l10n/app_localizations.dart';
 import 'package:cupward/l10n/app_localizations_en.dart';
 import 'package:cupward/models/recipes/brew_phase.dart';
+import 'package:cupward/models/recipes/brew_phase_kind.dart';
 import 'package:cupward/models/recipes/built_in_recipes.dart';
 import 'package:cupward/screens/brew/components/brew_phase_labels.dart';
 import 'package:cupward/screens/brew/components/brew_step_heading.dart';
+import 'package:cupward/theme/brew_step_image.dart';
 import 'package:cupward/theme/cupward_colors.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
@@ -60,6 +62,36 @@ void main() {
         expect(instructions.length, lessThanOrEqualTo(80), reason: instructions);
         expect('.'.allMatches(instructions), hasLength(1), reason: instructions);
       }
+    });
+  });
+
+  group('BrewPhaseLabels.imageFor', () {
+    /// Each pour over step has its own illustration, and pours use the image for their position.
+    test('gives every phase of the pour over its own image', () {
+      final List<BrewStepImage> images = <BrewStepImage>[
+        for (int i = 0; i < phases.length; i++) BrewPhaseLabels.imageFor(phases, i),
+      ];
+
+      expect(images, <BrewStepImage>[
+        BrewStepImage.prepare,
+        BrewStepImage.bloom,
+        BrewStepImage.pour1,
+        BrewStepImage.pour2,
+        BrewStepImage.pour3,
+        BrewStepImage.complete,
+      ]);
+    });
+
+    /// There are only three pour images, so a recipe with more pours must still show one instead of failing.
+    test('uses the third pour image for later pours', () {
+      const List<BrewPhase> manyPours = <BrewPhase>[
+        BrewPhase(id: 'pour-1', kind: BrewPhaseKind.pour),
+        BrewPhase(id: 'pour-2', kind: BrewPhaseKind.pour),
+        BrewPhase(id: 'pour-3', kind: BrewPhaseKind.pour),
+        BrewPhase(id: 'pour-4', kind: BrewPhaseKind.pour),
+      ];
+
+      expect(BrewPhaseLabels.imageFor(manyPours, 3), BrewStepImage.pour3);
     });
   });
 
