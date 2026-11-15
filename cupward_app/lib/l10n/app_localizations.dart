@@ -92,11 +92,17 @@ abstract class AppLocalizations {
   /// A list of this localizations delegate's supported locales.
   static const List<Locale> supportedLocales = <Locale>[Locale('en')];
 
-  /// The title of the application
+  /// The title of the application, also shown as the large title on the home screen
   ///
   /// In en, this message translates to:
   /// **'Cupward'**
   String get appTitle;
+
+  /// Label for the primary button at the bottom of the home screen that starts a new brewing session
+  ///
+  /// In en, this message translates to:
+  /// **'Start a Brew'**
+  String get buttonStartBrew;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

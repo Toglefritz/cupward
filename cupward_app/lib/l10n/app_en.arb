@@ -1,6 +1,10 @@
 {
   "appTitle": "Cupward",
   "@appTitle": {
-    "description": "The title of the application"
+    "description": "The title of the application, also shown as the large title on the home screen"
+  },
+  "buttonStartBrew": "Start a Brew",
+  "@buttonStartBrew": {
+    "description": "Label for the primary button at the bottom of the home screen that starts a new brewing session"
   }
 }

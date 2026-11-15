@@ -12,4 +12,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get appTitle => 'Cupward';
+
+  @override
+  String get buttonStartBrew => 'Start a Brew';
 }
