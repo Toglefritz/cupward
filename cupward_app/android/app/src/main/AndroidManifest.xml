@@ -10,7 +10,7 @@
     <!-- The scale is optional: the app is still useful without one, so devices without BLE can install it. -->
     <uses-feature android:name="android.hardware.bluetooth_le" android:required="false" />
     <application
-        android:label="cupward"
+        android:label="Cupward"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
