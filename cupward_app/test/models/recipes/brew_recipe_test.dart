@@ -1,8 +1,10 @@
+import 'package:cupward/models/recipes/brew_phase.dart';
+import 'package:cupward/models/recipes/brew_phase_kind.dart';
 import 'package:cupward/models/recipes/brew_recipe.dart';
 import 'package:cupward/models/recipes/built_in_recipes.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-/// Verifies the JSON form of [BrewRecipe] and the built-in recipes. No dependencies are mocked.
+/// Verifies the JSON form of [BrewRecipe], including its phases, and the built-in recipes. No dependencies are mocked.
 void main() {
   group('BrewRecipe JSON', () {
     /// Recipes are stored as JSON, so a recipe must come back unchanged after a round trip.
@@ -28,12 +30,37 @@ void main() {
         'waterGrams': 320.0,
         'brewTimeSeconds': 180,
         'yieldMilliliters': 320,
+        'phases': <Map<String, dynamic>>[
+          <String, dynamic>{'id': 'prepare', 'kind': 'prepare'},
+          <String, dynamic>{'id': 'pour-1', 'kind': 'pour'},
+        ],
       });
 
       // Assert
       expect(recipe.coffeeGrams, 20.0);
       expect(recipe.brewTime, const Duration(minutes: 3));
       expect(recipe.yieldMilliliters, 320.0);
+      expect(recipe.phases, const <BrewPhase>[
+        BrewPhase(id: 'prepare', kind: BrewPhaseKind.prepare),
+        BrewPhase(id: 'pour-1', kind: BrewPhaseKind.pour),
+      ]);
+    });
+
+    /// A brew needs at least one phase to follow, so stored data without any must be rejected.
+    test('throws a FormatException when there are no phases', () {
+      final Map<String, dynamic> json = BuiltInRecipes.v60PourOver.toJson()..['phases'] = <dynamic>[];
+
+      expect(() => BrewRecipe.fromJson(json), throwsFormatException);
+    });
+
+    /// Data from a newer version of the app may use a kind this version does not know, which must not be guessed at.
+    test('throws a FormatException for an unknown phase kind', () {
+      final Map<String, dynamic> json = BuiltInRecipes.v60PourOver.toJson()
+        ..['phases'] = <dynamic>[
+          <String, dynamic>{'id': 'press', 'kind': 'press'},
+        ];
+
+      expect(() => BrewRecipe.fromJson(json), throwsFormatException);
     });
 
     /// A missing field must be reported as a format problem instead of producing a recipe with a gap.
@@ -58,6 +85,27 @@ void main() {
       final Set<String> ids = BuiltInRecipes.all.map((BrewRecipe recipe) => recipe.id).toSet();
 
       expect(ids, hasLength(BuiltInRecipes.all.length));
+    });
+
+    /// Records of a brew refer to phases by id, so the ids within a recipe must be unique.
+    test('have unique phase ids within each recipe', () {
+      for (final BrewRecipe recipe in BuiltInRecipes.all) {
+        final Set<String> ids = recipe.phases.map((BrewPhase phase) => phase.id).toSet();
+
+        expect(ids, hasLength(recipe.phases.length), reason: recipe.id);
+      }
+    });
+
+    /// The concept for the brewing screen shows these six phases for the V60 pour over.
+    test('give the V60 pour over its six phases', () {
+      expect(BuiltInRecipes.v60PourOver.phases.map((BrewPhase phase) => phase.kind), <BrewPhaseKind>[
+        BrewPhaseKind.prepare,
+        BrewPhaseKind.bloom,
+        BrewPhaseKind.pour,
+        BrewPhaseKind.pour,
+        BrewPhaseKind.pour,
+        BrewPhaseKind.complete,
+      ]);
     });
 
     /// The default recipe must be one that the app offers.

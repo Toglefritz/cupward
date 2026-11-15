@@ -1,3 +1,5 @@
+import 'brew_phase.dart';
+import 'brew_phase_kind.dart';
 import 'brew_recipe.dart';
 
 /// The recipes that ship with the app.
@@ -5,7 +7,8 @@ import 'brew_recipe.dart';
 /// These are available before the user creates or saves any recipe of their own. Their [BrewRecipe.id] values are
 /// stable, because stored brews refer to recipes by ID.
 abstract final class BuiltInRecipes {
-  /// A balanced V60 pour over: 20 g of coffee to 320 g of water (a 1:16 ratio), brewed in three minutes.
+  /// A balanced V60 pour over: 20 g of coffee to 320 g of water (a 1:16 ratio), brewed in three minutes: prepare, bloom,
+  /// three pours, and complete.
   static const BrewRecipe v60PourOver = BrewRecipe(
     id: 'v60-pour-over',
     name: 'V60 Pour Over',
@@ -14,6 +17,14 @@ abstract final class BuiltInRecipes {
     waterGrams: 320,
     brewTime: Duration(minutes: 3),
     yieldMilliliters: 320,
+    phases: <BrewPhase>[
+      BrewPhase(id: 'prepare', kind: BrewPhaseKind.prepare),
+      BrewPhase(id: 'bloom', kind: BrewPhaseKind.bloom),
+      BrewPhase(id: 'pour-1', kind: BrewPhaseKind.pour),
+      BrewPhase(id: 'pour-2', kind: BrewPhaseKind.pour),
+      BrewPhase(id: 'pour-3', kind: BrewPhaseKind.pour),
+      BrewPhase(id: 'complete', kind: BrewPhaseKind.complete),
+    ],
   );
 
   /// Every built-in recipe, in the order they are offered.

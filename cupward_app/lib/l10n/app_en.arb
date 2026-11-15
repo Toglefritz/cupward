@@ -42,5 +42,45 @@
         "description": "The formatted number of milliliters"
       }
     }
+  },
+  "brewPhasePrepare": "Prepare",
+  "@brewPhasePrepare": {
+    "description": "Name of the phase of a brew in which the user sets up and tares the scale, shown in the phase indicator"
+  },
+  "brewPhaseBloom": "Bloom",
+  "@brewPhaseBloom": {
+    "description": "Name of the first, small pour that wets the coffee grounds, shown in the phase indicator"
+  },
+  "brewPhasePour": "Pour {number}",
+  "@brewPhasePour": {
+    "description": "Name of one of a recipe's pours, numbered in order, shown in the phase indicator, such as \"Pour 2\"",
+    "placeholders": {
+      "number": {
+        "type": "int",
+        "description": "The position of the pour among the recipe's pours, starting at 1"
+      }
+    }
+  },
+  "brewPhaseComplete": "Complete",
+  "@brewPhaseComplete": {
+    "description": "Name of the final phase of a brew, shown in the phase indicator"
+  },
+  "brewPhaseProgress": "Step {current} of {total}, {phase}",
+  "@brewPhaseProgress": {
+    "description": "What screen readers announce for the phase indicator, such as \"Step 2 of 6, Bloom\"",
+    "placeholders": {
+      "current": {
+        "type": "int",
+        "description": "The position of the current phase, starting at 1"
+      },
+      "total": {
+        "type": "int",
+        "description": "The number of phases in the brew"
+      },
+      "phase": {
+        "type": "String",
+        "description": "The name of the current phase"
+      }
+    }
   }
 }

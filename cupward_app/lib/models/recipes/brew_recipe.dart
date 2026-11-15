@@ -1,11 +1,14 @@
 import 'package:flutter/foundation.dart';
 
+import 'brew_phase.dart';
+
 /// A brewing recipe: what to brew and the targets that a brew follows.
 ///
 /// A recipe describes a brew by its quantities and timing, not by one brewing method, so the same type serves any
 /// method the app supports. The name says which method it is, for example "V60 Pour Over".
 ///
-/// All quantities are targets. The brewing screens compare live scale readings against them.
+/// All quantities are targets. The brewing screens compare live scale readings against them. The [phases] list the
+/// steps of the brew in order, such as prepare, bloom, three pours, and complete for a pour over.
 ///
 /// The JSON form, used for storage, is:
 ///
@@ -17,12 +20,19 @@ import 'package:flutter/foundation.dart';
 ///   "coffeeGrams": 20.0,
 ///   "waterGrams": 320.0,
 ///   "brewTimeSeconds": 180,
-///   "yieldMilliliters": 320.0
+///   "yieldMilliliters": 320.0,
+///   "phases": [
+///     { "id": "prepare", "kind": "prepare" },
+///     { "id": "bloom", "kind": "bloom" },
+///     { "id": "pour-1", "kind": "pour" },
+///     { "id": "complete", "kind": "complete" }
+///   ]
 /// }
 /// ```
 @immutable
 class BrewRecipe {
-  /// Creates a recipe. Every quantity must be greater than zero.
+  /// Creates a recipe. Every quantity must be greater than zero, and [phases] must not be empty. The phases cannot be
+  /// checked here, because the constructor is `const`, so [BrewRecipe.fromJson] checks them for stored recipes.
   const BrewRecipe({
     required this.id,
     required this.name,
@@ -31,14 +41,15 @@ class BrewRecipe {
     required this.waterGrams,
     required this.brewTime,
     required this.yieldMilliliters,
+    required this.phases,
   })  : assert(coffeeGrams > 0, 'coffeeGrams must be greater than zero'),
         assert(waterGrams > 0, 'waterGrams must be greater than zero'),
         assert(yieldMilliliters > 0, 'yieldMilliliters must be greater than zero');
 
   /// Creates a recipe from its JSON form, described on the class.
   ///
-  /// Throws a [FormatException] if a field is missing or has the wrong type, or if a quantity is not greater than
-  /// zero.
+  /// Throws a [FormatException] if a field is missing or has the wrong type, if a quantity is not greater than zero,
+  /// or if there are no phases.
   factory BrewRecipe.fromJson(Map<String, dynamic> json) {
     try {
       return BrewRecipe(
@@ -49,6 +60,7 @@ class BrewRecipe {
         waterGrams: _positive(json, 'waterGrams'),
         brewTime: Duration(seconds: (json['brewTimeSeconds'] as num).toInt()),
         yieldMilliliters: _positive(json, 'yieldMilliliters'),
+        phases: _phases(json),
       );
     } catch (e) {
       throw FormatException('Failed to parse BrewRecipe from JSON: $e');
@@ -79,6 +91,9 @@ class BrewRecipe {
   /// grind. It is stored with the recipe instead of being derived from the water weight for that reason.
   final double yieldMilliliters;
 
+  /// The phases of the brew, in the order they happen. There is always at least one.
+  final List<BrewPhase> phases;
+
   /// Converts the recipe to its JSON form, described on the class.
   ///
   /// The brew time is stored as whole seconds.
@@ -90,7 +105,25 @@ class BrewRecipe {
         'waterGrams': waterGrams,
         'brewTimeSeconds': brewTime.inSeconds,
         'yieldMilliliters': yieldMilliliters,
+        'phases': phases.map((BrewPhase phase) => phase.toJson()).toList(),
       };
+
+  /// Reads the list of phases from [json], and checks that it is not empty.
+  ///
+  /// The check is repeated here because the constructor's asserts do not run in release builds.
+  static List<BrewPhase> _phases(Map<String, dynamic> json) {
+    final Object? value = json['phases'];
+
+    if (value is! List<dynamic>) {
+      throw ArgumentError('Missing or non-list field: phases');
+    }
+
+    if (value.isEmpty) {
+      throw ArgumentError('Field phases must not be empty');
+    }
+
+    return value.map((dynamic phase) => BrewPhase.fromJson(phase as Map<String, dynamic>)).toList();
+  }
 
   /// Reads the number under [key] in [json] as a double, and checks that it is greater than zero.
   ///
@@ -118,10 +151,20 @@ class BrewRecipe {
       other.coffeeGrams == coffeeGrams &&
       other.waterGrams == waterGrams &&
       other.brewTime == brewTime &&
-      other.yieldMilliliters == yieldMilliliters;
+      other.yieldMilliliters == yieldMilliliters &&
+      listEquals(other.phases, phases);
 
   @override
-  int get hashCode => Object.hash(id, name, profile, coffeeGrams, waterGrams, brewTime, yieldMilliliters);
+  int get hashCode => Object.hash(
+        id,
+        name,
+        profile,
+        coffeeGrams,
+        waterGrams,
+        brewTime,
+        yieldMilliliters,
+        Object.hashAll(phases),
+      );
 
   @override
   String toString() => 'BrewRecipe($id, $name)';

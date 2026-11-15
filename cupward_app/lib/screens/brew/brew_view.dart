@@ -2,11 +2,13 @@ import 'package:material_ui/material_ui.dart';
 
 import '../../theme/insets.dart';
 import 'brew_controller.dart';
+import 'components/brew_phase_indicator.dart';
 import 'components/recipe_summary_card.dart';
 
 /// Layout for the brewing screen. Contains no logic.
 ///
-/// The recipe summary card sits at the top of a content column of limited width, below an app bar with a back button.
+/// The recipe summary card sits at the top of a content column of limited width, below an app bar with a back button,
+/// and the phase indicator follows it.
 class BrewView extends StatelessWidget {
   /// Creates the view for [state].
   const BrewView(this.state, {super.key});
@@ -30,6 +32,10 @@ class BrewView extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(Insets.small, Insets.xSmall, Insets.small, Insets.large),
               children: <Widget>[
                 RecipeSummaryCard(recipe: state.recipe),
+                Padding(
+                  padding: const EdgeInsets.only(top: Insets.medium),
+                  child: BrewPhaseIndicator(phases: state.recipe.phases, currentIndex: state.currentPhaseIndex),
+                ),
               ],
             ),
           ),

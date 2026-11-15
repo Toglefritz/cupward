@@ -37,4 +37,23 @@ class AppLocalizationsEn extends AppLocalizations {
   String recipeYieldMilliliters(String milliliters) {
     return '~$milliliters ml';
   }
+
+  @override
+  String get brewPhasePrepare => 'Prepare';
+
+  @override
+  String get brewPhaseBloom => 'Bloom';
+
+  @override
+  String brewPhasePour(int number) {
+    return 'Pour $number';
+  }
+
+  @override
+  String get brewPhaseComplete => 'Complete';
+
+  @override
+  String brewPhaseProgress(int current, int total, String phase) {
+    return 'Step $current of $total, $phase';
+  }
 }

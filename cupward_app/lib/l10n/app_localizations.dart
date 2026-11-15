@@ -139,6 +139,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'~{milliliters} ml'**
   String recipeYieldMilliliters(String milliliters);
+
+  /// Name of the phase of a brew in which the user sets up and tares the scale, shown in the phase indicator
+  ///
+  /// In en, this message translates to:
+  /// **'Prepare'**
+  String get brewPhasePrepare;
+
+  /// Name of the first, small pour that wets the coffee grounds, shown in the phase indicator
+  ///
+  /// In en, this message translates to:
+  /// **'Bloom'**
+  String get brewPhaseBloom;
+
+  /// Name of one of a recipe's pours, numbered in order, shown in the phase indicator, such as "Pour 2"
+  ///
+  /// In en, this message translates to:
+  /// **'Pour {number}'**
+  String brewPhasePour(int number);
+
+  /// Name of the final phase of a brew, shown in the phase indicator
+  ///
+  /// In en, this message translates to:
+  /// **'Complete'**
+  String get brewPhaseComplete;
+
+  /// What screen readers announce for the phase indicator, such as "Step 2 of 6, Bloom"
+  ///
+  /// In en, this message translates to:
+  /// **'Step {current} of {total}, {phase}'**
+  String brewPhaseProgress(int current, int total, String phase);
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {
