@@ -1,15 +1,16 @@
 import 'package:material_ui/material_ui.dart';
 
-import '../../../theme/context_theme_extension.dart';
-import '../../../theme/insets.dart';
+import '../theme/context_theme_extension.dart';
+import '../theme/insets.dart';
 
-/// A compact cream pill for the scale panel's actions, such as "Tare" and "Find scale".
+/// A compact cream pill for actions inside a card, such as "Tare" in the scale panel and "Download" in the on-device AI
+/// panel.
 ///
 /// It uses the theme's cream gradient with ink text and a hairline border, matching the app's other cream buttons at a
 /// size that fits inside a card. The label is a single line that shrinks rather than wraps when space is short.
-class ScalePanelButton extends StatelessWidget {
+class PanelButton extends StatelessWidget {
   /// Creates a button with [label] that calls [onPressed] when tapped.
-  const ScalePanelButton({required this.label, required this.onPressed, super.key});
+  const PanelButton({required this.label, required this.onPressed, super.key});
 
   /// The text on the button.
   final String label;

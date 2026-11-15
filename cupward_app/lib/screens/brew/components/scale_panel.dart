@@ -1,13 +1,13 @@
 import 'package:flutter_bookoo/flutter_bookoo.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../../../components/panel_button.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../models/recipes/brew_phase_kind.dart';
 import '../../../services/scale/scale_connection_status.dart';
 import '../../../theme/context_theme_extension.dart';
 import '../../../theme/insets.dart';
 import 'scale_flow_reading.dart';
-import 'scale_panel_button.dart';
 import 'scale_status_summary.dart';
 import 'scale_weight_reading.dart';
 
@@ -167,7 +167,7 @@ class ScalePanel extends StatelessWidget {
       case ScaleConnectionStatus.disconnected:
       case ScaleConnectionStatus.scanning:
         // While searching, the button reopens the list of scales without restarting the search.
-        return ScalePanelButton(label: strings.buttonFindScale, onPressed: onFindScalePressed);
+        return PanelButton(label: strings.buttonFindScale, onPressed: onFindScalePressed);
       case ScaleConnectionStatus.connecting:
         return const SizedBox.square(
           dimension: _progressSize,
@@ -176,7 +176,7 @@ class ScalePanel extends StatelessWidget {
       case ScaleConnectionStatus.connected:
         switch (phaseKind) {
           case BrewPhaseKind.prepare:
-            return ScalePanelButton(label: strings.buttonTare, onPressed: onTarePressed);
+            return PanelButton(label: strings.buttonTare, onPressed: onTarePressed);
           case BrewPhaseKind.bloom:
           case BrewPhaseKind.pour:
             return ScaleFlowReading(gramsPerSecond: latest?.flowRateGramsPerSecond);

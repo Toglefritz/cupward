@@ -297,5 +297,89 @@
   "scaleTareFailed": "Couldn't tare the scale.",
   "@scaleTareFailed": {
     "description": "Shown briefly when the tare command could not be sent"
+  },
+  "modelTitle": "On-device AI",
+  "@modelTitle": {
+    "description": "Heading of the home screen panel about the on-device AI model"
+  },
+  "modelStatusChecking": "Checking",
+  "@modelStatusChecking": {
+    "description": "Status in the on-device AI panel while the app checks whether the device has an on-device model"
+  },
+  "modelStatusReady": "Ready",
+  "@modelStatusReady": {
+    "description": "Status in the on-device AI panel when the on-device model is installed"
+  },
+  "modelStatusDownloadable": "Not downloaded",
+  "@modelStatusDownloadable": {
+    "description": "Status in the on-device AI panel when the on-device model can be downloaded but is not installed"
+  },
+  "modelStatusDownloading": "Downloading",
+  "@modelStatusDownloading": {
+    "description": "Status in the on-device AI panel while the on-device model downloads"
+  },
+  "modelStatusUnavailable": "Not supported",
+  "@modelStatusUnavailable": {
+    "description": "Status in the on-device AI panel when the device or browser cannot run an on-device model"
+  },
+  "modelStatusUnknown": "Couldn't check",
+  "@modelStatusUnknown": {
+    "description": "Status in the on-device AI panel when the check for the on-device model failed"
+  },
+  "modelMessageChecking": "Checking whether brew feedback can run on this device.",
+  "@modelMessageChecking": {
+    "description": "Explanation in the on-device AI panel while checking"
+  },
+  "modelMessageReady": "Brew feedback runs on this device, even offline.",
+  "@modelMessageReady": {
+    "description": "Explanation in the on-device AI panel when the on-device model is installed"
+  },
+  "modelMessageDownloadable": "Download the model for brew feedback on this device, even offline. Until then, it comes from the cloud.",
+  "@modelMessageDownloadable": {
+    "description": "Explanation in the on-device AI panel when the model can be downloaded"
+  },
+  "modelMessageDownloading": "Brew feedback comes from the cloud until the download finishes. You can start brewing now.",
+  "@modelMessageDownloading": {
+    "description": "Explanation in the on-device AI panel while the model downloads"
+  },
+  "modelMessageUnavailable": "This device can't run an on-device model, so brew feedback comes from the cloud.",
+  "@modelMessageUnavailable": {
+    "description": "Explanation in the on-device AI panel when the device cannot run an on-device model"
+  },
+  "modelMessageUnknown": "Couldn't check for the on-device model. Brew feedback will come from the cloud.",
+  "@modelMessageUnknown": {
+    "description": "Explanation in the on-device AI panel when the check failed"
+  },
+  "modelDownloadFailed": "The download didn't finish. Check your connection and try again.",
+  "@modelDownloadFailed": {
+    "description": "Shown in the on-device AI panel when a model download failed"
+  },
+  "modelDownloadProgress": "{percent}%",
+  "@modelDownloadProgress": {
+    "description": "How much of the on-device model has downloaded, such as \"42%\"",
+    "placeholders": {
+      "percent": {
+        "type": "int",
+        "description": "The portion downloaded, from 0 to 100"
+      }
+    }
+  },
+  "modelDownloadProgressSemantics": "Model download {percent} percent",
+  "@modelDownloadProgressSemantics": {
+    "description": "What screen readers announce for the model download progress",
+    "placeholders": {
+      "percent": {
+        "type": "int",
+        "description": "The portion downloaded, from 0 to 100"
+      }
+    }
+  },
+  "buttonDownloadModel": "Download",
+  "@buttonDownloadModel": {
+    "description": "Label of the button in the on-device AI panel that downloads the on-device model"
+  },
+  "buttonTryAgain": "Try again",
+  "@buttonTryAgain": {
+    "description": "Label of the button in the on-device AI panel that repeats a failed check"
   }
 }

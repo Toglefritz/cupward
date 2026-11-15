@@ -2,6 +2,7 @@ import 'package:material_ui/material_ui.dart';
 
 import '../../../l10n/app_localizations.dart';
 import '../../../theme/context_theme_extension.dart';
+import '../../../theme/insets.dart';
 
 /// The app's name, shown as a centered serif title over the home screen's photograph.
 ///
@@ -19,16 +20,33 @@ class HomeTitle extends StatelessWidget {
 
     return FittedBox(
       fit: BoxFit.scaleDown,
-      child: Text(
-        AppLocalizations.of(context)!.appTitle,
-        maxLines: 1,
-        textAlign: TextAlign.center,
-        style: theme.textTheme.headlineLarge?.copyWith(
-          color: colors.surface,
-          shadows: <Shadow>[
-            Shadow(color: colors.onSurface.withValues(alpha: 0.35), blurRadius: 24, offset: const Offset(0, 4)),
-          ],
-        ),
+      child: Stack(
+        alignment: Alignment.bottomCenter,
+        children: [
+          Container(
+            width: 256,
+            height: 6,
+            margin: const EdgeInsets.only(top: Insets.medium),
+            decoration: BoxDecoration(
+              border: Border.all(
+                color: context.theme.colorScheme.primary,
+                width: 6,
+              ),
+            ),
+          ),
+          Text(
+            AppLocalizations.of(context)!.appTitle,
+            maxLines: 1,
+            textAlign: TextAlign.center,
+            style: theme.textTheme.headlineLarge?.copyWith(
+              fontSize: 72,
+              color: colors.surface,
+              shadows: <Shadow>[
+                Shadow(color: colors.onSurface.withValues(alpha: 0.35), blurRadius: 24, offset: const Offset(0, 4)),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

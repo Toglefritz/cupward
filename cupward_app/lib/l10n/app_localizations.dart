@@ -409,6 +409,114 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Couldn\'t tare the scale.'**
   String get scaleTareFailed;
+
+  /// Heading of the home screen panel about the on-device AI model
+  ///
+  /// In en, this message translates to:
+  /// **'On-device AI'**
+  String get modelTitle;
+
+  /// Status in the on-device AI panel while the app checks whether the device has an on-device model
+  ///
+  /// In en, this message translates to:
+  /// **'Checking'**
+  String get modelStatusChecking;
+
+  /// Status in the on-device AI panel when the on-device model is installed
+  ///
+  /// In en, this message translates to:
+  /// **'Ready'**
+  String get modelStatusReady;
+
+  /// Status in the on-device AI panel when the on-device model can be downloaded but is not installed
+  ///
+  /// In en, this message translates to:
+  /// **'Not downloaded'**
+  String get modelStatusDownloadable;
+
+  /// Status in the on-device AI panel while the on-device model downloads
+  ///
+  /// In en, this message translates to:
+  /// **'Downloading'**
+  String get modelStatusDownloading;
+
+  /// Status in the on-device AI panel when the device or browser cannot run an on-device model
+  ///
+  /// In en, this message translates to:
+  /// **'Not supported'**
+  String get modelStatusUnavailable;
+
+  /// Status in the on-device AI panel when the check for the on-device model failed
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t check'**
+  String get modelStatusUnknown;
+
+  /// Explanation in the on-device AI panel while checking
+  ///
+  /// In en, this message translates to:
+  /// **'Checking whether brew feedback can run on this device.'**
+  String get modelMessageChecking;
+
+  /// Explanation in the on-device AI panel when the on-device model is installed
+  ///
+  /// In en, this message translates to:
+  /// **'Brew feedback runs on this device, even offline.'**
+  String get modelMessageReady;
+
+  /// Explanation in the on-device AI panel when the model can be downloaded
+  ///
+  /// In en, this message translates to:
+  /// **'Download the model for brew feedback on this device, even offline. Until then, it comes from the cloud.'**
+  String get modelMessageDownloadable;
+
+  /// Explanation in the on-device AI panel while the model downloads
+  ///
+  /// In en, this message translates to:
+  /// **'Brew feedback comes from the cloud until the download finishes. You can start brewing now.'**
+  String get modelMessageDownloading;
+
+  /// Explanation in the on-device AI panel when the device cannot run an on-device model
+  ///
+  /// In en, this message translates to:
+  /// **'This device can\'t run an on-device model, so brew feedback comes from the cloud.'**
+  String get modelMessageUnavailable;
+
+  /// Explanation in the on-device AI panel when the check failed
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t check for the on-device model. Brew feedback will come from the cloud.'**
+  String get modelMessageUnknown;
+
+  /// Shown in the on-device AI panel when a model download failed
+  ///
+  /// In en, this message translates to:
+  /// **'The download didn\'t finish. Check your connection and try again.'**
+  String get modelDownloadFailed;
+
+  /// How much of the on-device model has downloaded, such as "42%"
+  ///
+  /// In en, this message translates to:
+  /// **'{percent}%'**
+  String modelDownloadProgress(int percent);
+
+  /// What screen readers announce for the model download progress
+  ///
+  /// In en, this message translates to:
+  /// **'Model download {percent} percent'**
+  String modelDownloadProgressSemantics(int percent);
+
+  /// Label of the button in the on-device AI panel that downloads the on-device model
+  ///
+  /// In en, this message translates to:
+  /// **'Download'**
+  String get buttonDownloadModel;
+
+  /// Label of the button in the on-device AI panel that repeats a failed check
+  ///
+  /// In en, this message translates to:
+  /// **'Try again'**
+  String get buttonTryAgain;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

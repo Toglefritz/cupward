@@ -196,4 +196,65 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get scaleTareFailed => 'Couldn\'t tare the scale.';
+
+  @override
+  String get modelTitle => 'On-device AI';
+
+  @override
+  String get modelStatusChecking => 'Checking';
+
+  @override
+  String get modelStatusReady => 'Ready';
+
+  @override
+  String get modelStatusDownloadable => 'Not downloaded';
+
+  @override
+  String get modelStatusDownloading => 'Downloading';
+
+  @override
+  String get modelStatusUnavailable => 'Not supported';
+
+  @override
+  String get modelStatusUnknown => 'Couldn\'t check';
+
+  @override
+  String get modelMessageChecking => 'Checking whether brew feedback can run on this device.';
+
+  @override
+  String get modelMessageReady => 'Brew feedback runs on this device, even offline.';
+
+  @override
+  String get modelMessageDownloadable =>
+      'Download the model for brew feedback on this device, even offline. Until then, it comes from the cloud.';
+
+  @override
+  String get modelMessageDownloading =>
+      'Brew feedback comes from the cloud until the download finishes. You can start brewing now.';
+
+  @override
+  String get modelMessageUnavailable =>
+      'This device can\'t run an on-device model, so brew feedback comes from the cloud.';
+
+  @override
+  String get modelMessageUnknown => 'Couldn\'t check for the on-device model. Brew feedback will come from the cloud.';
+
+  @override
+  String get modelDownloadFailed => 'The download didn\'t finish. Check your connection and try again.';
+
+  @override
+  String modelDownloadProgress(int percent) {
+    return '$percent%';
+  }
+
+  @override
+  String modelDownloadProgressSemantics(int percent) {
+    return 'Model download $percent percent';
+  }
+
+  @override
+  String get buttonDownloadModel => 'Download';
+
+  @override
+  String get buttonTryAgain => 'Try again';
 }

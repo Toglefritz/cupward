@@ -27,10 +27,10 @@ class CupwardColors extends ThemeExtension<CupwardColors> {
   /// The fill of cards and panels, a cream slightly lighter than the page so a card reads as a raised surface.
   final Color cardSurface;
 
-  /// The fill of cream, pill-shaped buttons that sit over photographs, such as the home screen's main action.
+  /// The fill of cream, pill-shaped buttons, such as the actions inside the app's cards.
   ///
-  /// It runs from a light cream at the top to a warmer cream at the bottom, which gives the button some depth against
-  /// the image. Text and icons on it use the ink color, `ColorScheme.onSurface`.
+  /// It runs from a light cream at the top to a warmer cream at the bottom, which gives the button some depth. Text and
+  /// icons on it use the ink color, `ColorScheme.onSurface`.
   final Gradient creamGradient;
 
   /// Colors for the app's theme.
