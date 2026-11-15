@@ -141,10 +141,10 @@ packages:
     dependency: transitive
     description:
       name: flutter_splendid_ble
-      sha256: "934802c3e9c23c1bd413f297b3e5c676ee163094a93acbceb39ad430d7c434ce"
+      sha256: "21a865d639d1e9c8d2f3e66c73ffa17b507584a6329a0859c274b1d4bfa17651"
       url: "https://pub.dev"
     source: hosted
-    version: "1.8.0"
+    version: "1.8.1"
   flutter_test:
     dependency: "direct dev"
     description: flutter
@@ -300,10 +300,10 @@ packages:
     dependency: transitive
     description:
       name: vector_math
-      sha256: "92b9910f66ed1057fd4da7b040ae7c74cafacf885bdc81be496928d5049b032d"
+      sha256: fa49e1674cb84acb900141714e6c6e1f9ae099827c24d141430ff6819db4e1bc
       url: "https://pub.dev"
     source: hosted
-    version: "2.4.3"
+    version: "2.4.4"
   very_good_analysis:
     dependency: "direct dev"
     description:

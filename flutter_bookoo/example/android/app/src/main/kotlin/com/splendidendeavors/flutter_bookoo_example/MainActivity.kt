@@ -1,4 +1,4 @@
-package com.cupward.flutter_bookoo_example
+package com.splendidendeavors.flutter_bookoo_example
 
 import io.flutter.embedding.android.FlutterActivity
 
