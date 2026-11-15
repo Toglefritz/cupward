@@ -19,7 +19,7 @@ class StartBrewButton extends StatelessWidget {
   final VoidCallback onPressed;
 
   /// The height of the pill.
-  static const double _height = 36;
+  static const double _height = 42;
 
   /// The widest the button grows.
   static const double _maxWidth = 320;
@@ -62,7 +62,7 @@ class StartBrewButton extends StatelessWidget {
                             textAlign: TextAlign.center,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: theme.textTheme.labelMedium?.copyWith(color: colors.onSurface),
+                            style: theme.textTheme.titleMedium?.copyWith(color: colors.onSurface),
                           ),
                         ),
                       ],

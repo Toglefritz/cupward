@@ -10,6 +10,9 @@ environment:
 dependencies:
   firebase_app_check: ^0.5.1
   firebase_core: ^5.1.0
+  # Developed in this repository and depended on by path until it is published.
+  firebase_hybrid_ai:
+    path: ../firebase_hybrid_ai
   flutter:
     sdk: flutter
   flutter_localizations:

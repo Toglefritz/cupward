@@ -41,7 +41,7 @@ All of these are listed in `cupward_app/.gitignore`. Do not remove them from it,
 
    ```sh
    cd cupward_app
-   flutterfire configure --project=cupward-2b4bc --platforms=android,ios,macos
+   flutterfire configure --project=cupward-2b4bc --platforms=android,ios,macos,web
    ```
 
    When prompted, accept the existing app registrations for each platform. This creates all five files listed above.
@@ -54,7 +54,20 @@ All of these are listed in `cupward_app/.gitignore`. Do not remove them from it,
    flutter run
    ```
 
+## App Check on the web
+
+App Check protects Firebase AI Logic, so the browser needs a provider too.
+
+- **Debug builds** use the web debug provider. On the first run, the browser's developer console prints an App Check debug token. Register it in the Firebase console under **Security**, then **App Check**, then **Apps**, by choosing **Manage debug tokens** on the web app.
+- **Release builds** use reCAPTCHA Enterprise. Create a reCAPTCHA Enterprise key for the app's domain, register it for the web app in the App Check console, and pass the site key at build time:
+
+  ```sh
+  flutter build web --dart-define=RECAPTCHA_SITE_KEY=<site-key>
+  ```
+
+  Without the site key, a release build does not activate App Check in the browser, and requests to services that enforce App Check are rejected.
+
 ## Notes
 
 - Never commit service account keys (for example `*-firebase-adminsdk-*.json`). These are real secrets and are ignored by `.gitignore`.
-- Adding a new platform (such as web) requires re-running `flutterfire configure` with that platform included.
+- Adding a new platform requires re-running `flutterfire configure` with that platform included. List every platform in the command, because the generated `firebase_options.dart` only covers the platforms named in it.

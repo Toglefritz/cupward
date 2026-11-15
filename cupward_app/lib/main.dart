@@ -17,6 +17,19 @@ import 'firebase_options.dart';
 /// run the app using the Firebase Emulator Suite, use `--dart-define=USE_FIREBASE_EMULATOR=true`. The Firebase
 /// Emulator Suite will use the IP address for the machine on which the Firebase Emulator Suite is running from
 /// _services/firebase_emulator/dev_machine_ip.dart_, defined by `devMachineIP`.
+/// The reCAPTCHA Enterprise site key used by App Check in release builds on the web.
+///
+/// It is supplied at build time with `--dart-define=RECAPTCHA_SITE_KEY=<key>` so that it is not committed. The site key
+/// is not a secret, because it is sent to every browser, but each environment registers its own.
+const String _recaptchaSiteKey = String.fromEnvironment('RECAPTCHA_SITE_KEY');
+
+/// The App Check provider for release builds on the web, or null when no site key was supplied.
+///
+/// Without a provider, App Check is not activated in the browser, and Firebase services that enforce App Check reject
+/// the app's requests. Native platforms ignore this value.
+WebProvider? get _releaseWebProvider =>
+    _recaptchaSiteKey.isEmpty ? null : ReCaptchaEnterpriseProvider(_recaptchaSiteKey);
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -24,15 +37,17 @@ Future<void> main() async {
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
   // Initialize Firebase App Check. Debug builds use the debug providers, whose tokens must be registered in the
-  // Firebase console (the debug token is printed to the console on first launch). Release builds use the default
-  // attestation providers (Play Integrity on Android, DeviceCheck on Apple platforms).
+  // Firebase console (the debug token is printed to the console on first launch, and to the browser console on the
+  // web). Release builds use the default attestation providers (Play Integrity on Android, DeviceCheck on Apple
+  // platforms), and reCAPTCHA Enterprise on the web with the site key given at build time. See FIREBASE_SETUP.md.
   if (kDebugMode) {
     await FirebaseAppCheck.instance.activate(
       providerAndroid: const AndroidDebugProvider(),
       providerApple: const AppleDebugProvider(),
+      providerWeb: WebDebugProvider(),
     );
   } else {
-    await FirebaseAppCheck.instance.activate();
+    await FirebaseAppCheck.instance.activate(providerWeb: _releaseWebProvider);
   }
 
   // Run the app.

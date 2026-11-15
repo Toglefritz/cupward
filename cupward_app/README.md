@@ -24,7 +24,7 @@ Requests that reach the cloud are protected with Firebase App Check, which verif
 
 ## Platforms
 
-The app targets Android, iOS, and macOS. Firebase is configured for each of these platforms. On-device inference depends on what the platform and device provide, so the cloud fallback is what guarantees a consistent experience everywhere.
+The app targets Android, iOS, macOS, and the web. Firebase is configured for each of these platforms. In a browser, the on-device model is the one built into Chrome on desktop. On-device inference depends on what the platform and device provide, so the cloud fallback is what guarantees a consistent experience everywhere.
 
 ## Technology
 
