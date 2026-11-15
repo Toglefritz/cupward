@@ -70,7 +70,7 @@ lib/
 └── theme/           # Theme, theme extensions, spacing, and the app's icon assets
 ```
 
-Custom icons are referenced through the `AppIcon` enum in `lib/theme/app_icon.dart`, which maps each icon to its image under `assets/icons/`. Views never use icon asset paths directly, so replacing an icon only changes its path in the enum.
+Custom icons are referenced through the `AppIcon` enum in `lib/theme/app_icon.dart`, which maps each icon to its PNG under `assets/icons/`. A test checks that every path in the enum points to an existing file. Views never use icon asset paths directly, so replacing an icon only changes its path in the enum.
 
 ## Conventions
 

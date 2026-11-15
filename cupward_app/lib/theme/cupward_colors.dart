@@ -11,6 +11,7 @@ class CupwardColors extends ThemeExtension<CupwardColors> {
     required this.accent,
     required this.success,
     required this.cardBorder,
+    required this.cardSurface,
     required this.creamGradient,
   });
 
@@ -23,6 +24,9 @@ class CupwardColors extends ThemeExtension<CupwardColors> {
   /// Hairline border color used around cards and panels, and between rows inside a section.
   final Color cardBorder;
 
+  /// The fill of cards and panels, a cream slightly lighter than the page so a card reads as a raised surface.
+  final Color cardSurface;
+
   /// The fill of cream, pill-shaped buttons that sit over photographs, such as the home screen's main action.
   ///
   /// It runs from a light cream at the top to a warmer cream at the bottom, which gives the button some depth against
@@ -34,6 +38,7 @@ class CupwardColors extends ThemeExtension<CupwardColors> {
     accent: Color(0xFFD29A6E),
     success: Color(0xFF1F4D32),
     cardBorder: Color(0xFFE6DACB),
+    cardSurface: Color(0xFFFCF7F0),
     creamGradient: LinearGradient(
       begin: Alignment.topCenter,
       end: Alignment.bottomCenter,
@@ -42,11 +47,18 @@ class CupwardColors extends ThemeExtension<CupwardColors> {
   );
 
   @override
-  CupwardColors copyWith({Color? accent, Color? success, Color? cardBorder, Gradient? creamGradient}) {
+  CupwardColors copyWith({
+    Color? accent,
+    Color? success,
+    Color? cardBorder,
+    Color? cardSurface,
+    Gradient? creamGradient,
+  }) {
     return CupwardColors(
       accent: accent ?? this.accent,
       success: success ?? this.success,
       cardBorder: cardBorder ?? this.cardBorder,
+      cardSurface: cardSurface ?? this.cardSurface,
       creamGradient: creamGradient ?? this.creamGradient,
     );
   }
@@ -61,6 +73,7 @@ class CupwardColors extends ThemeExtension<CupwardColors> {
       accent: Color.lerp(accent, other.accent, t)!,
       success: Color.lerp(success, other.success, t)!,
       cardBorder: Color.lerp(cardBorder, other.cardBorder, t)!,
+      cardSurface: Color.lerp(cardSurface, other.cardSurface, t)!,
       creamGradient: Gradient.lerp(creamGradient, other.creamGradient, t)!,
     );
   }

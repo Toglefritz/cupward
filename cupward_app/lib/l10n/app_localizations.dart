@@ -103,6 +103,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Start a Brew'**
   String get buttonStartBrew;
+
+  /// Caption under the coffee dose in the recipe summary card, such as under "20.0 g"
+  ///
+  /// In en, this message translates to:
+  /// **'Coffee'**
+  String get recipeCoffeeLabel;
+
+  /// Caption under the water weight in the recipe summary card
+  ///
+  /// In en, this message translates to:
+  /// **'Water'**
+  String get recipeWaterLabel;
+
+  /// Caption under the target brew time in the recipe summary card, such as under "3:00"
+  ///
+  /// In en, this message translates to:
+  /// **'Time'**
+  String get recipeBrewTimeLabel;
+
+  /// Caption under the approximate amount of coffee the recipe makes in the recipe summary card
+  ///
+  /// In en, this message translates to:
+  /// **'Yield'**
+  String get recipeYieldLabel;
+
+  /// A weight in grams in the recipe summary card, such as "20.0 g". The number is already formatted for the locale.
+  ///
+  /// In en, this message translates to:
+  /// **'{grams} g'**
+  String recipeGrams(String grams);
+
+  /// The approximate amount of coffee a recipe makes, in milliliters, such as "~320 ml". The tilde marks it as an estimate.
+  ///
+  /// In en, this message translates to:
+  /// **'~{milliliters} ml'**
+  String recipeYieldMilliliters(String milliliters);
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

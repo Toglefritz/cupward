@@ -15,4 +15,26 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get buttonStartBrew => 'Start a Brew';
+
+  @override
+  String get recipeCoffeeLabel => 'Coffee';
+
+  @override
+  String get recipeWaterLabel => 'Water';
+
+  @override
+  String get recipeBrewTimeLabel => 'Time';
+
+  @override
+  String get recipeYieldLabel => 'Yield';
+
+  @override
+  String recipeGrams(String grams) {
+    return '$grams g';
+  }
+
+  @override
+  String recipeYieldMilliliters(String milliliters) {
+    return '~$milliliters ml';
+  }
 }

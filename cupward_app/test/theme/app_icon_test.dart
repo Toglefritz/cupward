@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:cupward/theme/app_icon.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -14,6 +16,13 @@ void main() {
   test('every path is in assets/icons', () {
     for (final AppIcon icon in AppIcon.values) {
       expect(icon.path, startsWith('assets/icons/'), reason: icon.name);
+    }
+  });
+
+  /// A path with no file behind it fails only when a screen draws the icon, so every path is checked here.
+  test('every path points to an existing file', () {
+    for (final AppIcon icon in AppIcon.values) {
+      expect(File(icon.path).existsSync(), isTrue, reason: '${icon.name}: ${icon.path}');
     }
   });
 }

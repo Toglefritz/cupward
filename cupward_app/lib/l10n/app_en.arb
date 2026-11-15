@@ -6,5 +6,41 @@
   "buttonStartBrew": "Start a Brew",
   "@buttonStartBrew": {
     "description": "Label for the primary button at the bottom of the home screen that starts a new brewing session"
+  },
+  "recipeCoffeeLabel": "Coffee",
+  "@recipeCoffeeLabel": {
+    "description": "Caption under the coffee dose in the recipe summary card, such as under \"20.0 g\""
+  },
+  "recipeWaterLabel": "Water",
+  "@recipeWaterLabel": {
+    "description": "Caption under the water weight in the recipe summary card"
+  },
+  "recipeBrewTimeLabel": "Time",
+  "@recipeBrewTimeLabel": {
+    "description": "Caption under the target brew time in the recipe summary card, such as under \"3:00\""
+  },
+  "recipeYieldLabel": "Yield",
+  "@recipeYieldLabel": {
+    "description": "Caption under the approximate amount of coffee the recipe makes in the recipe summary card"
+  },
+  "recipeGrams": "{grams} g",
+  "@recipeGrams": {
+    "description": "A weight in grams in the recipe summary card, such as \"20.0 g\". The number is already formatted for the locale.",
+    "placeholders": {
+      "grams": {
+        "type": "String",
+        "description": "The formatted number of grams"
+      }
+    }
+  },
+  "recipeYieldMilliliters": "~{milliliters} ml",
+  "@recipeYieldMilliliters": {
+    "description": "The approximate amount of coffee a recipe makes, in milliliters, such as \"~320 ml\". The tilde marks it as an estimate.",
+    "placeholders": {
+      "milliliters": {
+        "type": "String",
+        "description": "The formatted number of milliliters"
+      }
+    }
   }
 }
