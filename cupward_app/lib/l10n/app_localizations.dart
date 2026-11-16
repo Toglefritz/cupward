@@ -733,6 +733,222 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'For example: a little sweeter, with less bitterness.'**
   String get tastingGoalHint;
+
+  /// Label of the button on the feedback screen that sends the brew and tasting notes to brew feedback
+  ///
+  /// In en, this message translates to:
+  /// **'Get brew feedback'**
+  String get buttonGetFeedback;
+
+  /// Shown under the disabled feedback button until the user has filled in part of the tasting notes
+  ///
+  /// In en, this message translates to:
+  /// **'Rate at least one thing, or say what you\'d change, to get feedback.'**
+  String get feedbackNeedsNotes;
+
+  /// Heading shown while brew feedback is being prepared
+  ///
+  /// In en, this message translates to:
+  /// **'Tasting your brew'**
+  String get suggestionsLoadingTitle;
+
+  /// Explanation shown while brew feedback is being prepared
+  ///
+  /// In en, this message translates to:
+  /// **'Reviewing your readings and tasting notes. This can take a few seconds.'**
+  String get suggestionsLoadingMessage;
+
+  /// Heading of the summary card on the brew feedback screen
+  ///
+  /// In en, this message translates to:
+  /// **'Your next brew'**
+  String get suggestionsTitle;
+
+  /// Badge saying the feedback was produced by the AI model on the device
+  ///
+  /// In en, this message translates to:
+  /// **'On-device AI'**
+  String get suggestionsSourceOnDevice;
+
+  /// Badge saying the feedback was produced by the AI model in the cloud
+  ///
+  /// In en, this message translates to:
+  /// **'Cloud AI'**
+  String get suggestionsSourceCloud;
+
+  /// Small spaced label above the main suggested change
+  ///
+  /// In en, this message translates to:
+  /// **'TRY THIS NEXT'**
+  String get suggestionsPrimaryEyebrow;
+
+  /// Caption above the reason for a suggested change
+  ///
+  /// In en, this message translates to:
+  /// **'Why'**
+  String get suggestionsWhyLabel;
+
+  /// Caption above how the next cup should taste after a suggested change
+  ///
+  /// In en, this message translates to:
+  /// **'What to expect'**
+  String get suggestionsEffectLabel;
+
+  /// Note under the main suggestion explaining why only one change is recommended
+  ///
+  /// In en, this message translates to:
+  /// **'Change one thing at a time, so you can taste what it does.'**
+  String get suggestionsOneChangeNote;
+
+  /// Heading of the list of other changes to try in later brews
+  ///
+  /// In en, this message translates to:
+  /// **'Ideas for later brews'**
+  String get suggestionsAlternativesTitle;
+
+  /// Heading shown when brew feedback could not be produced
+  ///
+  /// In en, this message translates to:
+  /// **'No feedback yet'**
+  String get suggestionsErrorTitle;
+
+  /// Shown when the platform cannot run brew feedback
+  ///
+  /// In en, this message translates to:
+  /// **'Brew feedback isn\'t available on this device yet.'**
+  String get suggestionsFailureUnsupported;
+
+  /// Shown when the brew feedback request failed
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t get brew feedback. Check your connection and try again.'**
+  String get suggestionsFailureRequest;
+
+  /// Shown when the AI answer could not be read
+  ///
+  /// In en, this message translates to:
+  /// **'The feedback didn\'t come back in a form Cupward could read. Try again.'**
+  String get suggestionsFailureInvalid;
+
+  /// Label of the button on the brew feedback screen that returns to the home screen
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get buttonFinish;
+
+  /// What screen readers announce for a suggested value change, such as "Coffee, from 20 g to 21 g"
+  ///
+  /// In en, this message translates to:
+  /// **'{parameter}, from {current} to {suggested}'**
+  String suggestionsValueChangeSemantics(String parameter, String current, String suggested);
+
+  /// Name of the brewing variable for how fine the coffee is ground, shown on a suggested change
+  ///
+  /// In en, this message translates to:
+  /// **'Grind size'**
+  String get parameterGrindSize;
+
+  /// Name of the brewing variable for the weight of coffee, shown on a suggested change
+  ///
+  /// In en, this message translates to:
+  /// **'Coffee'**
+  String get parameterCoffeeDose;
+
+  /// Name of the brewing variable for the total weight of water, shown on a suggested change
+  ///
+  /// In en, this message translates to:
+  /// **'Water'**
+  String get parameterWaterAmount;
+
+  /// Name of the brewing variable for the weight of water in the bloom, shown on a suggested change
+  ///
+  /// In en, this message translates to:
+  /// **'Bloom water'**
+  String get parameterBloomWater;
+
+  /// Name of the brewing variable for how long the bloom rests, shown on a suggested change
+  ///
+  /// In en, this message translates to:
+  /// **'Bloom time'**
+  String get parameterBloomTime;
+
+  /// Name of the brewing variable for how quickly water is poured, shown on a suggested change
+  ///
+  /// In en, this message translates to:
+  /// **'Pour rate'**
+  String get parameterPourRate;
+
+  /// Name of the brewing variable for the temperature of the water, shown on a suggested change
+  ///
+  /// In en, this message translates to:
+  /// **'Water temperature'**
+  String get parameterWaterTemperature;
+
+  /// Name of the brewing variable for the total brew time, shown on a suggested change
+  ///
+  /// In en, this message translates to:
+  /// **'Brew time'**
+  String get parameterBrewTime;
+
+  /// Which way a suggested change goes, for more of an amount
+  ///
+  /// In en, this message translates to:
+  /// **'More'**
+  String get directionMore;
+
+  /// Which way a suggested change goes, for less of an amount
+  ///
+  /// In en, this message translates to:
+  /// **'Less'**
+  String get directionLess;
+
+  /// Which way a suggested change goes, for a finer grind
+  ///
+  /// In en, this message translates to:
+  /// **'Finer'**
+  String get directionFiner;
+
+  /// Which way a suggested change goes, for a coarser grind
+  ///
+  /// In en, this message translates to:
+  /// **'Coarser'**
+  String get directionCoarser;
+
+  /// Which way a suggested change goes, for a longer time
+  ///
+  /// In en, this message translates to:
+  /// **'Longer'**
+  String get directionLonger;
+
+  /// Which way a suggested change goes, for a shorter time
+  ///
+  /// In en, this message translates to:
+  /// **'Shorter'**
+  String get directionShorter;
+
+  /// Which way a suggested change goes, for a faster pour
+  ///
+  /// In en, this message translates to:
+  /// **'Faster'**
+  String get directionFaster;
+
+  /// Which way a suggested change goes, for a slower pour
+  ///
+  /// In en, this message translates to:
+  /// **'Slower'**
+  String get directionSlower;
+
+  /// Which way a suggested change goes, for hotter water
+  ///
+  /// In en, this message translates to:
+  /// **'Hotter'**
+  String get directionHotter;
+
+  /// Which way a suggested change goes, for cooler water
+  ///
+  /// In en, this message translates to:
+  /// **'Cooler'**
+  String get directionCooler;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

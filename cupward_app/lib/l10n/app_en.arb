@@ -551,5 +551,163 @@
   "tastingGoalHint": "For example: a little sweeter, with less bitterness.",
   "@tastingGoalHint": {
     "description": "Hint text in the empty tasting goal field"
+  },
+  "buttonGetFeedback": "Get brew feedback",
+  "@buttonGetFeedback": {
+    "description": "Label of the button on the feedback screen that sends the brew and tasting notes to brew feedback"
+  },
+  "feedbackNeedsNotes": "Rate at least one thing, or say what you'd change, to get feedback.",
+  "@feedbackNeedsNotes": {
+    "description": "Shown under the disabled feedback button until the user has filled in part of the tasting notes"
+  },
+  "suggestionsLoadingTitle": "Tasting your brew",
+  "@suggestionsLoadingTitle": {
+    "description": "Heading shown while brew feedback is being prepared"
+  },
+  "suggestionsLoadingMessage": "Reviewing your readings and tasting notes. This can take a few seconds.",
+  "@suggestionsLoadingMessage": {
+    "description": "Explanation shown while brew feedback is being prepared"
+  },
+  "suggestionsTitle": "Your next brew",
+  "@suggestionsTitle": {
+    "description": "Heading of the summary card on the brew feedback screen"
+  },
+  "suggestionsSourceOnDevice": "On-device AI",
+  "@suggestionsSourceOnDevice": {
+    "description": "Badge saying the feedback was produced by the AI model on the device"
+  },
+  "suggestionsSourceCloud": "Cloud AI",
+  "@suggestionsSourceCloud": {
+    "description": "Badge saying the feedback was produced by the AI model in the cloud"
+  },
+  "suggestionsPrimaryEyebrow": "TRY THIS NEXT",
+  "@suggestionsPrimaryEyebrow": {
+    "description": "Small spaced label above the main suggested change"
+  },
+  "suggestionsWhyLabel": "Why",
+  "@suggestionsWhyLabel": {
+    "description": "Caption above the reason for a suggested change"
+  },
+  "suggestionsEffectLabel": "What to expect",
+  "@suggestionsEffectLabel": {
+    "description": "Caption above how the next cup should taste after a suggested change"
+  },
+  "suggestionsOneChangeNote": "Change one thing at a time, so you can taste what it does.",
+  "@suggestionsOneChangeNote": {
+    "description": "Note under the main suggestion explaining why only one change is recommended"
+  },
+  "suggestionsAlternativesTitle": "Ideas for later brews",
+  "@suggestionsAlternativesTitle": {
+    "description": "Heading of the list of other changes to try in later brews"
+  },
+  "suggestionsErrorTitle": "No feedback yet",
+  "@suggestionsErrorTitle": {
+    "description": "Heading shown when brew feedback could not be produced"
+  },
+  "suggestionsFailureUnsupported": "Brew feedback isn't available on this device yet.",
+  "@suggestionsFailureUnsupported": {
+    "description": "Shown when the platform cannot run brew feedback"
+  },
+  "suggestionsFailureRequest": "Couldn't get brew feedback. Check your connection and try again.",
+  "@suggestionsFailureRequest": {
+    "description": "Shown when the brew feedback request failed"
+  },
+  "suggestionsFailureInvalid": "The feedback didn't come back in a form Cupward could read. Try again.",
+  "@suggestionsFailureInvalid": {
+    "description": "Shown when the AI answer could not be read"
+  },
+  "buttonFinish": "Done",
+  "@buttonFinish": {
+    "description": "Label of the button on the brew feedback screen that returns to the home screen"
+  },
+  "suggestionsValueChangeSemantics": "{parameter}, from {current} to {suggested}",
+  "@suggestionsValueChangeSemantics": {
+    "description": "What screen readers announce for a suggested value change, such as \"Coffee, from 20 g to 21 g\"",
+    "placeholders": {
+      "parameter": {
+        "type": "String",
+        "description": "The name of the variable"
+      },
+      "current": {
+        "type": "String",
+        "description": "The current value, with its unit"
+      },
+      "suggested": {
+        "type": "String",
+        "description": "The suggested value, with its unit"
+      }
+    }
+  },
+  "parameterGrindSize": "Grind size",
+  "@parameterGrindSize": {
+    "description": "Name of the brewing variable for how fine the coffee is ground, shown on a suggested change"
+  },
+  "parameterCoffeeDose": "Coffee",
+  "@parameterCoffeeDose": {
+    "description": "Name of the brewing variable for the weight of coffee, shown on a suggested change"
+  },
+  "parameterWaterAmount": "Water",
+  "@parameterWaterAmount": {
+    "description": "Name of the brewing variable for the total weight of water, shown on a suggested change"
+  },
+  "parameterBloomWater": "Bloom water",
+  "@parameterBloomWater": {
+    "description": "Name of the brewing variable for the weight of water in the bloom, shown on a suggested change"
+  },
+  "parameterBloomTime": "Bloom time",
+  "@parameterBloomTime": {
+    "description": "Name of the brewing variable for how long the bloom rests, shown on a suggested change"
+  },
+  "parameterPourRate": "Pour rate",
+  "@parameterPourRate": {
+    "description": "Name of the brewing variable for how quickly water is poured, shown on a suggested change"
+  },
+  "parameterWaterTemperature": "Water temperature",
+  "@parameterWaterTemperature": {
+    "description": "Name of the brewing variable for the temperature of the water, shown on a suggested change"
+  },
+  "parameterBrewTime": "Brew time",
+  "@parameterBrewTime": {
+    "description": "Name of the brewing variable for the total brew time, shown on a suggested change"
+  },
+  "directionMore": "More",
+  "@directionMore": {
+    "description": "Which way a suggested change goes, for more of an amount"
+  },
+  "directionLess": "Less",
+  "@directionLess": {
+    "description": "Which way a suggested change goes, for less of an amount"
+  },
+  "directionFiner": "Finer",
+  "@directionFiner": {
+    "description": "Which way a suggested change goes, for a finer grind"
+  },
+  "directionCoarser": "Coarser",
+  "@directionCoarser": {
+    "description": "Which way a suggested change goes, for a coarser grind"
+  },
+  "directionLonger": "Longer",
+  "@directionLonger": {
+    "description": "Which way a suggested change goes, for a longer time"
+  },
+  "directionShorter": "Shorter",
+  "@directionShorter": {
+    "description": "Which way a suggested change goes, for a shorter time"
+  },
+  "directionFaster": "Faster",
+  "@directionFaster": {
+    "description": "Which way a suggested change goes, for a faster pour"
+  },
+  "directionSlower": "Slower",
+  "@directionSlower": {
+    "description": "Which way a suggested change goes, for a slower pour"
+  },
+  "directionHotter": "Hotter",
+  "@directionHotter": {
+    "description": "Which way a suggested change goes, for hotter water"
+  },
+  "directionCooler": "Cooler",
+  "@directionCooler": {
+    "description": "Which way a suggested change goes, for cooler water"
   }
 }

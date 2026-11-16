@@ -371,4 +371,114 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get tastingGoalHint => 'For example: a little sweeter, with less bitterness.';
+
+  @override
+  String get buttonGetFeedback => 'Get brew feedback';
+
+  @override
+  String get feedbackNeedsNotes => 'Rate at least one thing, or say what you\'d change, to get feedback.';
+
+  @override
+  String get suggestionsLoadingTitle => 'Tasting your brew';
+
+  @override
+  String get suggestionsLoadingMessage => 'Reviewing your readings and tasting notes. This can take a few seconds.';
+
+  @override
+  String get suggestionsTitle => 'Your next brew';
+
+  @override
+  String get suggestionsSourceOnDevice => 'On-device AI';
+
+  @override
+  String get suggestionsSourceCloud => 'Cloud AI';
+
+  @override
+  String get suggestionsPrimaryEyebrow => 'TRY THIS NEXT';
+
+  @override
+  String get suggestionsWhyLabel => 'Why';
+
+  @override
+  String get suggestionsEffectLabel => 'What to expect';
+
+  @override
+  String get suggestionsOneChangeNote => 'Change one thing at a time, so you can taste what it does.';
+
+  @override
+  String get suggestionsAlternativesTitle => 'Ideas for later brews';
+
+  @override
+  String get suggestionsErrorTitle => 'No feedback yet';
+
+  @override
+  String get suggestionsFailureUnsupported => 'Brew feedback isn\'t available on this device yet.';
+
+  @override
+  String get suggestionsFailureRequest => 'Couldn\'t get brew feedback. Check your connection and try again.';
+
+  @override
+  String get suggestionsFailureInvalid => 'The feedback didn\'t come back in a form Cupward could read. Try again.';
+
+  @override
+  String get buttonFinish => 'Done';
+
+  @override
+  String suggestionsValueChangeSemantics(String parameter, String current, String suggested) {
+    return '$parameter, from $current to $suggested';
+  }
+
+  @override
+  String get parameterGrindSize => 'Grind size';
+
+  @override
+  String get parameterCoffeeDose => 'Coffee';
+
+  @override
+  String get parameterWaterAmount => 'Water';
+
+  @override
+  String get parameterBloomWater => 'Bloom water';
+
+  @override
+  String get parameterBloomTime => 'Bloom time';
+
+  @override
+  String get parameterPourRate => 'Pour rate';
+
+  @override
+  String get parameterWaterTemperature => 'Water temperature';
+
+  @override
+  String get parameterBrewTime => 'Brew time';
+
+  @override
+  String get directionMore => 'More';
+
+  @override
+  String get directionLess => 'Less';
+
+  @override
+  String get directionFiner => 'Finer';
+
+  @override
+  String get directionCoarser => 'Coarser';
+
+  @override
+  String get directionLonger => 'Longer';
+
+  @override
+  String get directionShorter => 'Shorter';
+
+  @override
+  String get directionFaster => 'Faster';
+
+  @override
+  String get directionSlower => 'Slower';
+
+  @override
+  String get directionHotter => 'Hotter';
+
+  @override
+  String get directionCooler => 'Cooler';
 }

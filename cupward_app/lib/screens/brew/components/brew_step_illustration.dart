@@ -15,7 +15,7 @@ class BrewStepIllustration extends StatelessWidget {
 
   /// The tallest the illustration grows. Its height, rather than its width, is limited, so that the recipe, the step,
   /// and the scale readings fit on one phone screen.
-  static const double _maxHeight = 240;
+  static const double _maxHeight = 220;
 
   /// How long the fade between two steps' images takes.
   static const Duration _fadeDuration = Duration(milliseconds: 250);

@@ -9,6 +9,7 @@ import 'package:cupward/screens/feedback/components/brew_weight_chart.dart';
 import 'package:cupward/screens/feedback/components/taste_slider.dart';
 import 'package:cupward/screens/feedback/feedback_controller.dart';
 import 'package:cupward/screens/feedback/feedback_route.dart';
+import 'package:cupward/screens/suggestions/suggestions_route.dart';
 import 'package:cupward/theme/cupward_colors.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
@@ -174,6 +175,47 @@ void main() {
       expect(find.text('What would you change next time?'), findsOneWidget);
       final FeedbackController controller = tester.state<FeedbackController>(find.byType(FeedbackRoute));
       expect(controller.tastingNotes.goal, 'A little sweeter.');
+    });
+
+    /// Feedback needs something to work from, so the button waits for a rating or a goal.
+    testWidgets('enables the feedback button once something is filled in', (WidgetTester tester) async {
+      // Arrange
+      await showScreen(tester, _record(samples: _samples));
+      final Finder button = find.widgetWithText(FilledButton, 'Get brew feedback');
+      await tester.scrollUntilVisible(button, 300, scrollable: _pageScrollable);
+
+      // Assert
+      expect(tester.widget<FilledButton>(button).onPressed, isNull);
+      expect(find.textContaining('Rate at least one thing'), findsOneWidget);
+
+      // Act
+      await tester.enterText(find.byType(TextField), 'Sweeter');
+      await tester.pump();
+
+      // Assert
+      expect(tester.widget<FilledButton>(button).onPressed, isNotNull);
+      expect(find.textContaining('Rate at least one thing'), findsNothing);
+    });
+
+    /// The button opens the brew feedback screen with the brew and the notes as they are now.
+    testWidgets('opens brew feedback with the brew and the notes', (WidgetTester tester) async {
+      // Arrange
+      await showScreen(tester, _record(samples: _samples));
+      final Finder button = find.widgetWithText(FilledButton, 'Get brew feedback');
+      await tester.scrollUntilVisible(find.byType(TextField), 300, scrollable: _pageScrollable);
+      await tester.enterText(find.byType(TextField), 'Sweeter');
+      await tester.pump();
+      await tester.scrollUntilVisible(button, 300, scrollable: _pageScrollable);
+
+      // Act
+      await tester.tap(button);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 500));
+
+      // Assert
+      final SuggestionsRoute route = tester.widget<SuggestionsRoute>(find.byType(SuggestionsRoute));
+      expect(route.notes.goal, 'Sweeter');
+      expect(route.record.samples, _samples);
     });
 
     /// The screen must fit on the narrowest and widest screens.
