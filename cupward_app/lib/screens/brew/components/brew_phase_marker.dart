@@ -5,8 +5,8 @@ import '../models/brew_phase_status.dart';
 
 /// The dot that marks one phase in the phase indicator.
 ///
-/// The current phase is a large filled dot in the copper accent. A finished phase is a smaller filled dot with a
-/// check mark. A phase that has not started is a small ring, so the brew's progress reads from left to right.
+/// The current phase is a filled dot in the copper accent. A finished phase is a filled dot with a check mark. A phase
+/// that has not started is a small ring, so the brew's progress reads from left to right.
 class BrewPhaseMarker extends StatelessWidget {
   /// Creates the marker for a phase with the given [status].
   const BrewPhaseMarker({required this.status, super.key});
@@ -15,7 +15,7 @@ class BrewPhaseMarker extends StatelessWidget {
   final BrewPhaseStatus status;
 
   /// The diameter of the current phase's dot.
-  static const double currentSize = 26;
+  static const double currentSize = 18;
 
   /// The diameter of the other phases' dots and rings.
   static const double otherSize = 18;
