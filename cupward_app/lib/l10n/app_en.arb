@@ -381,5 +381,57 @@
   "buttonTryAgain": "Try again",
   "@buttonTryAgain": {
     "description": "Label of the button in the on-device AI panel that repeats a failed check"
+  },
+  "brewSummaryTitle": "Your brew",
+  "@brewSummaryTitle": {
+    "description": "Heading of the card on the feedback screen that summarizes the brew that just finished"
+  },
+  "brewSummaryPeakFlowLabel": "Peak flow",
+  "@brewSummaryPeakFlowLabel": {
+    "description": "Caption under the fastest pour rate of the brew"
+  },
+  "brewSummaryTarget": "Target {value}",
+  "@brewSummaryTarget": {
+    "description": "The recipe target shown under a measured value, such as \"Target 320 g\"",
+    "placeholders": {
+      "value": {
+        "type": "String",
+        "description": "The formatted target, with its unit"
+      }
+    }
+  },
+  "brewSummaryNoReadings": "No scale was connected, so this brew has step times but no weights.",
+  "@brewSummaryNoReadings": {
+    "description": "Shown in place of the weight chart when the brew had no scale readings"
+  },
+  "brewSummaryChartSemantics": "Weight over time. {weight} after {time}.",
+  "@brewSummaryChartSemantics": {
+    "description": "What screen readers announce for the weight chart, such as \"Weight over time. 318 g after 3:12.\"",
+    "placeholders": {
+      "weight": {
+        "type": "String",
+        "description": "The final weight, with its unit"
+      },
+      "time": {
+        "type": "String",
+        "description": "The total time, as minutes and seconds"
+      }
+    }
+  },
+  "brewSummaryStepHeader": "Step",
+  "@brewSummaryStepHeader": {
+    "description": "Column heading for the step names in the brew summary table"
+  },
+  "brewSummaryTimeHeader": "Time",
+  "@brewSummaryTimeHeader": {
+    "description": "Column heading for how long each step took in the brew summary table"
+  },
+  "brewSummaryWeightHeader": "Weight",
+  "@brewSummaryWeightHeader": {
+    "description": "Column heading for the weight at the end of each step in the brew summary table"
+  },
+  "brewSummaryTargetHeader": "Target",
+  "@brewSummaryTargetHeader": {
+    "description": "Column heading for each step's target weight in the brew summary table"
   }
 }

@@ -1,11 +1,11 @@
 import 'package:intl/intl.dart';
 import 'package:material_ui/material_ui.dart';
 
-import '../../../l10n/app_localizations.dart';
-import '../../../models/recipes/brew_recipe.dart';
-import '../../../theme/app_icon.dart';
-import '../../../theme/context_theme_extension.dart';
-import '../../../theme/insets.dart';
+import '../l10n/app_localizations.dart';
+import '../models/recipes/brew_recipe.dart';
+import '../theme/app_icon.dart';
+import '../theme/context_theme_extension.dart';
+import '../theme/insets.dart';
 import 'recipe_stat.dart';
 
 /// A recipe's targets in equal columns, separated by hairline rules: coffee, water, brew time, and yield.

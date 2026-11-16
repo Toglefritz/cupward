@@ -517,6 +517,60 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Try again'**
   String get buttonTryAgain;
+
+  /// Heading of the card on the feedback screen that summarizes the brew that just finished
+  ///
+  /// In en, this message translates to:
+  /// **'Your brew'**
+  String get brewSummaryTitle;
+
+  /// Caption under the fastest pour rate of the brew
+  ///
+  /// In en, this message translates to:
+  /// **'Peak flow'**
+  String get brewSummaryPeakFlowLabel;
+
+  /// The recipe target shown under a measured value, such as "Target 320 g"
+  ///
+  /// In en, this message translates to:
+  /// **'Target {value}'**
+  String brewSummaryTarget(String value);
+
+  /// Shown in place of the weight chart when the brew had no scale readings
+  ///
+  /// In en, this message translates to:
+  /// **'No scale was connected, so this brew has step times but no weights.'**
+  String get brewSummaryNoReadings;
+
+  /// What screen readers announce for the weight chart, such as "Weight over time. 318 g after 3:12."
+  ///
+  /// In en, this message translates to:
+  /// **'Weight over time. {weight} after {time}.'**
+  String brewSummaryChartSemantics(String weight, String time);
+
+  /// Column heading for the step names in the brew summary table
+  ///
+  /// In en, this message translates to:
+  /// **'Step'**
+  String get brewSummaryStepHeader;
+
+  /// Column heading for how long each step took in the brew summary table
+  ///
+  /// In en, this message translates to:
+  /// **'Time'**
+  String get brewSummaryTimeHeader;
+
+  /// Column heading for the weight at the end of each step in the brew summary table
+  ///
+  /// In en, this message translates to:
+  /// **'Weight'**
+  String get brewSummaryWeightHeader;
+
+  /// Column heading for each step's target weight in the brew summary table
+  ///
+  /// In en, this message translates to:
+  /// **'Target'**
+  String get brewSummaryTargetHeader;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

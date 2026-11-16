@@ -4,12 +4,16 @@ import 'package:flutter_bookoo/flutter_bookoo.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../../l10n/app_localizations.dart';
+import '../../models/brews/brew_record.dart';
+import '../../models/recipes/brew_phase.dart';
 import '../../models/recipes/brew_phase_kind.dart';
 import '../../models/recipes/brew_recipe.dart';
+import '../../services/brew/brew_recorder.dart';
 import '../../services/brew/phase_advance_progress.dart';
 import '../../services/brew/phase_advance_tracker.dart';
 import '../../services/scale/scale_connection_status.dart';
 import '../../services/scale/scale_service.dart';
+import '../feedback/feedback_route.dart';
 import 'brew_route.dart';
 import 'brew_view.dart';
 import 'components/scale_picker_sheet.dart';
@@ -25,6 +29,10 @@ import 'components/scale_picker_sheet.dart';
 /// [advanceWindow], in which the screen offers to cancel. When the window ends the brew moves to the next phase.
 /// Cancelling, or tapping the main button, hands the phase back to the user. Without a connected scale none of this
 /// runs, and the button is the only way to advance.
+///
+/// The controller also records the brew with a [BrewRecorder]: when each phase began, and every scale reading from the
+/// moment the user leaves preparation. When the user taps Done, the record is handed to the feedback screen, which
+/// replaces this one.
 class BrewController extends State<BrewRoute> {
   /// The recipe being brewed.
   BrewRecipe get recipe => widget.recipe;
@@ -68,6 +76,9 @@ class BrewController extends State<BrewRoute> {
   /// Drives the countdowns while a rest or the cancel window is running, and is null the rest of the time.
   Timer? _ticker;
 
+  /// Records the phases and scale readings of this brew.
+  late final BrewRecorder _recorder = BrewRecorder(recipe: recipe);
+
   /// The time left in the current phase's rest, such as after the bloom water is added, or null if it is not
   /// resting.
   Duration? get restRemaining => _isFollowing ? _progress.restRemaining : null;
@@ -96,6 +107,11 @@ class BrewController extends State<BrewRoute> {
     super.initState();
     scale.addListener(_onScaleChanged);
     _startPhase();
+
+    // A brew normally starts when the user leaves preparation. A recipe without a preparation step starts at once.
+    if (currentPhaseKind != BrewPhaseKind.prepare) {
+      _recorder.start(_now(), recipe.phases[currentPhaseIndex]);
+    }
   }
 
   /// Rebuilds the screen with the scale's latest state, and checks whether the phase is finished.
@@ -103,7 +119,11 @@ class BrewController extends State<BrewRoute> {
     if (!mounted) {
       return;
     }
-    setState(() => _evaluate(scale.reading));
+    final BookooScaleReading? reading = scale.reading;
+    if (reading != null && scale.isConnected) {
+      _recorder.addReading(reading, _now(), scaleName: scale.connectedDevice?.name);
+    }
+    setState(() => _evaluate(reading));
   }
 
   /// Begins following the current phase with a new tracker, and forgets the state of the previous phase.
@@ -170,9 +190,20 @@ class BrewController extends State<BrewRoute> {
     _ticker = null;
   }
 
-  /// Moves to the next phase and starts following it.
+  /// Moves to the next phase, records it, and starts following it.
+  ///
+  /// Leaving preparation starts the recording, because the scale has just been tared and the brew begins.
   void _advance() {
+    final bool isLeavingPreparation = currentPhaseKind == BrewPhaseKind.prepare;
     currentPhaseIndex++;
+
+    final BrewPhase phase = recipe.phases[currentPhaseIndex];
+    if (isLeavingPreparation && !_recorder.isRecording) {
+      _recorder.start(_now(), phase);
+    } else {
+      _recorder.markPhase(phase, _now());
+    }
+
     _startPhase();
   }
 
@@ -230,13 +261,18 @@ class BrewController extends State<BrewRoute> {
   /// Handles a tap on the main action button at the bottom of the screen.
   ///
   /// This is also the manual route when the scale is not driving the brew, and it takes over from a countdown that
-  /// is running. In the last phase this leaves the screen. In any other phase it moves to the next one. Leaving the preparation
+  /// is running. In the last phase this ends the brew and opens the feedback screen in place of this one, so going back
+  /// from there returns to the home screen. In any other phase it moves to the next one. Leaving the preparation
   /// phase first tares the scale, so the weights in the later phases count water only. If the tare command fails, the
   /// brew stays in preparation and a message says so, because continuing with a wrong zero would make every target
   /// wrong. Without a connected scale there is nothing to tare, and the brew advances.
   Future<void> onActionPressed() async {
     if (isLastPhase) {
-      Navigator.pop(context);
+      final BrewRecord record = _recorder.finish(_now());
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute<void>(builder: (BuildContext context) => FeedbackRoute(record: record)),
+      );
       return;
     }
     if (currentPhaseKind == BrewPhaseKind.prepare && scale.isConnected) {

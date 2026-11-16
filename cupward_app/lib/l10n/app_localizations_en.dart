@@ -257,4 +257,35 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get buttonTryAgain => 'Try again';
+
+  @override
+  String get brewSummaryTitle => 'Your brew';
+
+  @override
+  String get brewSummaryPeakFlowLabel => 'Peak flow';
+
+  @override
+  String brewSummaryTarget(String value) {
+    return 'Target $value';
+  }
+
+  @override
+  String get brewSummaryNoReadings => 'No scale was connected, so this brew has step times but no weights.';
+
+  @override
+  String brewSummaryChartSemantics(String weight, String time) {
+    return 'Weight over time. $weight after $time.';
+  }
+
+  @override
+  String get brewSummaryStepHeader => 'Step';
+
+  @override
+  String get brewSummaryTimeHeader => 'Time';
+
+  @override
+  String get brewSummaryWeightHeader => 'Weight';
+
+  @override
+  String get brewSummaryTargetHeader => 'Target';
 }

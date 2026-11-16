@@ -1,8 +1,8 @@
 import 'package:material_ui/material_ui.dart';
 
-import '../../../theme/app_icon.dart';
-import '../../../theme/context_theme_extension.dart';
-import '../../../theme/insets.dart';
+import '../theme/app_icon.dart';
+import '../theme/context_theme_extension.dart';
+import '../theme/insets.dart';
 
 /// One target of a recipe, such as its coffee dose: an icon above the value, with a caption below.
 ///

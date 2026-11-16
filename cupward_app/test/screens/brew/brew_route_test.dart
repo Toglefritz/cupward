@@ -1,10 +1,14 @@
+import 'package:cupward/components/recipe_summary_card.dart';
 import 'package:cupward/l10n/app_localizations.dart';
+import 'package:cupward/models/brews/brew_phase_record.dart';
+import 'package:cupward/models/brews/brew_record.dart';
+import 'package:cupward/models/brews/brew_sample.dart';
 import 'package:cupward/models/recipes/built_in_recipes.dart';
 import 'package:cupward/screens/brew/brew_controller.dart';
 import 'package:cupward/screens/brew/brew_route.dart';
 import 'package:cupward/screens/brew/components/brew_action_button.dart';
-import 'package:cupward/screens/brew/components/recipe_summary_card.dart';
 import 'package:cupward/screens/brew/components/scale_panel.dart';
+import 'package:cupward/screens/feedback/feedback_route.dart';
 import 'package:cupward/services/scale/scale_service.dart';
 import 'package:cupward/theme/cupward_colors.dart';
 import 'package:flutter_bookoo/flutter_bookoo.dart';
@@ -150,6 +154,13 @@ void main() {
       await tester.tap(find.text('Done'));
       await tester.pumpAndSettle();
       expect(find.byType(BrewRoute), findsNothing);
+      final FeedbackRoute feedback = tester.widget<FeedbackRoute>(find.byType(FeedbackRoute));
+      expect(feedback.record.recipe, BuiltInRecipes.defaultRecipe);
+      expect(feedback.record.hasScaleReadings, isFalse);
+      expect(
+        feedback.record.phases.map((BrewPhaseRecord phase) => phase.phaseId),
+        <String>['bloom', 'pour-1', 'pour-2', 'pour-3', 'complete'],
+      );
     });
 
     /// Weights in later phases count water only if the scale is zeroed with the brewer and coffee on it.
@@ -241,6 +252,63 @@ void main() {
       service.emit(reading(60));
       await tester.pump();
     }
+
+    /// The feedback screen needs the scale's readings, timed from the start of the brew, to summarize it.
+    testWidgets('records the readings and hands them to the feedback screen', (WidgetTester tester) async {
+      // Arrange: open the brewing screen from another screen, so it can be replaced.
+      final _ConnectedScaleService service = _ConnectedScaleService();
+      addTearDown(service.dispose);
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: ThemeData(extensions: const <ThemeExtension<dynamic>>[CupwardColors.light]),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Builder(
+            builder: (BuildContext context) => TextButton(
+              onPressed: () => Navigator.push(
+                context,
+                MaterialPageRoute<void>(
+                  builder: (BuildContext context) =>
+                      BrewRoute(recipe: BuiltInRecipes.defaultRecipe, scaleService: service, now: () => clockNow),
+                ),
+              ),
+              child: const Text('open'),
+            ),
+          ),
+        ),
+      );
+      await tester.tap(find.text('open'));
+      await tester.pumpAndSettle();
+
+      // Act: a reading in preparation is not part of the brew; the ones after it are.
+      service.emit(reading(0.4));
+      await tester.pump();
+      await tester.tap(find.text('Continue'));
+      await tester.pumpAndSettle();
+      await elapse(tester, const Duration(seconds: 2));
+      service.emit(reading(30, flow: 4));
+      await elapse(tester, const Duration(seconds: 2));
+      service.emit(reading(58, flow: 3));
+      await tester.pump();
+      await tester.tap(find.text('Next step'));
+      await tester.pumpAndSettle();
+      for (int step = 0; step < 3; step++) {
+        await tester.tap(find.text('Next step'));
+        await tester.pumpAndSettle();
+      }
+      await elapse(tester, const Duration(seconds: 1));
+      await tester.tap(find.text('Done'));
+      await tester.pumpAndSettle();
+
+      // Assert
+      final BrewRecord record = tester.widget<FeedbackRoute>(find.byType(FeedbackRoute)).record;
+      expect(record.samples.map((BrewSample sample) => sample.weightGrams), <double>[30, 58]);
+      expect(record.samples.first.elapsed, const Duration(seconds: 2));
+      expect(record.samples.last.elapsed, const Duration(seconds: 4));
+      expect(record.phases.first.phaseId, 'bloom');
+      expect(record.phases[1].startedAt, const Duration(seconds: 4));
+      expect(record.totalTime, const Duration(seconds: 5));
+    });
 
     /// After the bloom water is in, the screen counts the rest, and then offers a window to cancel before moving on.
     testWidgets('rests after the bloom, counts down, and moves on', (WidgetTester tester) async {

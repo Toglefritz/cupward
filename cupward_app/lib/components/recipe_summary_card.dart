@@ -1,8 +1,8 @@
 import 'package:material_ui/material_ui.dart';
 
-import '../../../models/recipes/brew_recipe.dart';
-import '../../../theme/context_theme_extension.dart';
-import '../../../theme/insets.dart';
+import '../models/recipes/brew_recipe.dart';
+import '../theme/context_theme_extension.dart';
+import '../theme/insets.dart';
 import 'recipe_stats_row.dart';
 
 /// A card that summarizes the recipe being brewed: its name and profile, and its targets.

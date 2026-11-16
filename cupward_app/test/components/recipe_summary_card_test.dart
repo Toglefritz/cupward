@@ -1,8 +1,8 @@
+import 'package:cupward/components/recipe_stats_row.dart';
+import 'package:cupward/components/recipe_summary_card.dart';
 import 'package:cupward/l10n/app_localizations.dart';
 import 'package:cupward/models/recipes/brew_recipe.dart';
 import 'package:cupward/models/recipes/built_in_recipes.dart';
-import 'package:cupward/screens/brew/components/recipe_stats_row.dart';
-import 'package:cupward/screens/brew/components/recipe_summary_card.dart';
 import 'package:cupward/theme/cupward_colors.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';

@@ -1,5 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 
+import '../../components/recipe_summary_card.dart';
 import '../../l10n/app_localizations.dart';
 import '../../theme/insets.dart';
 import 'brew_controller.dart';
@@ -9,7 +10,6 @@ import 'components/brew_phase_indicator.dart';
 import 'components/brew_phase_labels.dart';
 import 'components/brew_step_heading.dart';
 import 'components/brew_step_illustration.dart';
-import 'components/recipe_summary_card.dart';
 import 'components/scale_panel.dart';
 
 /// Layout for the brewing screen. Contains no logic.
