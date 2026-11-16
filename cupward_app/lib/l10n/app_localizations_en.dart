@@ -288,4 +288,87 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get brewSummaryTargetHeader => 'Target';
+
+  @override
+  String get tastingNotesTitle => 'Tasting notes';
+
+  @override
+  String get tastingNotesIntro => 'Rate what you tasted. Skip anything you\'re not sure about.';
+
+  @override
+  String get tastingNotRated => 'Not rated';
+
+  @override
+  String tastingRatingSemantics(int rating, int max) {
+    return '$rating of $max';
+  }
+
+  @override
+  String get tasteIntensity => 'Intensity';
+
+  @override
+  String get tasteIntensityLow => 'Weak';
+
+  @override
+  String get tasteIntensityHigh => 'Strong';
+
+  @override
+  String get tasteAcidity => 'Acidity';
+
+  @override
+  String get tasteAcidityLow => 'Flat';
+
+  @override
+  String get tasteAcidityHigh => 'Bright';
+
+  @override
+  String get tasteSweetness => 'Sweetness';
+
+  @override
+  String get tasteSweetnessLow => 'Not sweet';
+
+  @override
+  String get tasteSweetnessHigh => 'Very sweet';
+
+  @override
+  String get tasteBitterness => 'Bitterness';
+
+  @override
+  String get tasteBitternessLow => 'Not bitter';
+
+  @override
+  String get tasteBitternessHigh => 'Very bitter';
+
+  @override
+  String get tasteBody => 'Body';
+
+  @override
+  String get tasteBodyLow => 'Thin';
+
+  @override
+  String get tasteBodyHigh => 'Heavy';
+
+  @override
+  String get tasteAstringency => 'Astringency';
+
+  @override
+  String get tasteAstringencyLow => 'Smooth';
+
+  @override
+  String get tasteAstringencyHigh => 'Drying';
+
+  @override
+  String get tasteOverall => 'Overall';
+
+  @override
+  String get tasteOverallLow => 'Disliked';
+
+  @override
+  String get tasteOverallHigh => 'Loved it';
+
+  @override
+  String get tastingGoalLabel => 'What would you change next time?';
+
+  @override
+  String get tastingGoalHint => 'For example: a little sweeter, with less bitterness.';
 }

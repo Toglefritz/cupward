@@ -3,8 +3,11 @@ import 'package:cupward/l10n/app_localizations.dart';
 import 'package:cupward/models/brews/brew_phase_record.dart';
 import 'package:cupward/models/brews/brew_record.dart';
 import 'package:cupward/models/brews/brew_sample.dart';
+import 'package:cupward/models/brews/taste_attribute.dart';
 import 'package:cupward/models/recipes/built_in_recipes.dart';
 import 'package:cupward/screens/feedback/components/brew_weight_chart.dart';
+import 'package:cupward/screens/feedback/components/taste_slider.dart';
+import 'package:cupward/screens/feedback/feedback_controller.dart';
 import 'package:cupward/screens/feedback/feedback_route.dart';
 import 'package:cupward/theme/cupward_colors.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -42,6 +45,9 @@ const List<BrewSample> _samples = <BrewSample>[
   BrewSample(elapsed: Duration(seconds: 130), weightGrams: 318.4, flowGramsPerSecond: 4),
   BrewSample(elapsed: Duration(seconds: 190), weightGrams: 318.4, flowGramsPerSecond: 0),
 ];
+
+/// The screen's own scrolling list, rather than the one inside the text field.
+final Finder _pageScrollable = find.byType(Scrollable).first;
 
 /// Verifies what the feedback screen shows for brews with and without scale readings.
 void main() {
@@ -107,6 +113,67 @@ void main() {
       expect(find.textContaining('No scale was connected'), findsOneWidget);
       expect(find.text('Weight'), findsNothing);
       expect(find.text('0:50'), findsOneWidget);
+    });
+
+    /// Every attribute starts unrated, so an untouched slider is not mistaken for an answer.
+    testWidgets('shows a slider for each taste attribute, all unrated', (WidgetTester tester) async {
+      // Act
+      await showScreen(tester, _record(samples: _samples));
+      await tester.scrollUntilVisible(find.text('Overall'), 300, scrollable: _pageScrollable);
+
+      // Assert
+      expect(find.text('Tasting notes'), findsOneWidget);
+      expect(find.byType(TasteSlider, skipOffstage: false), findsNWidgets(TasteAttribute.values.length));
+      expect(find.text('Not rated', skipOffstage: false), findsNWidgets(TasteAttribute.values.length));
+      expect(find.text('Very bitter', skipOffstage: false), findsOneWidget);
+    });
+
+    /// Moving a slider rates its attribute, including a tap on the thumb where it rests.
+    testWidgets('rates an attribute when its slider is touched', (WidgetTester tester) async {
+      // Arrange
+      await showScreen(tester, _record(samples: _samples));
+      final Finder bitterness = find.descendant(
+        of: find.byWidgetPredicate(
+          (Widget widget) => widget is TasteSlider && widget.attribute == TasteAttribute.bitterness,
+        ),
+        matching: find.byType(Slider),
+      );
+      final Finder intensity = find.descendant(
+        of: find.byWidgetPredicate(
+          (Widget widget) => widget is TasteSlider && widget.attribute == TasteAttribute.intensity,
+        ),
+        matching: find.byType(Slider),
+      );
+      await tester.scrollUntilVisible(bitterness, 300, scrollable: _pageScrollable);
+
+      // Act: drag bitterness to the right end, and tap intensity's resting thumb.
+      await tester.drag(bitterness, const Offset(500, 0));
+      await tester.tap(intensity);
+      await tester.pump();
+
+      // Assert
+      final FeedbackController controller = tester.state<FeedbackController>(find.byType(FeedbackRoute));
+      expect(controller.tastingNotes.ratings, <TasteAttribute, int>{
+        TasteAttribute.bitterness: 5,
+        TasteAttribute.intensity: 3,
+      });
+      expect(find.text('Not rated', skipOffstage: false), findsNWidgets(TasteAttribute.values.length - 2));
+    });
+
+    /// The user's own words about the next brew are kept with the ratings.
+    testWidgets('keeps the goal for the next brew', (WidgetTester tester) async {
+      // Arrange
+      await showScreen(tester, _record(samples: _samples));
+      await tester.scrollUntilVisible(find.byType(TextField), 300, scrollable: _pageScrollable);
+
+      // Act
+      await tester.enterText(find.byType(TextField), 'A little sweeter.');
+      await tester.pump();
+
+      // Assert
+      expect(find.text('What would you change next time?'), findsOneWidget);
+      final FeedbackController controller = tester.state<FeedbackController>(find.byType(FeedbackRoute));
+      expect(controller.tastingNotes.goal, 'A little sweeter.');
     });
 
     /// The screen must fit on the narrowest and widest screens.

@@ -3,12 +3,14 @@ import 'package:material_ui/material_ui.dart';
 import '../../components/recipe_summary_card.dart';
 import '../../theme/insets.dart';
 import 'components/brew_summary_card.dart';
+import 'components/tasting_notes_card.dart';
 import 'feedback_controller.dart';
 
 /// Layout for the feedback screen. Contains no logic.
 ///
-/// It uses the brewing screen's layout: a scrolling content column of limited width, with the recipe summary card at
-/// the top for reference and the summary of the brew below it.
+/// It uses the brewing screen's layout: a scrolling content column of limited width. The recipe summary card sits at the
+/// top for reference, the summary of the brew below it, and the tasting notes form last. Dragging the list hides the
+/// keyboard, so the user can scroll back up to the summary while writing.
 class FeedbackView extends StatelessWidget {
   /// Creates the view for [state].
   const FeedbackView(this.state, {super.key});
@@ -27,12 +29,21 @@ class FeedbackView extends StatelessWidget {
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: _maxContentWidth),
             child: ListView(
+              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
               padding: const EdgeInsets.fromLTRB(Insets.small, Insets.xSmall, Insets.small, Insets.small),
               children: <Widget>[
                 RecipeSummaryCard(recipe: state.record.recipe),
                 Padding(
                   padding: const EdgeInsets.only(top: Insets.small),
                   child: BrewSummaryCard(record: state.record),
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(top: Insets.small),
+                  child: TastingNotesCard(
+                    notes: state.tastingNotes,
+                    goalController: state.goalController,
+                    onRatingChanged: state.onRatingChanged,
+                  ),
                 ),
               ],
             ),

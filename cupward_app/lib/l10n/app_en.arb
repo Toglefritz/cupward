@@ -433,5 +433,123 @@
   "brewSummaryTargetHeader": "Target",
   "@brewSummaryTargetHeader": {
     "description": "Column heading for each step's target weight in the brew summary table"
+  },
+  "tastingNotesTitle": "Tasting notes",
+  "@tastingNotesTitle": {
+    "description": "Heading of the card on the feedback screen where the user describes how the brew tasted"
+  },
+  "tastingNotesIntro": "Rate what you tasted. Skip anything you're not sure about.",
+  "@tastingNotesIntro": {
+    "description": "Short explanation at the top of the tasting notes card"
+  },
+  "tastingNotRated": "Not rated",
+  "@tastingNotRated": {
+    "description": "Shown beside a taste slider that the user has not moved yet"
+  },
+  "tastingRatingSemantics": "{rating} of {max}",
+  "@tastingRatingSemantics": {
+    "description": "What screen readers announce for a taste slider's value, such as \"4 of 5\"",
+    "placeholders": {
+      "rating": {
+        "type": "int",
+        "description": "The chosen rating"
+      },
+      "max": {
+        "type": "int",
+        "description": "The highest rating"
+      }
+    }
+  },
+  "tasteIntensity": "Intensity",
+  "@tasteIntensity": {
+    "description": "Name of the taste slider for how strong and concentrated the coffee tastes"
+  },
+  "tasteIntensityLow": "Weak",
+  "@tasteIntensityLow": {
+    "description": "Label at the low end of the taste slider for how strong and concentrated the coffee tastes"
+  },
+  "tasteIntensityHigh": "Strong",
+  "@tasteIntensityHigh": {
+    "description": "Label at the high end of the taste slider for how strong and concentrated the coffee tastes"
+  },
+  "tasteAcidity": "Acidity",
+  "@tasteAcidity": {
+    "description": "Name of the taste slider for how bright or sour the coffee tastes"
+  },
+  "tasteAcidityLow": "Flat",
+  "@tasteAcidityLow": {
+    "description": "Label at the low end of the taste slider for how bright or sour the coffee tastes"
+  },
+  "tasteAcidityHigh": "Bright",
+  "@tasteAcidityHigh": {
+    "description": "Label at the high end of the taste slider for how bright or sour the coffee tastes"
+  },
+  "tasteSweetness": "Sweetness",
+  "@tasteSweetness": {
+    "description": "Name of the taste slider for how sweet the coffee tastes"
+  },
+  "tasteSweetnessLow": "Not sweet",
+  "@tasteSweetnessLow": {
+    "description": "Label at the low end of the taste slider for how sweet the coffee tastes"
+  },
+  "tasteSweetnessHigh": "Very sweet",
+  "@tasteSweetnessHigh": {
+    "description": "Label at the high end of the taste slider for how sweet the coffee tastes"
+  },
+  "tasteBitterness": "Bitterness",
+  "@tasteBitterness": {
+    "description": "Name of the taste slider for how bitter the coffee tastes"
+  },
+  "tasteBitternessLow": "Not bitter",
+  "@tasteBitternessLow": {
+    "description": "Label at the low end of the taste slider for how bitter the coffee tastes"
+  },
+  "tasteBitternessHigh": "Very bitter",
+  "@tasteBitternessHigh": {
+    "description": "Label at the high end of the taste slider for how bitter the coffee tastes"
+  },
+  "tasteBody": "Body",
+  "@tasteBody": {
+    "description": "Name of the taste slider for how heavy the coffee feels in the mouth"
+  },
+  "tasteBodyLow": "Thin",
+  "@tasteBodyLow": {
+    "description": "Label at the low end of the taste slider for how heavy the coffee feels in the mouth"
+  },
+  "tasteBodyHigh": "Heavy",
+  "@tasteBodyHigh": {
+    "description": "Label at the high end of the taste slider for how heavy the coffee feels in the mouth"
+  },
+  "tasteAstringency": "Astringency",
+  "@tasteAstringency": {
+    "description": "Name of the taste slider for how dry and puckering the finish feels"
+  },
+  "tasteAstringencyLow": "Smooth",
+  "@tasteAstringencyLow": {
+    "description": "Label at the low end of the taste slider for how dry and puckering the finish feels"
+  },
+  "tasteAstringencyHigh": "Drying",
+  "@tasteAstringencyHigh": {
+    "description": "Label at the high end of the taste slider for how dry and puckering the finish feels"
+  },
+  "tasteOverall": "Overall",
+  "@tasteOverall": {
+    "description": "Name of the taste slider for how much the user enjoyed the coffee"
+  },
+  "tasteOverallLow": "Disliked",
+  "@tasteOverallLow": {
+    "description": "Label at the low end of the taste slider for how much the user enjoyed the coffee"
+  },
+  "tasteOverallHigh": "Loved it",
+  "@tasteOverallHigh": {
+    "description": "Label at the high end of the taste slider for how much the user enjoyed the coffee"
+  },
+  "tastingGoalLabel": "What would you change next time?",
+  "@tastingGoalLabel": {
+    "description": "Label of the text field where the user describes how they want the next brew to taste"
+  },
+  "tastingGoalHint": "For example: a little sweeter, with less bitterness.",
+  "@tastingGoalHint": {
+    "description": "Hint text in the empty tasting goal field"
   }
 }

@@ -571,6 +571,168 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Target'**
   String get brewSummaryTargetHeader;
+
+  /// Heading of the card on the feedback screen where the user describes how the brew tasted
+  ///
+  /// In en, this message translates to:
+  /// **'Tasting notes'**
+  String get tastingNotesTitle;
+
+  /// Short explanation at the top of the tasting notes card
+  ///
+  /// In en, this message translates to:
+  /// **'Rate what you tasted. Skip anything you\'re not sure about.'**
+  String get tastingNotesIntro;
+
+  /// Shown beside a taste slider that the user has not moved yet
+  ///
+  /// In en, this message translates to:
+  /// **'Not rated'**
+  String get tastingNotRated;
+
+  /// What screen readers announce for a taste slider's value, such as "4 of 5"
+  ///
+  /// In en, this message translates to:
+  /// **'{rating} of {max}'**
+  String tastingRatingSemantics(int rating, int max);
+
+  /// Name of the taste slider for how strong and concentrated the coffee tastes
+  ///
+  /// In en, this message translates to:
+  /// **'Intensity'**
+  String get tasteIntensity;
+
+  /// Label at the low end of the taste slider for how strong and concentrated the coffee tastes
+  ///
+  /// In en, this message translates to:
+  /// **'Weak'**
+  String get tasteIntensityLow;
+
+  /// Label at the high end of the taste slider for how strong and concentrated the coffee tastes
+  ///
+  /// In en, this message translates to:
+  /// **'Strong'**
+  String get tasteIntensityHigh;
+
+  /// Name of the taste slider for how bright or sour the coffee tastes
+  ///
+  /// In en, this message translates to:
+  /// **'Acidity'**
+  String get tasteAcidity;
+
+  /// Label at the low end of the taste slider for how bright or sour the coffee tastes
+  ///
+  /// In en, this message translates to:
+  /// **'Flat'**
+  String get tasteAcidityLow;
+
+  /// Label at the high end of the taste slider for how bright or sour the coffee tastes
+  ///
+  /// In en, this message translates to:
+  /// **'Bright'**
+  String get tasteAcidityHigh;
+
+  /// Name of the taste slider for how sweet the coffee tastes
+  ///
+  /// In en, this message translates to:
+  /// **'Sweetness'**
+  String get tasteSweetness;
+
+  /// Label at the low end of the taste slider for how sweet the coffee tastes
+  ///
+  /// In en, this message translates to:
+  /// **'Not sweet'**
+  String get tasteSweetnessLow;
+
+  /// Label at the high end of the taste slider for how sweet the coffee tastes
+  ///
+  /// In en, this message translates to:
+  /// **'Very sweet'**
+  String get tasteSweetnessHigh;
+
+  /// Name of the taste slider for how bitter the coffee tastes
+  ///
+  /// In en, this message translates to:
+  /// **'Bitterness'**
+  String get tasteBitterness;
+
+  /// Label at the low end of the taste slider for how bitter the coffee tastes
+  ///
+  /// In en, this message translates to:
+  /// **'Not bitter'**
+  String get tasteBitternessLow;
+
+  /// Label at the high end of the taste slider for how bitter the coffee tastes
+  ///
+  /// In en, this message translates to:
+  /// **'Very bitter'**
+  String get tasteBitternessHigh;
+
+  /// Name of the taste slider for how heavy the coffee feels in the mouth
+  ///
+  /// In en, this message translates to:
+  /// **'Body'**
+  String get tasteBody;
+
+  /// Label at the low end of the taste slider for how heavy the coffee feels in the mouth
+  ///
+  /// In en, this message translates to:
+  /// **'Thin'**
+  String get tasteBodyLow;
+
+  /// Label at the high end of the taste slider for how heavy the coffee feels in the mouth
+  ///
+  /// In en, this message translates to:
+  /// **'Heavy'**
+  String get tasteBodyHigh;
+
+  /// Name of the taste slider for how dry and puckering the finish feels
+  ///
+  /// In en, this message translates to:
+  /// **'Astringency'**
+  String get tasteAstringency;
+
+  /// Label at the low end of the taste slider for how dry and puckering the finish feels
+  ///
+  /// In en, this message translates to:
+  /// **'Smooth'**
+  String get tasteAstringencyLow;
+
+  /// Label at the high end of the taste slider for how dry and puckering the finish feels
+  ///
+  /// In en, this message translates to:
+  /// **'Drying'**
+  String get tasteAstringencyHigh;
+
+  /// Name of the taste slider for how much the user enjoyed the coffee
+  ///
+  /// In en, this message translates to:
+  /// **'Overall'**
+  String get tasteOverall;
+
+  /// Label at the low end of the taste slider for how much the user enjoyed the coffee
+  ///
+  /// In en, this message translates to:
+  /// **'Disliked'**
+  String get tasteOverallLow;
+
+  /// Label at the high end of the taste slider for how much the user enjoyed the coffee
+  ///
+  /// In en, this message translates to:
+  /// **'Loved it'**
+  String get tasteOverallHigh;
+
+  /// Label of the text field where the user describes how they want the next brew to taste
+  ///
+  /// In en, this message translates to:
+  /// **'What would you change next time?'**
+  String get tastingGoalLabel;
+
+  /// Hint text in the empty tasting goal field
+  ///
+  /// In en, this message translates to:
+  /// **'For example: a little sweeter, with less bitterness.'**
+  String get tastingGoalHint;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {
