@@ -54,6 +54,12 @@ All of these are listed in `cupward_app/.gitignore`. Do not remove them from it,
    flutter run
    ```
 
+## Anonymous sign-in
+
+The app signs in to Firebase Authentication anonymously at launch, without asking the user for anything, so that their data can be stored under their own user ID. The Anonymous provider must be turned on for the project, in the Firebase console under **Security**, then **Authentication**, then **Sign-in method**. While it is off, sign-in fails with `operation-not-allowed`, which the app logs.
+
+Leave the automatic clean-up of anonymous accounts turned off. It deletes anonymous accounts older than 30 days, including ones that are still in use, along with the user's access to their data.
+
 ## App Check on the web
 
 App Check protects Firebase AI Logic, so the browser needs a provider too.

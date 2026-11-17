@@ -1,13 +1,13 @@
 // coverage:ignore-file
-import 'dart:io';
+import 'package:flutter/foundation.dart';
 
 /// The host address of the machine running the Firebase Emulator Suite.
 ///
 /// Debug builds that opt in to the emulators (`flutter run --dart-define=USE_FIREBASE_EMULATOR=true`) connect to this
 /// host instead of the cloud.
 ///
-/// Desktop builds run on the same machine as the emulators, so they use `localhost`. Physical devices and Android
-/// emulators must reach the development machine over the network. Android and iOS emulators can use `10.0.2.2`;
+/// Desktop builds and browsers run on the same machine as the emulators, so they use `localhost`. Physical devices and
+/// Android emulators must reach the development machine over the network. Android emulators can use `10.0.2.2`;
 /// physical devices need the development machine's LAN IP address. Override it at launch to avoid committing a
 /// personal IP:
 ///
@@ -21,6 +21,10 @@ import 'dart:io';
 ///
 /// The device and the development machine must be on the same network, and the machine's firewall must allow incoming
 /// connections to the emulator ports (Auth 9099, Firestore 8080).
+///
+/// The platform is read from `defaultTargetPlatform` rather than `dart:io`, so this also compiles for the web.
 final String devMachineIP = const String.fromEnvironment('EMULATOR_HOST').isNotEmpty
     ? const String.fromEnvironment('EMULATOR_HOST')
-    : (Platform.isMacOS || Platform.isIOS ? 'localhost' : '10.0.2.2');
+    : (kIsWeb || defaultTargetPlatform == TargetPlatform.macOS || defaultTargetPlatform == TargetPlatform.iOS
+        ? 'localhost'
+        : '10.0.2.2');

@@ -1,27 +1,28 @@
+import 'dart:async';
+
 import 'package:firebase_app_check/firebase_app_check.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:material_ui/material_ui.dart';
 
 import 'app.dart';
 import 'firebase_options.dart';
+import 'services/auth/auth_service.dart';
+import 'services/firebase_emulator/dev_machine_ip.dart';
 
-/// Application entry point that initializes Firebase and runs the Flutter app.
-///
-/// Firebase is initialized first, followed by Firebase App Check, so that every Firebase service added later is
-/// protected from the first request. All other application configuration is handled by the Cupward widget in
-/// `app.dart`.
-///
-/// When running the app in debug mode, the Firebase Emulator Suite should be used since debug builds are not signed
-/// the same way as release builds and the normal Firebase App Check authentication will fail with debug builds. To
-/// run the app using the Firebase Emulator Suite, use `--dart-define=USE_FIREBASE_EMULATOR=true`. The Firebase
-/// Emulator Suite will use the IP address for the machine on which the Firebase Emulator Suite is running from
-/// _services/firebase_emulator/dev_machine_ip.dart_, defined by `devMachineIP`.
 /// The reCAPTCHA Enterprise site key used by App Check in release builds on the web.
 ///
 /// It is supplied at build time with `--dart-define=RECAPTCHA_SITE_KEY=<key>` so that it is not committed. The site key
 /// is not a secret, because it is sent to every browser, but each environment registers its own.
 const String _recaptchaSiteKey = String.fromEnvironment('RECAPTCHA_SITE_KEY');
+
+/// Whether debug builds connect to the local Firebase Emulator Suite, set with
+/// `--dart-define=USE_FIREBASE_EMULATOR=true`. It is false when the flag is not given.
+const bool _useFirebaseEmulator = bool.fromEnvironment('USE_FIREBASE_EMULATOR');
+
+/// The port of the Auth emulator, matching `cupward_cloud/firebase.json`.
+const int _authEmulatorPort = 9099;
 
 /// The App Check provider for release builds on the web, or null when no site key was supplied.
 ///
@@ -30,6 +31,17 @@ const String _recaptchaSiteKey = String.fromEnvironment('RECAPTCHA_SITE_KEY');
 WebProvider? get _releaseWebProvider =>
     _recaptchaSiteKey.isEmpty ? null : ReCaptchaEnterpriseProvider(_recaptchaSiteKey);
 
+/// Application entry point that initializes Firebase and runs the Flutter app.
+///
+/// Firebase is initialized first, followed by Firebase App Check, so that every Firebase service added later is
+/// protected from the first request. In debug builds launched with `--dart-define=USE_FIREBASE_EMULATOR=true`, Firebase
+/// Auth then connects to the local Firebase Emulator Suite, at the host given by `devMachineIP` in
+/// _services/firebase_emulator/dev_machine_ip.dart_. Firebase AI Logic has no emulator, so AI requests still reach the
+/// cloud.
+///
+/// Last, the app starts signing in anonymously through `AuthService`. It does not wait for the result, so a launch
+/// without a network is not held up. Code that needs the user waits for it then. All other application configuration
+/// is handled by the Cupward widget in `app.dart`.
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -49,6 +61,24 @@ Future<void> main() async {
   } else {
     await FirebaseAppCheck.instance.activate(providerWeb: _releaseWebProvider);
   }
+
+  // Connect to the local emulators before any Auth call, because the SDK cannot switch once it has been used.
+  if (kDebugMode && _useFirebaseEmulator) {
+    try {
+      await FirebaseAuth.instance.useAuthEmulator(devMachineIP, _authEmulatorPort);
+      debugPrint('Using the Firebase Auth emulator at $devMachineIP:$_authEmulatorPort');
+    } on Object catch (error) {
+      debugPrint('Could not connect to the Firebase emulators: $error');
+    }
+  }
+
+  // Sign in anonymously in the background. A failure is logged and tried again by the first code that needs the user.
+  unawaited(
+    AuthService.instance.ensureSignedIn().then<void>(
+          (String userId) {},
+          onError: (Object error) => debugPrint('Sign-in at launch failed: $error'),
+        ),
+  );
 
   // Run the app.
   runApp(
