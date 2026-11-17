@@ -9,6 +9,7 @@ import 'package:cupward/screens/brew/brew_route.dart';
 import 'package:cupward/screens/brew/components/brew_action_button.dart';
 import 'package:cupward/screens/brew/components/scale_panel.dart';
 import 'package:cupward/screens/feedback/feedback_route.dart';
+import 'package:cupward/screens/new_recipe/new_recipe_route.dart';
 import 'package:cupward/services/scale/scale_service.dart';
 import 'package:cupward/theme/cupward_colors.dart';
 import 'package:flutter_bookoo/flutter_bookoo.dart';
@@ -127,6 +128,36 @@ void main() {
     await tester.tap(find.text('open'));
     await tester.pumpAndSettle();
   }
+
+  group('recipe menu', () {
+    /// The corner menu offers a new recipe, and returns to the brew afterwards.
+    testWidgets('opens the new recipe screen from the recipe card', (WidgetTester tester) async {
+      // Arrange
+      await showWith(tester, ScaleService(isSupported: false));
+
+      // Act
+      await tester.tap(find.byTooltip('Recipe options'));
+      await tester.pumpAndSettle();
+
+      // Assert
+      expect(find.text('New recipe'), findsOneWidget);
+
+      // Act
+      await tester.tap(find.text('New recipe'));
+      await tester.pumpAndSettle();
+
+      // Assert
+      expect(find.byType(NewRecipeRoute), findsOneWidget);
+      expect(find.text('New Recipe'), findsOneWidget);
+
+      // Act
+      tester.state<NavigatorState>(find.byType(Navigator)).pop();
+      await tester.pumpAndSettle();
+
+      // Assert
+      expect(find.text('STEP 1 OF 6'), findsOneWidget);
+    });
+  });
 
   group('main action button', () {
     /// Each phase kind has its own label, and the button walks the brew from the first step to the last.

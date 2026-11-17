@@ -79,6 +79,8 @@ void main() {
 
       // Assert
       expect(find.byType(RecipeSummaryCard), findsOneWidget);
+      // The recipe menu belongs to the brewing screen, not the review of a finished brew.
+      expect(find.byTooltip('Recipe options'), findsNothing);
       expect(find.text('Your brew'), findsOneWidget);
       expect(find.text('3:12'), findsOneWidget);
       expect(find.text('Target 3:00'), findsOneWidget);

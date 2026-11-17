@@ -735,5 +735,21 @@
   "suggestionApplyFailed": "Couldn't update your recipe. Try again.",
   "@suggestionApplyFailed": {
     "description": "Brief message when saving a suggested change to the recipe failed"
+  },
+  "recipeMenuTooltip": "Recipe options",
+  "@recipeMenuTooltip": {
+    "description": "Tooltip and screen reader label of the menu button in the corner of the recipe card on the brewing screen"
+  },
+  "recipeMenuNewRecipe": "New recipe",
+  "@recipeMenuNewRecipe": {
+    "description": "Menu item that opens the screen for creating a new recipe"
+  },
+  "newRecipeTitle": "New Recipe",
+  "@newRecipeTitle": {
+    "description": "Title of the screen for creating a new recipe"
+  },
+  "newRecipePlaceholder": "Creating a recipe will happen here.",
+  "@newRecipePlaceholder": {
+    "description": "Temporary text on the screen for creating a new recipe, shown until the screen is built"
   }
 }

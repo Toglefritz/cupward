@@ -495,4 +495,16 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get suggestionApplyFailed => 'Couldn\'t update your recipe. Try again.';
+
+  @override
+  String get recipeMenuTooltip => 'Recipe options';
+
+  @override
+  String get recipeMenuNewRecipe => 'New recipe';
+
+  @override
+  String get newRecipeTitle => 'New Recipe';
+
+  @override
+  String get newRecipePlaceholder => 'Creating a recipe will happen here.';
 }

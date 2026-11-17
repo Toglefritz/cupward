@@ -11,7 +11,7 @@ import 'package:material_ui/material_ui.dart';
 /// rules behind them. The card is shown on its own, with the app's colors extension and English strings.
 void main() {
   /// Shows [recipe] in the card at the given screen [width].
-  Future<void> showCard(WidgetTester tester, BrewRecipe recipe, {double width = 412}) async {
+  Future<void> showCard(WidgetTester tester, BrewRecipe recipe, {double width = 412, Widget? menu}) async {
     tester.view.physicalSize = Size(width, 600);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
@@ -21,7 +21,7 @@ void main() {
         theme: ThemeData(extensions: const <ThemeExtension<dynamic>>[CupwardColors.light]),
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
-        home: Scaffold(body: RecipeSummaryCard(recipe: recipe)),
+        home: Scaffold(body: RecipeSummaryCard(recipe: recipe, menu: menu)),
       ),
     );
   }
@@ -51,6 +51,27 @@ void main() {
         await showCard(tester, BuiltInRecipes.v60PourOver, width: width);
 
         expect(tester.takeException(), isNull, reason: 'width $width');
+      }
+    });
+
+    /// The menu sits in the corner over the card's padding, without overflowing or covering the name.
+    testWidgets('fits a menu in its corner', (WidgetTester tester) async {
+      for (final double width in <double>[320, 412, 768, 1024]) {
+        // Act
+        await showCard(
+          tester,
+          BuiltInRecipes.v60PourOver,
+          width: width,
+          menu: IconButton(key: const Key('menu'), icon: const Icon(Icons.more_horiz), onPressed: () {}),
+        );
+
+        // Assert
+        expect(tester.takeException(), isNull, reason: 'width $width');
+        final Rect card = tester.getRect(find.byType(RecipeSummaryCard));
+        final Rect menu = tester.getRect(find.byKey(const Key('menu')));
+        final Rect name = tester.getRect(find.text('V60 Pour Over'));
+        expect(menu.topRight, card.topRight, reason: 'width $width');
+        expect(name.overlaps(menu), isFalse, reason: 'width $width');
       }
     });
   });

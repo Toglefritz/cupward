@@ -10,13 +10,15 @@ import 'components/brew_phase_indicator.dart';
 import 'components/brew_phase_labels.dart';
 import 'components/brew_step_heading.dart';
 import 'components/brew_step_illustration.dart';
+import 'components/recipe_menu_button.dart';
 import 'components/scale_panel.dart';
 
 /// Layout for the brewing screen. Contains no logic.
 ///
-/// The recipe summary card sits at the top of a content column of limited width, and the phase indicator, the current step's heading, its illustration, and the scale panel follow it. The scale
-/// panel is left out on platforms that cannot use a scale, such as the web. The main action button is pinned below
-/// the scrolling content, so it stays in reach however tall the content is.
+/// The recipe summary card sits at the top of a content column of limited width, with the recipe menu in its corner.
+/// The phase indicator, the current step's heading, its illustration, and the scale panel follow it. The scale panel is
+/// left out on platforms that cannot use a scale, such as the web. The main action button is pinned below the
+/// scrolling content, so it stays in reach however tall the content is.
 class BrewView extends StatelessWidget {
   /// Creates the view for [state].
   const BrewView(this.state, {super.key});
@@ -40,7 +42,10 @@ class BrewView extends StatelessWidget {
                   child: ListView(
                     padding: const EdgeInsets.fromLTRB(Insets.small, Insets.xSmall, Insets.small, Insets.small),
                     children: <Widget>[
-                      RecipeSummaryCard(recipe: state.recipe),
+                      RecipeSummaryCard(
+                        recipe: state.recipe,
+                        menu: RecipeMenuButton(onNewRecipePressed: state.onNewRecipePressed),
+                      ),
                       Padding(
                         padding: const EdgeInsets.only(top: Insets.small),
                         child: BrewPhaseIndicator(phases: state.recipe.phases, currentIndex: state.currentPhaseIndex),

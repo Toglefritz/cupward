@@ -10,11 +10,19 @@ import 'recipe_stats_row.dart';
 /// On a wide screen the name sits on the left and the targets on the right, separated by a rule, as one row. On a
 /// narrow screen there is not enough room for both, so the name sits above the targets instead.
 class RecipeSummaryCard extends StatelessWidget {
-  /// Creates the card for [recipe].
-  const RecipeSummaryCard({required this.recipe, super.key});
+  /// Creates the card for [recipe], with an optional [menu] in its top-right corner.
+  const RecipeSummaryCard({required this.recipe, this.menu, super.key});
 
   /// The recipe shown.
   final BrewRecipe recipe;
+
+  /// A button that opens a menu of actions for the recipe, shown in the card's top-right corner, or null for none.
+  ///
+  /// It is drawn over the card's padding, so it does not change the card's size. The name is kept clear of it.
+  final Widget? menu;
+
+  /// The space kept beside the name for the [menu], so a long name does not run under it.
+  static const double _menuClearance = 40;
 
   /// The narrowest card width at which the name and the targets fit side by side.
   static const double _sideBySideMinWidth = 600;
@@ -27,6 +35,7 @@ class RecipeSummaryCard extends StatelessWidget {
     final ThemeData theme = context.theme;
     final Color ruleColor = context.cupwardColors.cardBorder;
 
+    final Widget? menuButton = menu;
     final Widget title = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
@@ -63,42 +72,50 @@ class RecipeSummaryCard extends StatelessWidget {
           ),
         ],
       ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: Insets.medium, vertical: Insets.small),
-        child: LayoutBuilder(
-          builder: (BuildContext context, BoxConstraints constraints) {
-            if (constraints.maxWidth >= _sideBySideMinWidth) {
-              return IntrinsicHeight(
-                child: Row(
+      child: Stack(
+        children: <Widget>[
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: Insets.medium, vertical: Insets.small),
+            child: LayoutBuilder(
+              builder: (BuildContext context, BoxConstraints constraints) {
+                if (constraints.maxWidth >= _sideBySideMinWidth) {
+                  return IntrinsicHeight(
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: <Widget>[
+                        Expanded(
+                          flex: 2,
+                          child: Align(alignment: Alignment.centerLeft, child: title),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: Insets.small),
+                          child: VerticalDivider(width: 1, color: ruleColor),
+                        ),
+                        Expanded(flex: 5, child: RecipeStatsRow(recipe: recipe)),
+                      ],
+                    ),
+                  );
+                }
+
+                return Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: <Widget>[
-                    Expanded(
-                      flex: 2,
-                      child: Align(alignment: Alignment.centerLeft, child: title),
+                    Padding(
+                      padding: EdgeInsets.only(right: menuButton == null ? 0 : _menuClearance),
+                      child: title,
                     ),
                     Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: Insets.small),
-                      child: VerticalDivider(width: 1, color: ruleColor),
+                      padding: const EdgeInsets.symmetric(vertical: Insets.small),
+                      child: Divider(color: ruleColor),
                     ),
-                    Expanded(flex: 5, child: RecipeStatsRow(recipe: recipe)),
+                    RecipeStatsRow(recipe: recipe),
                   ],
-                ),
-              );
-            }
-
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: <Widget>[
-                title,
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: Insets.small),
-                  child: Divider(color: ruleColor),
-                ),
-                RecipeStatsRow(recipe: recipe),
-              ],
-            );
-          },
-        ),
+                );
+              },
+            ),
+          ),
+          if (menuButton != null) Positioned(top: 0, right: 0, child: menuButton),
+        ],
       ),
     );
   }

@@ -14,6 +14,7 @@ import '../../services/brew/phase_advance_tracker.dart';
 import '../../services/scale/scale_connection_status.dart';
 import '../../services/scale/scale_service.dart';
 import '../feedback/feedback_route.dart';
+import '../new_recipe/new_recipe_route.dart';
 import 'brew_route.dart';
 import 'brew_view.dart';
 import 'components/scale_picker_sheet.dart';
@@ -282,6 +283,15 @@ class BrewController extends State<BrewRoute> {
       }
     }
     setState(_advance);
+  }
+
+  /// Handles "New recipe" in the recipe menu by opening the screen for creating a recipe. The brew stays as it is
+  /// underneath, so going back returns to it.
+  Future<void> onNewRecipePressed() async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute<void>(builder: (BuildContext context) => const NewRecipeRoute()),
+    );
   }
 
   /// Handles a tap on Tare by zeroing the scale, and briefly says so if the command could not be sent.

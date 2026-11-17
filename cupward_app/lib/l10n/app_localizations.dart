@@ -973,6 +973,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Couldn\'t update your recipe. Try again.'**
   String get suggestionApplyFailed;
+
+  /// Tooltip and screen reader label of the menu button in the corner of the recipe card on the brewing screen
+  ///
+  /// In en, this message translates to:
+  /// **'Recipe options'**
+  String get recipeMenuTooltip;
+
+  /// Menu item that opens the screen for creating a new recipe
+  ///
+  /// In en, this message translates to:
+  /// **'New recipe'**
+  String get recipeMenuNewRecipe;
+
+  /// Title of the screen for creating a new recipe
+  ///
+  /// In en, this message translates to:
+  /// **'New Recipe'**
+  String get newRecipeTitle;
+
+  /// Temporary text on the screen for creating a new recipe, shown until the screen is built
+  ///
+  /// In en, this message translates to:
+  /// **'Creating a recipe will happen here.'**
+  String get newRecipePlaceholder;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {
