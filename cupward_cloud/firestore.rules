@@ -1,10 +1,56 @@
 rules_version = '2';
 
-// Deny all client access by default. Add explicit rules as collections are introduced.
+// Cupward's clients talk to Firestore directly, so these rules are the only check on what they read and write.
+// Anything not allowed below is denied.
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /{document=**} {
-      allow read, write: if false;
+
+    // A user's brew recipes. The user ID comes from Firebase Authentication (anonymous sign-in), and the recipe ID is
+    // derived from the recipe's name by the app (RecipeIds.fromName), so each of a user's recipes has a unique name.
+    match /users/{userId}/recipes/{recipeId} {
+      allow read: if isOwner(userId);
+
+      // New recipes are stamped with the server's time as their creation time.
+      allow create: if isOwner(userId)
+        && isValidRecipe(recipeId)
+        && request.resource.data.createdAt == request.time;
+
+      // Changes keep the original creation time.
+      allow update: if isOwner(userId)
+        && isValidRecipe(recipeId)
+        && request.resource.data.createdAt == resource.data.createdAt;
+
+      allow delete: if isOwner(userId);
+    }
+
+    // Whether the signed-in user is the one whose data is at [userId].
+    function isOwner(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
+
+    // Whether the recipe being written has the shape of BrewRecipe.toJson plus the stored metadata, and sensible
+    // values. The phases are only checked to be a short, non-empty list, because rules cannot look inside each one.
+    function isValidRecipe(recipeId) {
+      let recipe = request.resource.data;
+      return recipe.keys().hasOnly([
+          'id', 'name', 'profile', 'coffeeGrams', 'waterGrams', 'brewTimeSeconds', 'yieldMilliliters', 'phases',
+          'schemaVersion', 'createdAt', 'updatedAt'
+        ])
+        && recipe.keys().hasAll([
+          'id', 'name', 'profile', 'coffeeGrams', 'waterGrams', 'brewTimeSeconds', 'yieldMilliliters', 'phases',
+          'schemaVersion', 'createdAt', 'updatedAt'
+        ])
+        && recipe.id == recipeId
+        && recipeId.size() <= 60
+        && recipe.name is string && recipe.name.size() > 0 && recipe.name.size() <= 60
+        && recipe.profile is string && recipe.profile.size() <= 80
+        && recipe.coffeeGrams is number && recipe.coffeeGrams > 0 && recipe.coffeeGrams <= 200
+        && recipe.waterGrams is number && recipe.waterGrams > 0 && recipe.waterGrams <= 5000
+        && recipe.brewTimeSeconds is int && recipe.brewTimeSeconds > 0 && recipe.brewTimeSeconds <= 86400
+        && recipe.yieldMilliliters is number && recipe.yieldMilliliters > 0 && recipe.yieldMilliliters <= 5000
+        && recipe.phases is list && recipe.phases.size() > 0 && recipe.phases.size() <= 30
+        && recipe.schemaVersion == 1
+        && recipe.updatedAt == request.time;
     }
   }
 }

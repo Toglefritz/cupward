@@ -34,6 +34,7 @@ The scale connects over Bluetooth on Android, iOS, and macOS, which ask for Blue
 - **Firebase AI Logic** for hybrid on-device and cloud inference.
 - **Firebase App Check** for protecting backend access.
 - **Firebase Authentication** for signing in anonymously at launch, so each install's data belongs to its own user without an account to create.
+- **Cloud Firestore** for storing each user's brew recipes, accessed directly from the app and protected by the security rules in [`cupward_cloud`](../cupward_cloud/README.md).
 - **Bluetooth Low Energy (BLE)** for communicating with the BOOKOO Themis Ultra scale.
 
 ## Getting Started
@@ -51,7 +52,7 @@ To run against the local Firebase Emulator Suite in debug builds, start the emul
 flutter run --dart-define=USE_FIREBASE_EMULATOR=true
 ```
 
-Firebase Authentication then uses the Auth emulator. Firebase AI Logic has no emulator, so AI requests still reach the cloud.
+Firebase Authentication and Cloud Firestore then use their emulators. Firebase AI Logic has no emulator, so AI requests still reach the cloud.
 
 ## Architecture
 

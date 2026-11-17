@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -24,6 +25,9 @@ const bool _useFirebaseEmulator = bool.fromEnvironment('USE_FIREBASE_EMULATOR');
 /// The port of the Auth emulator, matching `cupward_cloud/firebase.json`.
 const int _authEmulatorPort = 9099;
 
+/// The port of the Firestore emulator, matching `cupward_cloud/firebase.json`.
+const int _firestoreEmulatorPort = 8080;
+
 /// The App Check provider for release builds on the web, or null when no site key was supplied.
 ///
 /// Without a provider, App Check is not activated in the browser, and Firebase services that enforce App Check reject
@@ -35,7 +39,7 @@ WebProvider? get _releaseWebProvider =>
 ///
 /// Firebase is initialized first, followed by Firebase App Check, so that every Firebase service added later is
 /// protected from the first request. In debug builds launched with `--dart-define=USE_FIREBASE_EMULATOR=true`, Firebase
-/// Auth then connects to the local Firebase Emulator Suite, at the host given by `devMachineIP` in
+/// Auth and Cloud Firestore then connect to the local Firebase Emulator Suite, at the host given by `devMachineIP` in
 /// _services/firebase_emulator/dev_machine_ip.dart_. Firebase AI Logic has no emulator, so AI requests still reach the
 /// cloud.
 ///
@@ -62,11 +66,12 @@ Future<void> main() async {
     await FirebaseAppCheck.instance.activate(providerWeb: _releaseWebProvider);
   }
 
-  // Connect to the local emulators before any Auth call, because the SDK cannot switch once it has been used.
+  // Connect to the local emulators before any Auth or Firestore call, because the SDKs cannot switch once used.
   if (kDebugMode && _useFirebaseEmulator) {
     try {
       await FirebaseAuth.instance.useAuthEmulator(devMachineIP, _authEmulatorPort);
-      debugPrint('Using the Firebase Auth emulator at $devMachineIP:$_authEmulatorPort');
+      FirebaseFirestore.instance.useFirestoreEmulator(devMachineIP, _firestoreEmulatorPort);
+      debugPrint('Using the Firebase emulators at $devMachineIP');
     } on Object catch (error) {
       debugPrint('Could not connect to the Firebase emulators: $error');
     }

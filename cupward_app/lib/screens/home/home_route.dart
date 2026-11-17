@@ -1,5 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 import '../../services/on_device_model/on_device_model_service.dart';
+import '../../services/recipes/recipe_repository.dart';
 import 'home_controller.dart';
 
 /// Landing screen shown when the app first loads.
@@ -10,11 +11,15 @@ import 'home_controller.dart';
 class HomeRoute extends StatefulWidget {
   /// Creates the home route widget.
   ///
-  /// [modelService] defaults to the app's shared `OnDeviceModelService.instance`. Tests supply their own.
-  const HomeRoute({this.modelService, super.key});
+  /// [modelService] defaults to the app's shared `OnDeviceModelService.instance`, and [recipeRepository] to
+  /// `RecipeRepository.instance`. Tests supply their own.
+  const HomeRoute({this.modelService, this.recipeRepository, super.key});
 
   /// The service that checks and downloads the on-device model, or null to use the app's shared one.
   final OnDeviceModelService? modelService;
+
+  /// The repository that stores the user's recipes, or null to use the app's shared one.
+  final RecipeRepository? recipeRepository;
 
   @override
   State<HomeRoute> createState() => HomeController();
