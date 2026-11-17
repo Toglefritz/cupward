@@ -19,7 +19,7 @@ import 'home_view.dart';
 /// It also starts loading the user's recipe from [RecipeRepository]. The first time, the built-in recipe is saved as
 /// the user's own copy, so that later changes to it are kept. Starting a brew waits for the load, which falls back to
 /// the built-in recipe if the stored one cannot be reached. When the user comes back from a brew, the recipe is loaded
-/// again, because the brew may have ended with a suggestion saved to it.
+/// again, because the brew may have ended with a suggestion saved to it, or the user may have chosen a new recipe.
 class HomeController extends State<HomeRoute> {
   /// The service that checks and downloads the on-device model.
   OnDeviceModelService get modelService => widget.modelService ?? OnDeviceModelService.instance;
@@ -32,7 +32,7 @@ class HomeController extends State<HomeRoute> {
 
   /// Starts loading the user's recipe.
   void _loadRecipe() {
-    _recipe = recipeRepository.fetchOrCreate(BuiltInRecipes.defaultRecipe);
+    _recipe = recipeRepository.fetchSelected(BuiltInRecipes.defaultRecipe);
   }
 
   @override

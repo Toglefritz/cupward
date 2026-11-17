@@ -1,7 +1,12 @@
 import 'package:material_ui/material_ui.dart';
 
 import '../../models/recipes/brew_method.dart';
+import '../../models/recipes/brew_recipe.dart';
 import '../../models/recipes/new_recipe_request.dart';
+import '../../services/recipe_generation/recipe_generation_exception.dart';
+import '../../services/recipe_generation/recipe_generation_failure.dart';
+import '../../services/recipe_generation/recipe_generation_service.dart';
+import 'models/new_recipe_status.dart';
 import 'new_recipe_route.dart';
 import 'new_recipe_view.dart';
 
@@ -10,7 +15,21 @@ import 'new_recipe_view.dart';
 /// The controller holds the form: the chosen [selectedMethod], and the taste preferences in [preferencesController],
 /// which the text field edits directly. The form is complete once a method is chosen and the preferences are not
 /// blank, and [request] then describes what the user asked for.
+///
+/// "Create recipe" sends the request to the hybrid AI system. While it runs, [status] is [NewRecipeStatus.creating]
+/// and the screen shows progress in place of the form. When the recipe is saved, the screen closes with it as its
+/// result. If it fails, [status] is [NewRecipeStatus.failed] with the reason in [failure], and the form keeps what the
+/// user entered.
 class NewRecipeController extends State<NewRecipeRoute> {
+  /// The service that creates and saves the recipe, created once for the life of the screen.
+  late final RecipeGenerationService _service = widget.generationService ?? RecipeGenerationService();
+
+  /// Where the screen stands.
+  NewRecipeStatus status = NewRecipeStatus.editing;
+
+  /// Why the last attempt failed, or null if it did not.
+  RecipeGenerationFailure? failure;
+
   /// The chosen brewing method, or null if none has been chosen.
   BrewMethod? selectedMethod;
 
@@ -67,9 +86,40 @@ class NewRecipeController extends State<NewRecipeRoute> {
     preferencesFocus.requestFocus();
   }
 
-  /// Handles a tap on "Create recipe". The form's [request] is complete when this is called.
-  void onCreatePressed() {
+  /// Handles a tap on "Create recipe", or on Try again after a failure, by creating the recipe the form describes.
+  Future<void> onCreatePressed() async {
+    final NewRecipeRequest? current = request;
+    if (current == null || status == NewRecipeStatus.creating) {
+      return;
+    }
+
     FocusScope.of(context).unfocus();
+    setState(() {
+      status = NewRecipeStatus.creating;
+      failure = null;
+    });
+
+    try {
+      final BrewRecipe recipe = await _service.createRecipe(current);
+      if (mounted) {
+        Navigator.pop(context, recipe);
+      }
+    } on RecipeGenerationException catch (error) {
+      if (mounted) {
+        setState(() {
+          status = NewRecipeStatus.failed;
+          failure = error.failure;
+        });
+      }
+    }
+  }
+
+  /// Handles a tap on Edit after a failure by returning to the form, with what the user entered.
+  void onEditPressed() {
+    setState(() {
+      status = NewRecipeStatus.editing;
+      failure = null;
+    });
   }
 
   @override

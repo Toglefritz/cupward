@@ -156,5 +156,34 @@ void main() {
       // Assert
       expect(result, same(recipe));
     });
+
+    /// After the user chooses a recipe, later brews load it instead of the built-in one.
+    test('loads the chosen recipe', () async {
+      // Arrange
+      final BrewRecipe chosen = recipe.copyWith(id: 'house-blend', name: 'House Blend', coffeeGrams: 18);
+      await repository.create(chosen);
+
+      // Act
+      final BrewRecipe before = await repository.fetchSelected(recipe);
+      repository.select(chosen);
+      final BrewRecipe after = await repository.fetchSelected(recipe);
+
+      // Assert
+      expect(before.id, recipe.id);
+      expect(after.id, 'house-blend');
+      expect(after.coffeeGrams, 18);
+    });
+
+    /// A chosen recipe that has gone falls back to the built-in recipe, so a brew can always start.
+    test('falls back when the chosen recipe is gone', () async {
+      // Arrange
+      repository.select(recipe.copyWith(id: 'gone', name: 'Gone'));
+
+      // Act
+      final BrewRecipe result = await repository.fetchSelected(recipe);
+
+      // Assert
+      expect(result.id, recipe.id);
+    });
   });
 }

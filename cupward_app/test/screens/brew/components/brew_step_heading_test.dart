@@ -32,6 +32,29 @@ void main() {
     );
   }
 
+  /// An immersion recipe's steep is named and explained like the other steps, in one short sentence.
+  test('labels the steep step', () {
+    // Arrange
+    final AppLocalizations strings = AppLocalizationsEn();
+    const List<BrewPhase> phases = <BrewPhase>[
+      BrewPhase(id: 'prepare', kind: BrewPhaseKind.prepare),
+      BrewPhase(id: 'pour-1', kind: BrewPhaseKind.pour, targetWeightGrams: 300),
+      BrewPhase(id: 'steep', kind: BrewPhaseKind.steep, duration: Duration(minutes: 4)),
+      BrewPhase(id: 'complete', kind: BrewPhaseKind.complete),
+    ];
+
+    // Act
+    final String instructions = BrewPhaseLabels.instructionsFor(phases, 2, strings);
+
+    // Assert
+    expect(BrewPhaseLabels.labelFor(phases, 2, strings), 'Steep');
+    expect(BrewPhaseLabels.titleFor(phases, 2, strings), 'Steep');
+    expect(BrewPhaseLabels.actionLabelFor(phases, 2, strings), 'Next step');
+    expect(BrewPhaseLabels.imageFor(phases, 2), BrewStepImage.bloom);
+    expect(instructions.length, lessThanOrEqualTo(80));
+    expect('.'.allMatches(instructions), hasLength(1));
+  });
+
   group('BrewPhaseLabels', () {
     /// Each phase needs its own title, and pours are numbered among the pours only.
     test('gives every phase a title', () {

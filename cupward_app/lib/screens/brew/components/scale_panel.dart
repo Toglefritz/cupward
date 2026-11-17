@@ -18,7 +18,8 @@ import 'scale_weight_reading.dart';
 /// * On the left, the connection status, with the battery level under it once the scale reports one.
 /// * In the middle, the live weight.
 /// * On the right, the one thing relevant to the current phase. While setting up, that is a Tare button. While water is
-///   poured, in the bloom and the pours, it is the flow rate. Once the brew is complete, nothing is shown there.
+///   poured, in the bloom and the pours, it is the flow rate. While the coffee steeps, and once the brew is complete,
+///   nothing is shown there.
 ///
 /// Until a scale is connected, the right side holds a "Find scale" button instead, or a progress indicator while
 /// connecting. The brewing screen leaves the panel out where scales cannot be used, such as in a web browser. If it is
@@ -180,6 +181,7 @@ class ScalePanel extends StatelessWidget {
           case BrewPhaseKind.bloom:
           case BrewPhaseKind.pour:
             return ScaleFlowReading(gramsPerSecond: latest?.flowRateGramsPerSecond);
+          case BrewPhaseKind.steep:
           case BrewPhaseKind.complete:
             return null;
         }

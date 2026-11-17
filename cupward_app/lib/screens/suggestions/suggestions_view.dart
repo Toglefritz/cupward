@@ -1,5 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 
+import '../../components/status_card.dart';
 import '../../l10n/app_localizations.dart';
 import '../../models/feedback/brew_feedback.dart';
 import '../../models/feedback/recipe_suggestion.dart';
@@ -9,7 +10,6 @@ import '../../theme/insets.dart';
 import 'components/alternative_suggestion_card.dart';
 import 'components/primary_suggestion_card.dart';
 import 'components/suggestion_apply_button.dart';
-import 'components/suggestions_status_card.dart';
 import 'components/suggestions_summary_card.dart';
 import 'models/suggestions_status.dart';
 import 'suggestions_controller.dart';
@@ -80,7 +80,7 @@ class SuggestionsView extends StatelessWidget {
     switch (state.status) {
       case SuggestionsStatus.loading:
         return <Widget>[
-          SuggestionsStatusCard(
+          StatusCard(
             title: strings.suggestionsLoadingTitle,
             message: strings.suggestionsLoadingMessage,
             isBusy: true,
@@ -88,7 +88,7 @@ class SuggestionsView extends StatelessWidget {
         ];
       case SuggestionsStatus.failed:
         return <Widget>[
-          SuggestionsStatusCard(
+          StatusCard(
             title: strings.suggestionsErrorTitle,
             message: messageFor(failure ?? BrewFeedbackFailure.requestFailed, strings),
             action: failure == BrewFeedbackFailure.unsupported

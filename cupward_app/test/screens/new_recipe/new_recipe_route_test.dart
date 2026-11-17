@@ -1,15 +1,32 @@
+import 'dart:async';
+
 import 'package:cupward/l10n/app_localizations.dart';
 import 'package:cupward/models/recipes/brew_method.dart';
+import 'package:cupward/models/recipes/brew_recipe.dart';
 import 'package:cupward/models/recipes/new_recipe_request.dart';
 import 'package:cupward/screens/new_recipe/components/brew_method_card.dart';
 import 'package:cupward/screens/new_recipe/new_recipe_controller.dart';
 import 'package:cupward/screens/new_recipe/new_recipe_route.dart';
+import 'package:cupward/services/auth/auth_service.dart';
+import 'package:cupward/services/recipe_generation/recipe_generation_service.dart';
+import 'package:cupward/services/recipes/recipe_repository.dart';
 import 'package:cupward/theme/cupward_colors.dart';
+import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
+import 'package:firebase_hybrid_ai/firebase_hybrid_ai.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../../services/brew_feedback/brew_feedback_fixtures.dart';
+import '../../services/recipe_generation/recipe_generation_fixtures.dart';
+
 /// The screen's own scrolling list, rather than the one inside the text field.
 final Finder _page = find.byType(Scrollable).first;
+
+/// An auth service that is already signed in, without Firebase.
+class _SignedInAuth extends AuthService {
+  @override
+  Future<String> ensureSignedIn() async => 'tester';
+}
 
 /// Verifies the new recipe form: choosing a method, describing a taste, and when a recipe can be created.
 void main() {
@@ -126,6 +143,121 @@ void main() {
         await tester.pump();
         expect(tester.takeException(), isNull, reason: 'width $width');
       }
+    });
+  });
+
+  group('creating a recipe', () {
+    late FakeStructuredHybridAi hybridAi;
+    late RecipeGenerationService service;
+
+    setUp(() {
+      hybridAi = FakeStructuredHybridAi();
+      service = RecipeGenerationService(
+        hybridAi: hybridAi,
+        recipes: RecipeRepository(firestore: FakeFirebaseFirestore(), auth: _SignedInAuth()),
+        isSupported: true,
+      );
+    });
+
+    /// Opens the screen from another screen, and returns a completer that receives the result it closes with.
+    Future<Completer<BrewRecipe?>> openScreen(WidgetTester tester) async {
+      final Completer<BrewRecipe?> result = Completer<BrewRecipe?>();
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: ThemeData(extensions: const <ThemeExtension<dynamic>>[CupwardColors.light]),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Builder(
+            builder: (BuildContext context) => TextButton(
+              onPressed: () async => result.complete(
+                await Navigator.push<BrewRecipe>(
+                  context,
+                  MaterialPageRoute<BrewRecipe>(
+                    builder: (BuildContext context) => NewRecipeRoute(generationService: service),
+                  ),
+                ),
+              ),
+              child: const Text('brew'),
+            ),
+          ),
+        ),
+      );
+      await tester.tap(find.text('brew'));
+      await tester.pumpAndSettle();
+      return result;
+    }
+
+    /// Fills in the form and taps Create recipe.
+    Future<void> submit(WidgetTester tester) async {
+      await tester.tap(find.text('Kalita Wave'));
+      await tester.scrollUntilVisible(find.byType(TextField), 300, scrollable: _page);
+      await tester.enterText(find.byType(TextField), 'Strong, about 350 ml.');
+      await tester.pump();
+      await tester.scrollUntilVisible(find.text('Create recipe'), 300, scrollable: _page);
+      await tester.tap(find.text('Create recipe'));
+      await tester.pump();
+    }
+
+    /// The screen shows progress while the recipe is made, then closes with the saved recipe.
+    testWidgets('shows progress, then returns the new recipe', (WidgetTester tester) async {
+      // Arrange
+      hybridAi
+        ..gate = Completer<void>()
+        ..responses.add(BrewFeedbackFixtures.result(RecipeGenerationFixtures.pourOverAnswer()));
+      final Completer<BrewRecipe?> result = await openScreen(tester);
+
+      // Act
+      await submit(tester);
+      await tester.pump(const Duration(milliseconds: 300));
+
+      // Assert
+      expect(find.text('Creating your recipe'), findsOneWidget);
+      expect(find.textContaining('Building a Kalita Wave recipe'), findsOneWidget);
+      expect(find.text('Brewing method'), findsNothing);
+
+      // Act
+      hybridAi.gate!.complete();
+      await tester.pumpAndSettle();
+
+      // Assert
+      expect(find.byType(NewRecipeRoute), findsNothing);
+      expect((await result.future)?.name, 'Bold Morning Kalita');
+    });
+
+    /// A failure can be retried, or the request edited, without losing what the user entered.
+    testWidgets('offers to try again or edit after a failure', (WidgetTester tester) async {
+      // Arrange
+      hybridAi.responses
+        ..add(const FirebaseHybridAiException(code: 'network'))
+        ..add(const FirebaseHybridAiException(code: 'network'))
+        ..add(BrewFeedbackFixtures.result(RecipeGenerationFixtures.pourOverAnswer()));
+      final Completer<BrewRecipe?> result = await openScreen(tester);
+
+      // Act
+      await submit(tester);
+      await tester.pumpAndSettle();
+
+      // Assert
+      expect(find.text('No recipe yet'), findsOneWidget);
+      expect(find.textContaining("Couldn't create a recipe"), findsOneWidget);
+
+      // Act: editing keeps the form as it was.
+      await tester.tap(find.text('Edit'));
+      await tester.pumpAndSettle();
+
+      // Assert
+      expect(controller(tester).selectedMethod, BrewMethod.kalitaWave);
+      expect(controller(tester).preferencesController.text, 'Strong, about 350 ml.');
+
+      // Act: create again, fail, then try again.
+      await tester.scrollUntilVisible(find.text('Create recipe'), 300, scrollable: _page);
+      await tester.tap(find.text('Create recipe'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Try again'));
+      await tester.pumpAndSettle();
+
+      // Assert
+      expect((await result.future)?.id, 'bold-morning-kalita');
     });
   });
 

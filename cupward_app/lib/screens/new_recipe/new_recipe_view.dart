@@ -1,11 +1,15 @@
 import 'package:material_ui/material_ui.dart';
 
 import '../../components/content_card.dart';
+import '../../components/status_card.dart';
 import '../../l10n/app_localizations.dart';
+import '../../services/recipe_generation/recipe_generation_failure.dart';
 import '../../theme/context_theme_extension.dart';
 import '../../theme/insets.dart';
+import 'components/brew_method_labels.dart';
 import 'components/brew_method_picker.dart';
 import 'components/taste_preferences_field.dart';
+import 'models/new_recipe_status.dart';
 import 'new_recipe_controller.dart';
 
 /// Layout for the new recipe screen. Contains no logic.
@@ -14,6 +18,9 @@ import 'new_recipe_controller.dart';
 /// explanation, the brewing methods as a grid of cards under their own heading, the taste preferences card under its
 /// heading, and the "Create recipe" button. The button is disabled, with a note saying why, until a method is chosen
 /// and the preferences are filled in. Dragging the list hides the keyboard.
+///
+/// While the recipe is created, and if that fails, a status card takes the place of the form below the title card:
+/// first with progress, then with the reason and buttons to try again or edit the request.
 class NewRecipeView extends StatelessWidget {
   /// Creates the view for [state].
   const NewRecipeView(this.state, {super.key});
@@ -23,6 +30,20 @@ class NewRecipeView extends StatelessWidget {
 
   /// The widest the content column grows on large windows, matching the other screens.
   static const double _maxContentWidth = 760;
+
+  /// Returns the message for [failure].
+  static String messageFor(RecipeGenerationFailure failure, AppLocalizations strings) {
+    switch (failure) {
+      case RecipeGenerationFailure.unsupported:
+        return strings.newRecipeFailureUnsupported;
+      case RecipeGenerationFailure.requestFailed:
+        return strings.newRecipeFailureRequest;
+      case RecipeGenerationFailure.invalidResponse:
+        return strings.newRecipeFailureInvalid;
+      case RecipeGenerationFailure.saveFailed:
+        return strings.newRecipeFailureSave;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -65,34 +86,67 @@ class NewRecipeView extends StatelessWidget {
                     ],
                   ),
                 ),
-                sectionTitle(strings.newRecipeMethodTitle),
-                BrewMethodPicker(selected: state.selectedMethod, onSelected: state.onMethodSelected),
-                sectionTitle(strings.newRecipeTasteTitle),
-                TastePreferencesField(
-                  controller: state.preferencesController,
-                  focusNode: state.preferencesFocus,
-                  onTopicPressed: state.onTopicPressed,
-                ),
-                Padding(
-                  padding: const EdgeInsets.only(top: Insets.medium),
-                  child: FilledButton(
-                    onPressed: state.canCreate ? state.onCreatePressed : null,
-                    child: Text(strings.buttonCreateRecipe),
+                if (state.status != NewRecipeStatus.editing)
+                  Padding(padding: const EdgeInsets.only(top: Insets.small), child: _statusCard(strings))
+                else ...<Widget>[
+                  sectionTitle(strings.newRecipeMethodTitle),
+                  BrewMethodPicker(selected: state.selectedMethod, onSelected: state.onMethodSelected),
+                  sectionTitle(strings.newRecipeTasteTitle),
+                  TastePreferencesField(
+                    controller: state.preferencesController,
+                    focusNode: state.preferencesFocus,
+                    onTopicPressed: state.onTopicPressed,
                   ),
-                ),
-                if (!state.canCreate)
                   Padding(
-                    padding: const EdgeInsets.only(top: Insets.xSmall),
-                    child: Text(
-                      strings.newRecipeNeedsInput,
-                      textAlign: TextAlign.center,
-                      style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                    padding: const EdgeInsets.only(top: Insets.medium),
+                    child: FilledButton(
+                      onPressed: state.canCreate ? state.onCreatePressed : null,
+                      child: Text(strings.buttonCreateRecipe),
                     ),
                   ),
+                  if (!state.canCreate)
+                    Padding(
+                      padding: const EdgeInsets.only(top: Insets.xSmall),
+                      child: Text(
+                        strings.newRecipeNeedsInput,
+                        textAlign: TextAlign.center,
+                        style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                      ),
+                    ),
+                ],
               ],
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  /// The card shown in place of the form while the recipe is created, or after it failed.
+  Widget _statusCard(AppLocalizations strings) {
+    final RecipeGenerationFailure? failure = state.failure;
+    if (state.status == NewRecipeStatus.creating || failure == null) {
+      final String method =
+          state.selectedMethod == null ? '' : BrewMethodLabels.nameFor(state.selectedMethod!, strings);
+      return StatusCard(
+        title: strings.newRecipeCreatingTitle,
+        message: strings.newRecipeCreatingMessage(method),
+        isBusy: true,
+      );
+    }
+
+    return StatusCard(
+      title: strings.newRecipeErrorTitle,
+      message: messageFor(failure, strings),
+      action: Wrap(
+        alignment: WrapAlignment.center,
+        spacing: Insets.small,
+        runSpacing: Insets.xSmall,
+        children: <Widget>[
+          if (failure != RecipeGenerationFailure.unsupported)
+            OutlinedButton(onPressed: state.onCreatePressed, child: Text(strings.buttonTryAgain)),
+          TextButton(onPressed: state.onEditPressed, child: Text(strings.buttonEditRequest)),
+        ],
       ),
     );
   }

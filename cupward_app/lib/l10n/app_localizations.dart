@@ -1159,6 +1159,78 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Steep, then drain, for a forgiving, balanced cup.'**
   String get brewMethodCleverDripperDescription;
+
+  /// Short name of the steeping phase in the phase indicator, used by immersion methods such as the French press
+  ///
+  /// In en, this message translates to:
+  /// **'Steep'**
+  String get brewPhaseSteep;
+
+  /// Large title of the steeping step
+  ///
+  /// In en, this message translates to:
+  /// **'Steep'**
+  String get brewStepTitleSteep;
+
+  /// One-sentence instructions for the steeping step
+  ///
+  /// In en, this message translates to:
+  /// **'Let the coffee steep, then press or drain it.'**
+  String get brewStepInstructionsSteep;
+
+  /// Heading shown while a new recipe is being created
+  ///
+  /// In en, this message translates to:
+  /// **'Creating your recipe'**
+  String get newRecipeCreatingTitle;
+
+  /// Explanation shown while a new recipe is being created
+  ///
+  /// In en, this message translates to:
+  /// **'Building a {method} recipe around your taste. This can take a few seconds.'**
+  String newRecipeCreatingMessage(String method);
+
+  /// Heading shown when a new recipe could not be created
+  ///
+  /// In en, this message translates to:
+  /// **'No recipe yet'**
+  String get newRecipeErrorTitle;
+
+  /// Shown when the platform cannot create recipes with AI
+  ///
+  /// In en, this message translates to:
+  /// **'Creating recipes isn\'t available on this device yet.'**
+  String get newRecipeFailureUnsupported;
+
+  /// Shown when the request to create a recipe failed
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t create a recipe. Check your connection and try again.'**
+  String get newRecipeFailureRequest;
+
+  /// Shown when the AI answer could not be turned into a recipe
+  ///
+  /// In en, this message translates to:
+  /// **'The recipe didn\'t come back in a form Cupward could use. Try again.'**
+  String get newRecipeFailureInvalid;
+
+  /// Shown when the new recipe could not be saved
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t save the new recipe. Check your connection and try again.'**
+  String get newRecipeFailureSave;
+
+  /// Label of the button that returns from a failed recipe request to the form
+  ///
+  /// In en, this message translates to:
+  /// **'Edit'**
+  String get buttonEditRequest;
+
+  /// Brief confirmation on the brewing screen after a new recipe was created, such as "Bold Morning Kalita is ready to brew"
+  ///
+  /// In en, this message translates to:
+  /// **'{name} is ready to brew'**
+  String recipeCreatedMessage(String name);
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

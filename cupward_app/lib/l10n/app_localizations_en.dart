@@ -593,4 +593,44 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get brewMethodCleverDripperDescription => 'Steep, then drain, for a forgiving, balanced cup.';
+
+  @override
+  String get brewPhaseSteep => 'Steep';
+
+  @override
+  String get brewStepTitleSteep => 'Steep';
+
+  @override
+  String get brewStepInstructionsSteep => 'Let the coffee steep, then press or drain it.';
+
+  @override
+  String get newRecipeCreatingTitle => 'Creating your recipe';
+
+  @override
+  String newRecipeCreatingMessage(String method) {
+    return 'Building a $method recipe around your taste. This can take a few seconds.';
+  }
+
+  @override
+  String get newRecipeErrorTitle => 'No recipe yet';
+
+  @override
+  String get newRecipeFailureUnsupported => 'Creating recipes isn\'t available on this device yet.';
+
+  @override
+  String get newRecipeFailureRequest => 'Couldn\'t create a recipe. Check your connection and try again.';
+
+  @override
+  String get newRecipeFailureInvalid => 'The recipe didn\'t come back in a form Cupward could use. Try again.';
+
+  @override
+  String get newRecipeFailureSave => 'Couldn\'t save the new recipe. Check your connection and try again.';
+
+  @override
+  String get buttonEditRequest => 'Edit';
+
+  @override
+  String recipeCreatedMessage(String name) {
+    return '$name is ready to brew';
+  }
 }

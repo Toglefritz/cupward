@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter_bookoo/flutter_bookoo.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../../components/app_snack_bars.dart';
 import '../../l10n/app_localizations.dart';
 import '../../models/brews/brew_record.dart';
 import '../../models/recipes/brew_phase.dart';
@@ -11,6 +12,7 @@ import '../../models/recipes/brew_recipe.dart';
 import '../../services/brew/brew_recorder.dart';
 import '../../services/brew/phase_advance_progress.dart';
 import '../../services/brew/phase_advance_tracker.dart';
+import '../../services/recipes/recipe_repository.dart';
 import '../../services/scale/scale_connection_status.dart';
 import '../../services/scale/scale_service.dart';
 import '../feedback/feedback_route.dart';
@@ -34,9 +36,13 @@ import 'components/scale_picker_sheet.dart';
 /// The controller also records the brew with a [BrewRecorder]: when each phase began, and every scale reading from the
 /// moment the user leaves preparation. When the user taps Done, the record is handed to the feedback screen, which
 /// replaces this one.
+///
+/// Creating a recipe from the recipe menu switches the screen to it: the brew starts again from the new recipe's first
+/// step, the recipe becomes the chosen one in [RecipeRepository], and a brief message confirms it.
 class BrewController extends State<BrewRoute> {
-  /// The recipe being brewed.
-  BrewRecipe get recipe => widget.recipe;
+  /// The recipe being brewed. It starts as the route's recipe and changes when the user creates a new one.
+  BrewRecipe get recipe => _recipe;
+  late BrewRecipe _recipe = widget.recipe;
 
   /// The position of the current phase in the recipe's phases. A brew starts at its first phase.
   int currentPhaseIndex = 0;
@@ -78,7 +84,7 @@ class BrewController extends State<BrewRoute> {
   Timer? _ticker;
 
   /// Records the phases and scale readings of this brew.
-  late final BrewRecorder _recorder = BrewRecorder(recipe: recipe);
+  late BrewRecorder _recorder;
 
   /// The time left in the current phase's rest, such as after the bloom water is added, or null if it is not
   /// resting.
@@ -107,6 +113,13 @@ class BrewController extends State<BrewRoute> {
   void initState() {
     super.initState();
     scale.addListener(_onScaleChanged);
+    _startBrew();
+  }
+
+  /// Starts brewing [recipe] from its first phase, with a new recording.
+  void _startBrew() {
+    currentPhaseIndex = 0;
+    _recorder = BrewRecorder(recipe: recipe);
     _startPhase();
 
     // A brew normally starts when the user leaves preparation. A recipe without a preparation step starts at once.
@@ -287,10 +300,26 @@ class BrewController extends State<BrewRoute> {
 
   /// Handles "New recipe" in the recipe menu by opening the screen for creating a recipe. The brew stays as it is
   /// underneath, so going back returns to it.
+  ///
+  /// If a recipe was created, the screen switches to it and a brief message confirms it.
   Future<void> onNewRecipePressed() async {
-    await Navigator.push(
+    final BrewRecipe? created = await Navigator.push<BrewRecipe>(
       context,
-      MaterialPageRoute<void>(builder: (BuildContext context) => const NewRecipeRoute()),
+      MaterialPageRoute<BrewRecipe>(
+        builder: (BuildContext context) => NewRecipeRoute(generationService: widget.recipeGenerationService),
+      ),
+    );
+    if (created == null || !mounted) {
+      return;
+    }
+
+    (widget.recipeRepository ?? RecipeRepository.instance).select(created);
+    setState(() {
+      _recipe = created;
+      _startBrew();
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      AppSnackBars.confirmation(context, AppLocalizations.of(context)!.recipeCreatedMessage(created.name)),
     );
   }
 
@@ -309,7 +338,7 @@ class BrewController extends State<BrewRoute> {
 
       if (mounted) {
         ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.scaleTareFailed)));
+            .showSnackBar(AppSnackBars.problem(context, AppLocalizations.of(context)!.scaleTareFailed));
       }
       return false;
     }

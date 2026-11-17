@@ -21,6 +21,9 @@ part of '../app.dart';
 /// | `labelLarge` | Sans, semibold | Primary buttons |
 /// | `labelMedium` | Sans, spaced | The subtitle under a screen title |
 /// | `labelSmall` | Mono | Timestamps and other small readouts |
+///
+/// SnackBars float above the content as small cream cards with ink text. `AppSnackBars` builds them with an icon that
+/// says whether the message confirms something or reports a problem.
 class _AppTheme {
   /// The family name of the bundled display serif, as declared in pubspec.yaml.
   static const String _serif = 'DM Serif Display';
@@ -149,6 +152,20 @@ class _AppTheme {
             borderRadius: BorderRadius.circular(10),
           ),
           textStyle: text.labelLarge,
+        ),
+      ),
+      // Short messages float above the content as small cream cards, matching the app's cards, rather than Material's
+      // dark bar along the bottom.
+      snackBarTheme: SnackBarThemeData(
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: CupwardColors.light.cardSurface,
+        contentTextStyle: text.bodyMedium?.copyWith(color: _ink, fontWeight: FontWeight.w600),
+        actionTextColor: _green,
+        elevation: 3,
+        insetPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: BorderSide(color: CupwardColors.light.cardBorder),
         ),
       ),
       textButtonTheme: TextButtonThemeData(

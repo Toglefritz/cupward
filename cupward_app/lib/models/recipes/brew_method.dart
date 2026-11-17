@@ -7,27 +7,33 @@
 /// The [name] of each value is its stored and JSON form, so values must not be renamed.
 enum BrewMethod {
   /// A cone dripper with a single large hole, known for a bright, clean cup.
-  v60(typicalBrewTime: Duration(minutes: 3)),
+  v60(typicalBrewTime: Duration(minutes: 3), isImmersion: false),
 
   /// A flat-bottom dripper with three small holes, which drains evenly.
-  kalitaWave(typicalBrewTime: Duration(minutes: 3, seconds: 30)),
+  kalitaWave(typicalBrewTime: Duration(minutes: 3, seconds: 30), isImmersion: false),
 
   /// A glass pour-over brewer with a thick paper filter, known for a very clean cup.
-  chemex(typicalBrewTime: Duration(minutes: 4, seconds: 30)),
+  chemex(typicalBrewTime: Duration(minutes: 4, seconds: 30), isImmersion: false),
 
   /// A full-immersion brewer with a metal mesh filter, known for a heavy body.
-  frenchPress(typicalBrewTime: Duration(minutes: 4)),
+  frenchPress(typicalBrewTime: Duration(minutes: 4), isImmersion: true),
 
   /// A short steep followed by pressing through a paper filter.
-  aeroPress(typicalBrewTime: Duration(minutes: 2)),
+  aeroPress(typicalBrewTime: Duration(minutes: 2), isImmersion: true),
 
   /// A dripper with a valve, so the coffee steeps and then drains when the brewer is set on a cup.
-  cleverDripper(typicalBrewTime: Duration(minutes: 3, seconds: 30));
+  cleverDripper(typicalBrewTime: Duration(minutes: 3, seconds: 30), isImmersion: true);
 
-  const BrewMethod({required this.typicalBrewTime});
+  const BrewMethod({required this.typicalBrewTime, required this.isImmersion});
 
   /// About how long a brew with this method takes.
   final Duration typicalBrewTime;
+
+  /// Whether the coffee steeps in all of the water at once, rather than having water poured through it.
+  ///
+  /// An immersion recipe adds all the water in one pour and then steeps. A pour-over recipe has a bloom and several
+  /// pours.
+  final bool isImmersion;
 
   /// Returns the method whose [name] is [value].
   ///

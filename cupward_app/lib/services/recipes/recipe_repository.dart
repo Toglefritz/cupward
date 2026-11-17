@@ -19,6 +19,9 @@ import 'recipe_name_taken_exception.dart';
 /// Firestore's security rules, in `cupward_cloud/firestore.rules`, let each user read and write only their own
 /// recipes, and check each recipe's shape and values, so the app needs no server code of its own. Firestore keeps a
 /// copy of what it has read on the device, so recipes also load offline once they have been loaded before.
+///
+/// The repository also remembers which recipe the user chose to brew, in [selectedRecipeId], for as long as the app
+/// runs.
 class RecipeRepository {
   /// Creates a repository.
   ///
@@ -38,6 +41,30 @@ class RecipeRepository {
 
   /// Signs the user in before any request.
   final AuthService _auth;
+
+  /// The ID of the recipe the user chose to brew, or null to brew the built-in recipe.
+  String? get selectedRecipeId => _selectedRecipeId;
+  String? _selectedRecipeId;
+
+  /// Chooses [recipe] as the one to brew.
+  void select(BrewRecipe recipe) => _selectedRecipeId = recipe.id;
+
+  /// Returns the recipe the user chose to brew, or the user's copy of [fallback] if they have not chosen one, or if the
+  /// chosen one can no longer be found.
+  ///
+  /// Like [fetchOrCreate], this returns [fallback] itself if the request fails.
+  Future<BrewRecipe> fetchSelected(BrewRecipe fallback) async {
+    final String? selected = _selectedRecipeId;
+    if (selected == null || selected == fallback.id) {
+      return await fetchOrCreate(fallback);
+    }
+    try {
+      return await fetch(selected) ?? await fetchOrCreate(fallback);
+    } on Object catch (error) {
+      debugPrint('Could not load the chosen recipe $selected, so ${fallback.id} is used: $error');
+      return fallback;
+    }
+  }
 
   /// The Firestore instance, read when first needed so that creating the repository does not require Firebase.
   FirebaseFirestore get _firestore => _firestoreOverride ?? FirebaseFirestore.instance;

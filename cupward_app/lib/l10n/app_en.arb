@@ -871,5 +871,65 @@
   "brewMethodCleverDripperDescription": "Steep, then drain, for a forgiving, balanced cup.",
   "@brewMethodCleverDripperDescription": {
     "description": "One-line description of the Clever Dripper brewing method on its card"
+  },
+  "brewPhaseSteep": "Steep",
+  "@brewPhaseSteep": {
+    "description": "Short name of the steeping phase in the phase indicator, used by immersion methods such as the French press"
+  },
+  "brewStepTitleSteep": "Steep",
+  "@brewStepTitleSteep": {
+    "description": "Large title of the steeping step"
+  },
+  "brewStepInstructionsSteep": "Let the coffee steep, then press or drain it.",
+  "@brewStepInstructionsSteep": {
+    "description": "One-sentence instructions for the steeping step"
+  },
+  "newRecipeCreatingTitle": "Creating your recipe",
+  "@newRecipeCreatingTitle": {
+    "description": "Heading shown while a new recipe is being created"
+  },
+  "newRecipeCreatingMessage": "Building a {method} recipe around your taste. This can take a few seconds.",
+  "@newRecipeCreatingMessage": {
+    "description": "Explanation shown while a new recipe is being created",
+    "placeholders": {
+      "method": {
+        "type": "String",
+        "description": "The brewing method name, such as \"Chemex\""
+      }
+    }
+  },
+  "newRecipeErrorTitle": "No recipe yet",
+  "@newRecipeErrorTitle": {
+    "description": "Heading shown when a new recipe could not be created"
+  },
+  "newRecipeFailureUnsupported": "Creating recipes isn't available on this device yet.",
+  "@newRecipeFailureUnsupported": {
+    "description": "Shown when the platform cannot create recipes with AI"
+  },
+  "newRecipeFailureRequest": "Couldn't create a recipe. Check your connection and try again.",
+  "@newRecipeFailureRequest": {
+    "description": "Shown when the request to create a recipe failed"
+  },
+  "newRecipeFailureInvalid": "The recipe didn't come back in a form Cupward could use. Try again.",
+  "@newRecipeFailureInvalid": {
+    "description": "Shown when the AI answer could not be turned into a recipe"
+  },
+  "newRecipeFailureSave": "Couldn't save the new recipe. Check your connection and try again.",
+  "@newRecipeFailureSave": {
+    "description": "Shown when the new recipe could not be saved"
+  },
+  "buttonEditRequest": "Edit",
+  "@buttonEditRequest": {
+    "description": "Label of the button that returns from a failed recipe request to the form"
+  },
+  "recipeCreatedMessage": "{name} is ready to brew",
+  "@recipeCreatedMessage": {
+    "description": "Brief confirmation on the brewing screen after a new recipe was created, such as \"Bold Morning Kalita is ready to brew\"",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "description": "The new recipe name"
+      }
+    }
   }
 }

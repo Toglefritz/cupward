@@ -21,6 +21,8 @@ abstract final class BrewPhaseLabels {
         return strings.brewPhaseBloom;
       case BrewPhaseKind.pour:
         return strings.brewPhasePour(pourNumber(phases, index));
+      case BrewPhaseKind.steep:
+        return strings.brewPhaseSteep;
       case BrewPhaseKind.complete:
         return strings.brewPhaseComplete;
     }
@@ -35,6 +37,8 @@ abstract final class BrewPhaseLabels {
         return strings.brewStepTitleBloom;
       case BrewPhaseKind.pour:
         return strings.brewStepTitlePour(pourNumber(phases, index));
+      case BrewPhaseKind.steep:
+        return strings.brewStepTitleSteep;
       case BrewPhaseKind.complete:
         return strings.brewStepTitleComplete;
     }
@@ -49,6 +53,8 @@ abstract final class BrewPhaseLabels {
         return strings.brewStepInstructionsBloom;
       case BrewPhaseKind.pour:
         return strings.brewStepInstructionsPour;
+      case BrewPhaseKind.steep:
+        return strings.brewStepInstructionsSteep;
       case BrewPhaseKind.complete:
         return strings.brewStepInstructionsComplete;
     }
@@ -69,13 +75,14 @@ abstract final class BrewPhaseLabels {
   }
 
   /// Returns the label of the main action button for the phase at [index] in [phases]: "Continue" to start the brew,
-  /// "Next step" during the bloom and pours, and "Done" at the end.
+  /// "Next step" during the bloom, pours, and steep, and "Done" at the end.
   static String actionLabelFor(List<BrewPhase> phases, int index, AppLocalizations strings) {
     switch (phases[index].kind) {
       case BrewPhaseKind.prepare:
         return strings.brewActionContinue;
       case BrewPhaseKind.bloom:
       case BrewPhaseKind.pour:
+      case BrewPhaseKind.steep:
         return strings.brewActionNextStep;
       case BrewPhaseKind.complete:
         return strings.brewActionDone;
@@ -85,12 +92,14 @@ abstract final class BrewPhaseLabels {
   /// Returns the illustration for the phase at [index] in [phases].
   ///
   /// Pours use the image for their position among the pours. There are images for three pours, so a recipe with more
-  /// pours shows the third pour's image for the rest of them.
+  /// pours shows the third pour's image for the rest of them. There is no image of steeping yet, so a steep shows the
+  /// bloom's, which also shows coffee resting in water.
   static BrewStepImage imageFor(List<BrewPhase> phases, int index) {
     switch (phases[index].kind) {
       case BrewPhaseKind.prepare:
         return BrewStepImage.prepare;
       case BrewPhaseKind.bloom:
+      case BrewPhaseKind.steep:
         return BrewStepImage.bloom;
       case BrewPhaseKind.pour:
         switch (pourNumber(phases, index)) {

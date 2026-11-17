@@ -18,7 +18,8 @@ import 'components/scale_panel.dart';
 /// The recipe summary card sits at the top of a content column of limited width, with the recipe menu in its corner.
 /// The phase indicator, the current step's heading, its illustration, and the scale panel follow it. The scale panel is
 /// left out on platforms that cannot use a scale, such as the web. The main action button is pinned below the
-/// scrolling content, so it stays in reach however tall the content is.
+/// scrolling content in the Scaffold's bottom bar slot, so it stays in reach however tall the content is, and floating
+/// messages appear above it.
 class BrewView extends StatelessWidget {
   /// Creates the view for [state].
   const BrewView(this.state, {super.key});
@@ -36,66 +37,72 @@ class BrewView extends StatelessWidget {
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: _maxContentWidth),
-            child: Column(
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(Insets.small, Insets.xSmall, Insets.small, Insets.small),
               children: <Widget>[
-                Expanded(
-                  child: ListView(
-                    padding: const EdgeInsets.fromLTRB(Insets.small, Insets.xSmall, Insets.small, Insets.small),
-                    children: <Widget>[
-                      RecipeSummaryCard(
-                        recipe: state.recipe,
-                        menu: RecipeMenuButton(onNewRecipePressed: state.onNewRecipePressed),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.only(top: Insets.small),
-                        child: BrewPhaseIndicator(phases: state.recipe.phases, currentIndex: state.currentPhaseIndex),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.only(top: Insets.small),
-                        child: BrewStepHeading(phases: state.recipe.phases, currentIndex: state.currentPhaseIndex),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.only(top: Insets.xSmall),
-                        child: BrewStepIllustration(
-                          image: BrewPhaseLabels.imageFor(state.recipe.phases, state.currentPhaseIndex),
-                        ),
-                      ),
-                      if (state.isScaleSupported)
-                        Padding(
-                          padding: const EdgeInsets.only(top: Insets.small),
-                          child: ScalePanel(
-                            status: state.scale.status,
-                            reading: state.scale.reading,
-                            phaseKind: state.currentPhaseKind,
-                            onFindScalePressed: state.onFindScalePressed,
-                            onTarePressed: state.onTarePressed,
-                          ),
-                        ),
-                    ],
-                  ),
+                RecipeSummaryCard(
+                  recipe: state.recipe,
+                  menu: RecipeMenuButton(onNewRecipePressed: state.onNewRecipePressed),
                 ),
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(Insets.small, 0, Insets.small, Insets.small),
-                  child: Column(
-                    children: <Widget>[
-                      BrewAdvanceNotice(
-                        restRemaining: state.restRemaining,
-                        advanceRemaining: state.advanceRemaining,
-                        onCancel: state.onCancelAdvancePressed,
-                      ),
-                      BrewActionButton(
-                        label: BrewPhaseLabels.actionLabelFor(
-                          state.recipe.phases,
-                          state.currentPhaseIndex,
-                          AppLocalizations.of(context)!,
-                        ),
-                        onPressed: state.onActionPressed,
-                        isProminent: !state.isAdvancingAutomatically,
-                      ),
-                    ],
+                  padding: const EdgeInsets.only(top: Insets.small),
+                  child: BrewPhaseIndicator(phases: state.recipe.phases, currentIndex: state.currentPhaseIndex),
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(top: Insets.small),
+                  child: BrewStepHeading(phases: state.recipe.phases, currentIndex: state.currentPhaseIndex),
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(top: Insets.xSmall),
+                  child: BrewStepIllustration(
+                    image: BrewPhaseLabels.imageFor(state.recipe.phases, state.currentPhaseIndex),
                   ),
                 ),
+                if (state.isScaleSupported)
+                  Padding(
+                    padding: const EdgeInsets.only(top: Insets.small),
+                    child: ScalePanel(
+                      status: state.scale.status,
+                      reading: state.scale.reading,
+                      phaseKind: state.currentPhaseKind,
+                      onFindScalePressed: state.onFindScalePressed,
+                      onTarePressed: state.onTarePressed,
+                    ),
+                  ),
               ],
+            ),
+          ),
+        ),
+      ),
+      // The main action sits in the bottom bar slot, below the scrolling content, so it stays in reach however tall
+      // the content is, and floating messages appear above it rather than over it.
+      bottomNavigationBar: SafeArea(
+        top: false,
+        child: Center(
+          heightFactor: 1,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: _maxContentWidth),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(Insets.small, 0, Insets.small, Insets.small),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  BrewAdvanceNotice(
+                    restRemaining: state.restRemaining,
+                    advanceRemaining: state.advanceRemaining,
+                    onCancel: state.onCancelAdvancePressed,
+                  ),
+                  BrewActionButton(
+                    label: BrewPhaseLabels.actionLabelFor(
+                      state.recipe.phases,
+                      state.currentPhaseIndex,
+                      AppLocalizations.of(context)!,
+                    ),
+                    onPressed: state.onActionPressed,
+                    isProminent: !state.isAdvancingAutomatically,
+                  ),
+                ],
+              ),
             ),
           ),
         ),

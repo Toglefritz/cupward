@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:material_ui/material_ui.dart';
 
+import '../../components/app_snack_bars.dart';
 import '../../l10n/app_localizations.dart';
 
 import '../../models/feedback/brew_feedback.dart';
@@ -97,14 +98,15 @@ class SuggestionsController extends State<SuggestionsRoute> {
 
     final AppLocalizations strings = AppLocalizations.of(context)!;
     final ScaffoldMessengerState messenger = ScaffoldMessenger.of(context);
+    // Built now, because the screen may be gone by the time a failure is reported.
+    final SnackBar failed = AppSnackBars.problem(context, strings.suggestionApplyFailed);
     setState(() => appliedSuggestion = suggestion);
     messenger.showSnackBar(
-      SnackBar(
-        content: Text(
-          strings.suggestionAppliedMessage(
-            RecipeParameterLabels.nameFor(suggestion.parameter, strings),
-            RecipeParameterLabels.formatValue(suggestion.parameter, suggestion.suggestedValue!, strings),
-          ),
+      AppSnackBars.confirmation(
+        context,
+        strings.suggestionAppliedMessage(
+          RecipeParameterLabels.nameFor(suggestion.parameter, strings),
+          RecipeParameterLabels.formatValue(suggestion.parameter, suggestion.suggestedValue!, strings),
         ),
       ),
     );
@@ -118,7 +120,7 @@ class SuggestionsController extends State<SuggestionsRoute> {
         // The confirmation is no longer true, so it is replaced rather than queued behind.
         messenger
           ..removeCurrentSnackBar()
-          ..showSnackBar(SnackBar(content: Text(strings.suggestionApplyFailed)));
+          ..showSnackBar(failed);
       }),
     );
   }

@@ -1,17 +1,17 @@
 import 'package:material_ui/material_ui.dart';
 
-import '../../../components/content_card.dart';
-import '../../../theme/context_theme_extension.dart';
-import '../../../theme/insets.dart';
+import '../theme/context_theme_extension.dart';
+import '../theme/insets.dart';
+import 'content_card.dart';
 
-/// A card for the brew feedback screen while there is no feedback to show: either a progress indicator while it is
-/// prepared, or a message with an action when it could not be.
+/// A card for a screen that is waiting on a result, such as brew feedback or a new recipe: either a progress indicator
+/// while it is prepared, or a message with an action when it could not be.
 ///
 /// The [title] is a serif heading and the [message] a sentence of running text below it. A spinner shows while
 /// [isBusy] is true, and the [action], such as a Try again button, follows the message when one is given.
-class SuggestionsStatusCard extends StatelessWidget {
+class StatusCard extends StatelessWidget {
   /// Creates a card with [title] and [message].
-  const SuggestionsStatusCard({
+  const StatusCard({
     required this.title,
     required this.message,
     this.isBusy = false,

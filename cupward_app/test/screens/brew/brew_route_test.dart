@@ -10,11 +10,24 @@ import 'package:cupward/screens/brew/components/brew_action_button.dart';
 import 'package:cupward/screens/brew/components/scale_panel.dart';
 import 'package:cupward/screens/feedback/feedback_route.dart';
 import 'package:cupward/screens/new_recipe/new_recipe_route.dart';
+import 'package:cupward/services/auth/auth_service.dart';
+import 'package:cupward/services/recipe_generation/recipe_generation_service.dart';
+import 'package:cupward/services/recipes/recipe_repository.dart';
 import 'package:cupward/services/scale/scale_service.dart';
 import 'package:cupward/theme/cupward_colors.dart';
+import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:flutter_bookoo/flutter_bookoo.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
+
+import '../../services/brew_feedback/brew_feedback_fixtures.dart';
+import '../../services/recipe_generation/recipe_generation_fixtures.dart';
+
+/// An auth service that is already signed in, without Firebase.
+class _SignedInAuth extends AuthService {
+  @override
+  Future<String> ensureSignedIn() async => 'tester';
+}
 
 /// A scale service that reports itself connected and records tare commands, without Bluetooth.
 class _ConnectedScaleService extends ScaleService {
@@ -156,6 +169,55 @@ void main() {
 
       // Assert
       expect(find.text('STEP 1 OF 6'), findsOneWidget);
+    });
+
+    /// A new recipe replaces the one on screen, starts from its first step, is chosen for later brews, and is confirmed.
+    testWidgets('switches to a newly created recipe', (WidgetTester tester) async {
+      // Arrange
+      final FakeStructuredHybridAi hybridAi = FakeStructuredHybridAi()
+        ..responses.add(BrewFeedbackFixtures.result(RecipeGenerationFixtures.immersionAnswer()));
+      final RecipeRepository recipes = RecipeRepository(firestore: FakeFirebaseFirestore(), auth: _SignedInAuth());
+      final ScaleService scale = ScaleService(isSupported: false);
+      addTearDown(scale.dispose);
+      tester.view.physicalSize = const Size(412, 1400);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: ThemeData(extensions: const <ThemeExtension<dynamic>>[CupwardColors.light]),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: BrewRoute(
+            recipe: BuiltInRecipes.defaultRecipe,
+            scaleService: scale,
+            recipeRepository: recipes,
+            recipeGenerationService: RecipeGenerationService(hybridAi: hybridAi, recipes: recipes, isSupported: true),
+          ),
+        ),
+      );
+      await tester.tap(find.text('Continue'));
+      await tester.pumpAndSettle();
+      expect(find.text('STEP 2 OF 6'), findsOneWidget);
+
+      // Act
+      await tester.tap(find.byTooltip('Recipe options'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('New recipe'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('French press'));
+      await tester.enterText(find.byType(TextField), 'Full-bodied.');
+      await tester.pump();
+      await tester.ensureVisible(find.text('Create recipe'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Create recipe'));
+      await tester.pumpAndSettle();
+
+      // Assert
+      expect(find.byType(NewRecipeRoute), findsNothing);
+      expect(find.text('Sweet Press'), findsOneWidget);
+      expect(find.text('STEP 1 OF 4'), findsOneWidget);
+      expect(find.text('Sweet Press is ready to brew'), findsOneWidget);
+      expect(recipes.selectedRecipeId, 'sweet-press');
     });
   });
 
