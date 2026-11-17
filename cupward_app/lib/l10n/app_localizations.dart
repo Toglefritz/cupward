@@ -949,6 +949,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Cooler'**
   String get directionCooler;
+
+  /// Label of the button on a suggested change that saves the change to the recipe that was just brewed
+  ///
+  /// In en, this message translates to:
+  /// **'Update my recipe'**
+  String get buttonApplySuggestion;
+
+  /// Shown on a suggested change after it was saved to the recipe
+  ///
+  /// In en, this message translates to:
+  /// **'Saved to your recipe'**
+  String get suggestionApplied;
+
+  /// Brief confirmation after a suggested change is saved, such as "Recipe updated: Coffee 21.0 g"
+  ///
+  /// In en, this message translates to:
+  /// **'Recipe updated: {parameter} {value}'**
+  String suggestionAppliedMessage(String parameter, String value);
+
+  /// Brief message when saving a suggested change to the recipe failed
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t update your recipe. Try again.'**
+  String get suggestionApplyFailed;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

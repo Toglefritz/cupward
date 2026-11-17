@@ -709,5 +709,31 @@
   "directionCooler": "Cooler",
   "@directionCooler": {
     "description": "Which way a suggested change goes, for cooler water"
+  },
+  "buttonApplySuggestion": "Update my recipe",
+  "@buttonApplySuggestion": {
+    "description": "Label of the button on a suggested change that saves the change to the recipe that was just brewed"
+  },
+  "suggestionApplied": "Saved to your recipe",
+  "@suggestionApplied": {
+    "description": "Shown on a suggested change after it was saved to the recipe"
+  },
+  "suggestionAppliedMessage": "Recipe updated: {parameter} {value}",
+  "@suggestionAppliedMessage": {
+    "description": "Brief confirmation after a suggested change is saved, such as \"Recipe updated: Coffee 21.0 g\"",
+    "placeholders": {
+      "parameter": {
+        "type": "String",
+        "description": "The name of the variable that changed"
+      },
+      "value": {
+        "type": "String",
+        "description": "Its new value, with its unit"
+      }
+    }
+  },
+  "suggestionApplyFailed": "Couldn't update your recipe. Try again.",
+  "@suggestionApplyFailed": {
+    "description": "Brief message when saving a suggested change to the recipe failed"
   }
 }

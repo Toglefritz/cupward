@@ -8,6 +8,7 @@ import '../../theme/context_theme_extension.dart';
 import '../../theme/insets.dart';
 import 'components/alternative_suggestion_card.dart';
 import 'components/primary_suggestion_card.dart';
+import 'components/suggestion_apply_button.dart';
 import 'components/suggestions_status_card.dart';
 import 'components/suggestions_summary_card.dart';
 import 'models/suggestions_status.dart';
@@ -17,7 +18,9 @@ import 'suggestions_controller.dart';
 ///
 /// It uses the app's scrolling content column of limited width. While the feedback is prepared, and if it fails, a
 /// single status card fills the column. Once the feedback arrives, the summary card comes first, then the main
-/// suggestion, then any ideas for later brews under their own heading, and a Done button at the end.
+/// suggestion, then any ideas for later brews under their own heading, and a Done button at the end. Each suggestion
+/// that can be saved to the recipe has an "Update my recipe" button until one of them is saved, which then shows as
+/// saved.
 class SuggestionsView extends StatelessWidget {
   /// Creates the view for [state].
   const SuggestionsView(this.state, {super.key});
@@ -57,6 +60,17 @@ class SuggestionsView extends StatelessWidget {
     );
   }
 
+  /// Returns the save action for [suggestion]: the saved state if it was saved, a button if it can be, or null.
+  Widget? _applyAction(RecipeSuggestion suggestion) {
+    if (state.appliedSuggestion == suggestion) {
+      return const SuggestionApplyButton(isApplied: true);
+    }
+    if (state.canApply(suggestion)) {
+      return SuggestionApplyButton(isApplied: false, onPressed: () => state.onApplySuggestionPressed(suggestion));
+    }
+    return null;
+  }
+
   /// Returns the content for the current status.
   List<Widget> _buildChildren(BuildContext context) {
     final AppLocalizations strings = AppLocalizations.of(context)!;
@@ -90,7 +104,7 @@ class SuggestionsView extends StatelessWidget {
           SuggestionsSummaryCard(feedback: feedback),
           Padding(
             padding: const EdgeInsets.only(top: Insets.small),
-            child: PrimarySuggestionCard(suggestion: feedback.primary),
+            child: PrimarySuggestionCard(suggestion: feedback.primary, action: _applyAction(feedback.primary)),
           ),
           if (feedback.alternatives.isNotEmpty)
             Padding(
@@ -106,7 +120,7 @@ class SuggestionsView extends StatelessWidget {
           for (final RecipeSuggestion suggestion in feedback.alternatives)
             Padding(
               padding: const EdgeInsets.only(top: Insets.xSmall),
-              child: AlternativeSuggestionCard(suggestion: suggestion),
+              child: AlternativeSuggestionCard(suggestion: suggestion, action: _applyAction(suggestion)),
             ),
           Padding(
             padding: const EdgeInsets.only(top: Insets.large),

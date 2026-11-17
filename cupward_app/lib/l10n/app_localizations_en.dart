@@ -481,4 +481,18 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get directionCooler => 'Cooler';
+
+  @override
+  String get buttonApplySuggestion => 'Update my recipe';
+
+  @override
+  String get suggestionApplied => 'Saved to your recipe';
+
+  @override
+  String suggestionAppliedMessage(String parameter, String value) {
+    return 'Recipe updated: $parameter $value';
+  }
+
+  @override
+  String get suggestionApplyFailed => 'Couldn\'t update your recipe. Try again.';
 }

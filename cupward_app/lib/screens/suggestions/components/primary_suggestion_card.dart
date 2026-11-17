@@ -12,14 +12,17 @@ import 'suggestion_value_change.dart';
 ///
 /// From top to bottom: a "TRY THIS NEXT" label in the copper accent, the change as a serif title, what it changes and
 /// which way, the new recipe value against the current one when there is one, and otherwise how much to change it in
-/// words. Below a rule, the reason and the expected effect follow under their own captions, and a closing note explains
+/// words, and the [action] that saves the change to the recipe when there is one. Below a rule, the reason and the expected effect follow under their own captions, and a closing note explains
 /// why only one change is recommended.
 class PrimarySuggestionCard extends StatelessWidget {
-  /// Creates the card for [suggestion].
-  const PrimarySuggestionCard({required this.suggestion, super.key});
+  /// Creates the card for [suggestion], with an optional [action] below the change.
+  const PrimarySuggestionCard({required this.suggestion, this.action, super.key});
 
   /// The change to try next.
   final RecipeSuggestion suggestion;
+
+  /// What the user can do with the change, such as save it to the recipe, or null for nothing.
+  final Widget? action;
 
   @override
   Widget build(BuildContext context) {
@@ -72,6 +75,7 @@ class PrimarySuggestionCard extends StatelessWidget {
                 style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
               ),
             ),
+          if (action != null) Padding(padding: const EdgeInsets.only(top: Insets.small), child: action),
           Padding(
             padding: const EdgeInsets.symmetric(vertical: Insets.small),
             child: Divider(color: ruleColor),

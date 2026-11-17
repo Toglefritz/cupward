@@ -86,6 +86,17 @@ class BrewPhase {
     return value.toDouble();
   }
 
+  /// Returns a copy with the given fields replaced. A target that is null here keeps the phase's own, so this cannot
+  /// remove a target.
+  BrewPhase copyWith({String? id, BrewPhaseKind? kind, double? targetWeightGrams, Duration? duration}) {
+    return BrewPhase(
+      id: id ?? this.id,
+      kind: kind ?? this.kind,
+      targetWeightGrams: targetWeightGrams ?? this.targetWeightGrams,
+      duration: duration ?? this.duration,
+    );
+  }
+
   @override
   bool operator ==(Object other) =>
       other is BrewPhase &&

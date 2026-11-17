@@ -142,6 +142,29 @@ class BrewRecipe {
     return value.toDouble();
   }
 
+  /// Returns a copy with the given fields replaced.
+  BrewRecipe copyWith({
+    String? id,
+    String? name,
+    String? profile,
+    double? coffeeGrams,
+    double? waterGrams,
+    Duration? brewTime,
+    double? yieldMilliliters,
+    List<BrewPhase>? phases,
+  }) {
+    return BrewRecipe(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      profile: profile ?? this.profile,
+      coffeeGrams: coffeeGrams ?? this.coffeeGrams,
+      waterGrams: waterGrams ?? this.waterGrams,
+      brewTime: brewTime ?? this.brewTime,
+      yieldMilliliters: yieldMilliliters ?? this.yieldMilliliters,
+      phases: phases ?? this.phases,
+    );
+  }
+
   @override
   bool operator ==(Object other) =>
       other is BrewRecipe &&

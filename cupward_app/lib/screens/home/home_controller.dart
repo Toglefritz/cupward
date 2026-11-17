@@ -18,7 +18,8 @@ import 'home_view.dart';
 ///
 /// It also starts loading the user's recipe from [RecipeRepository]. The first time, the built-in recipe is saved as
 /// the user's own copy, so that later changes to it are kept. Starting a brew waits for the load, which falls back to
-/// the built-in recipe if the stored one cannot be reached.
+/// the built-in recipe if the stored one cannot be reached. When the user comes back from a brew, the recipe is loaded
+/// again, because the brew may have ended with a suggestion saved to it.
 class HomeController extends State<HomeRoute> {
   /// The service that checks and downloads the on-device model.
   OnDeviceModelService get modelService => widget.modelService ?? OnDeviceModelService.instance;
@@ -27,7 +28,12 @@ class HomeController extends State<HomeRoute> {
   RecipeRepository get recipeRepository => widget.recipeRepository ?? RecipeRepository.instance;
 
   /// The user's recipe, once loaded, or the built-in recipe if it could not be.
-  late final Future<BrewRecipe> _recipe = recipeRepository.fetchOrCreate(BuiltInRecipes.defaultRecipe);
+  late Future<BrewRecipe> _recipe;
+
+  /// Starts loading the user's recipe.
+  void _loadRecipe() {
+    _recipe = recipeRepository.fetchOrCreate(BuiltInRecipes.defaultRecipe);
+  }
 
   @override
   void initState() {
@@ -39,7 +45,7 @@ class HomeController extends State<HomeRoute> {
     }
 
     // Start loading now, so the recipe is usually ready by the time the user taps Start a Brew.
-    unawaited(_recipe);
+    _loadRecipe();
   }
 
   /// Rebuilds the screen with the model's latest state.
@@ -72,6 +78,9 @@ class HomeController extends State<HomeRoute> {
       context,
       MaterialPageRoute<void>(builder: (BuildContext context) => BrewRoute(recipe: recipe)),
     );
+
+    // The brew may have ended with a suggestion saved to the recipe, so the next brew loads it again.
+    _loadRecipe();
   }
 
   @override

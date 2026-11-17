@@ -123,5 +123,26 @@ void main() {
       final bool exists = (await firestore.doc('users/tester/recipes/${BuiltInRecipes.defaultRecipe.id}').get()).exists;
       expect(exists, isTrue);
     });
+
+    /// A suggestion saved at the end of a brew is used by the next brew, without restarting the app.
+    testWidgets('loads the recipe again after a brew', (WidgetTester tester) async {
+      // Arrange: a first brew starts with the built-in recipe.
+      await showHome(tester);
+      await tester.pump();
+      await tester.tap(find.text('Start a Brew'));
+      await tester.pumpAndSettle();
+
+      // Act: the brew saves a change, and the user returns home and starts again.
+      await firestore.doc('users/tester/recipes/${BuiltInRecipes.defaultRecipe.id}').update(<String, dynamic>{
+        'coffeeGrams': 21.0,
+      });
+      tester.state<NavigatorState>(find.byType(Navigator)).pop();
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Start a Brew'));
+      await tester.pumpAndSettle();
+
+      // Assert
+      expect(tester.widget<BrewRoute>(find.byType(BrewRoute)).recipe.coffeeGrams, 21);
+    });
   });
 }

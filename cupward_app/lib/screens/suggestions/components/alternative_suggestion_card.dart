@@ -10,13 +10,17 @@ import 'suggestion_value_change.dart';
 /// A smaller card for a change to try in a later brew.
 ///
 /// It shows what the change is, what it changes and which way, how much, and why, in that order. It leaves out the
-/// expected effect and the captions of the main suggestion, so it reads as secondary to it.
+/// expected effect and the captions of the main suggestion, so it reads as secondary to it. An optional [action], such as
+/// saving the change to the recipe, comes last.
 class AlternativeSuggestionCard extends StatelessWidget {
-  /// Creates the card for [suggestion].
-  const AlternativeSuggestionCard({required this.suggestion, super.key});
+  /// Creates the card for [suggestion], with an optional [action] at the end.
+  const AlternativeSuggestionCard({required this.suggestion, this.action, super.key});
 
   /// The change described.
   final RecipeSuggestion suggestion;
+
+  /// What the user can do with the change, such as save it to the recipe, or null for nothing.
+  final Widget? action;
 
   @override
   Widget build(BuildContext context) {
@@ -44,6 +48,7 @@ class AlternativeSuggestionCard extends StatelessWidget {
               style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant, height: 1.35),
             ),
           ),
+          if (action != null) Padding(padding: const EdgeInsets.only(top: Insets.small), child: action),
         ],
       ),
     );
