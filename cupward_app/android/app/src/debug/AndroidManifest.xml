@@ -4,4 +4,11 @@
          to allow setting breakpoints, to provide hot reload, etc.
     -->
     <uses-permission android:name="android.permission.INTERNET"/>
+
+    <!-- The Firebase Emulator Suite serves plain HTTP, which Android blocks by default. Debug builds allow it so they
+         can reach the emulators on 10.0.2.2 from an Android emulator, or on the development machine's LAN address from
+         a phone, which differs between machines and so cannot be listed here. This manifest is merged only into debug
+         builds, so release and profile builds keep Android's default and allow HTTPS only.
+    -->
+    <application android:usesCleartextTraffic="true"/>
 </manifest>
