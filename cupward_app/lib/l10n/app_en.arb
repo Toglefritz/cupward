@@ -748,8 +748,128 @@
   "@newRecipeTitle": {
     "description": "Title of the screen for creating a new recipe"
   },
-  "newRecipePlaceholder": "Creating a recipe will happen here.",
-  "@newRecipePlaceholder": {
-    "description": "Temporary text on the screen for creating a new recipe, shown until the screen is built"
+  "newRecipeIntro": "Pick how you'll brew, then tell Cupward how you like your coffee.",
+  "@newRecipeIntro": {
+    "description": "Short explanation under the title of the new recipe screen"
+  },
+  "newRecipeMethodTitle": "Brewing method",
+  "@newRecipeMethodTitle": {
+    "description": "Heading of the list of brewing methods on the new recipe screen"
+  },
+  "newRecipeTasteTitle": "Your taste",
+  "@newRecipeTasteTitle": {
+    "description": "Heading of the taste preferences section on the new recipe screen"
+  },
+  "newRecipePreferencesLabel": "How do you like your coffee?",
+  "@newRecipePreferencesLabel": {
+    "description": "Label of the text field for taste preferences on the new recipe screen"
+  },
+  "newRecipePreferencesHint": "For example: a strong cup from a medium-dark roast, about 350 ml, with more body than brightness.",
+  "@newRecipePreferencesHint": {
+    "description": "Hint text in the empty taste preferences field"
+  },
+  "newRecipeTopicsLabel": "Things you might mention",
+  "@newRecipeTopicsLabel": {
+    "description": "Caption above the tappable topics that start a line in the taste preferences field"
+  },
+  "newRecipeTopicStrength": "Strength",
+  "@newRecipeTopicStrength": {
+    "description": "A topic chip under the taste preferences field; tapping it starts a line about strength"
+  },
+  "newRecipeTopicRoast": "Roast",
+  "@newRecipeTopicRoast": {
+    "description": "A topic chip under the taste preferences field; tapping it starts a line about roast"
+  },
+  "newRecipeTopicCupSize": "Cup size",
+  "@newRecipeTopicCupSize": {
+    "description": "A topic chip under the taste preferences field; tapping it starts a line about cup size"
+  },
+  "newRecipeTopicBody": "Body or clean",
+  "@newRecipeTopicBody": {
+    "description": "A topic chip under the taste preferences field; tapping it starts a line about body or clean"
+  },
+  "newRecipeTopicSweetness": "Sweetness",
+  "@newRecipeTopicSweetness": {
+    "description": "A topic chip under the taste preferences field; tapping it starts a line about sweetness"
+  },
+  "newRecipeTopicAcidity": "Acidity",
+  "@newRecipeTopicAcidity": {
+    "description": "A topic chip under the taste preferences field; tapping it starts a line about acidity"
+  },
+  "buttonCreateRecipe": "Create recipe",
+  "@buttonCreateRecipe": {
+    "description": "Label of the button that creates a recipe from the chosen method and taste preferences"
+  },
+  "newRecipeNeedsInput": "Pick a brewing method and describe your taste to continue.",
+  "@newRecipeNeedsInput": {
+    "description": "Shown under the disabled create button until the form is filled in"
+  },
+  "brewMethodTime": "About {minutes} min",
+  "@brewMethodTime": {
+    "description": "Typical brew time on a brewing method card, such as \"About 3 min\"",
+    "placeholders": {
+      "minutes": {
+        "type": "String",
+        "description": "The minutes, which may include a half, such as \"3\" or \"3½\""
+      }
+    }
+  },
+  "brewMethodSelectedSemantics": "{method}, selected",
+  "@brewMethodSelectedSemantics": {
+    "description": "What screen readers announce for the chosen brewing method",
+    "placeholders": {
+      "method": {
+        "type": "String",
+        "description": "The method name"
+      }
+    }
+  },
+  "brewMethodV60": "V60",
+  "@brewMethodV60": {
+    "description": "Name of the V60 brewing method"
+  },
+  "brewMethodV60Description": "Cone dripper for a bright, clean cup.",
+  "@brewMethodV60Description": {
+    "description": "One-line description of the V60 brewing method on its card"
+  },
+  "brewMethodKalitaWave": "Kalita Wave",
+  "@brewMethodKalitaWave": {
+    "description": "Name of the Kalita Wave brewing method"
+  },
+  "brewMethodKalitaWaveDescription": "Flat-bottom dripper for an even, sweet cup.",
+  "@brewMethodKalitaWaveDescription": {
+    "description": "One-line description of the Kalita Wave brewing method on its card"
+  },
+  "brewMethodChemex": "Chemex",
+  "@brewMethodChemex": {
+    "description": "Name of the Chemex brewing method"
+  },
+  "brewMethodChemexDescription": "Thick filter for a very clean, delicate cup.",
+  "@brewMethodChemexDescription": {
+    "description": "One-line description of the Chemex brewing method on its card"
+  },
+  "brewMethodFrenchPress": "French press",
+  "@brewMethodFrenchPress": {
+    "description": "Name of the French press brewing method"
+  },
+  "brewMethodFrenchPressDescription": "Full immersion for a rich, heavy cup.",
+  "@brewMethodFrenchPressDescription": {
+    "description": "One-line description of the French press brewing method on its card"
+  },
+  "brewMethodAeroPress": "AeroPress",
+  "@brewMethodAeroPress": {
+    "description": "Name of the AeroPress brewing method"
+  },
+  "brewMethodAeroPressDescription": "A short steep, pressed, for a concentrated cup.",
+  "@brewMethodAeroPressDescription": {
+    "description": "One-line description of the AeroPress brewing method on its card"
+  },
+  "brewMethodCleverDripper": "Clever Dripper",
+  "@brewMethodCleverDripper": {
+    "description": "Name of the Clever Dripper brewing method"
+  },
+  "brewMethodCleverDripperDescription": "Steep, then drain, for a forgiving, balanced cup.",
+  "@brewMethodCleverDripperDescription": {
+    "description": "One-line description of the Clever Dripper brewing method on its card"
   }
 }

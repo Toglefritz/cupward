@@ -506,5 +506,91 @@ class AppLocalizationsEn extends AppLocalizations {
   String get newRecipeTitle => 'New Recipe';
 
   @override
-  String get newRecipePlaceholder => 'Creating a recipe will happen here.';
+  String get newRecipeIntro => 'Pick how you\'ll brew, then tell Cupward how you like your coffee.';
+
+  @override
+  String get newRecipeMethodTitle => 'Brewing method';
+
+  @override
+  String get newRecipeTasteTitle => 'Your taste';
+
+  @override
+  String get newRecipePreferencesLabel => 'How do you like your coffee?';
+
+  @override
+  String get newRecipePreferencesHint =>
+      'For example: a strong cup from a medium-dark roast, about 350 ml, with more body than brightness.';
+
+  @override
+  String get newRecipeTopicsLabel => 'Things you might mention';
+
+  @override
+  String get newRecipeTopicStrength => 'Strength';
+
+  @override
+  String get newRecipeTopicRoast => 'Roast';
+
+  @override
+  String get newRecipeTopicCupSize => 'Cup size';
+
+  @override
+  String get newRecipeTopicBody => 'Body or clean';
+
+  @override
+  String get newRecipeTopicSweetness => 'Sweetness';
+
+  @override
+  String get newRecipeTopicAcidity => 'Acidity';
+
+  @override
+  String get buttonCreateRecipe => 'Create recipe';
+
+  @override
+  String get newRecipeNeedsInput => 'Pick a brewing method and describe your taste to continue.';
+
+  @override
+  String brewMethodTime(String minutes) {
+    return 'About $minutes min';
+  }
+
+  @override
+  String brewMethodSelectedSemantics(String method) {
+    return '$method, selected';
+  }
+
+  @override
+  String get brewMethodV60 => 'V60';
+
+  @override
+  String get brewMethodV60Description => 'Cone dripper for a bright, clean cup.';
+
+  @override
+  String get brewMethodKalitaWave => 'Kalita Wave';
+
+  @override
+  String get brewMethodKalitaWaveDescription => 'Flat-bottom dripper for an even, sweet cup.';
+
+  @override
+  String get brewMethodChemex => 'Chemex';
+
+  @override
+  String get brewMethodChemexDescription => 'Thick filter for a very clean, delicate cup.';
+
+  @override
+  String get brewMethodFrenchPress => 'French press';
+
+  @override
+  String get brewMethodFrenchPressDescription => 'Full immersion for a rich, heavy cup.';
+
+  @override
+  String get brewMethodAeroPress => 'AeroPress';
+
+  @override
+  String get brewMethodAeroPressDescription => 'A short steep, pressed, for a concentrated cup.';
+
+  @override
+  String get brewMethodCleverDripper => 'Clever Dripper';
+
+  @override
+  String get brewMethodCleverDripperDescription => 'Steep, then drain, for a forgiving, balanced cup.';
 }

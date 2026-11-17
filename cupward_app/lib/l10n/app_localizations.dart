@@ -992,11 +992,173 @@ abstract class AppLocalizations {
   /// **'New Recipe'**
   String get newRecipeTitle;
 
-  /// Temporary text on the screen for creating a new recipe, shown until the screen is built
+  /// Short explanation under the title of the new recipe screen
   ///
   /// In en, this message translates to:
-  /// **'Creating a recipe will happen here.'**
-  String get newRecipePlaceholder;
+  /// **'Pick how you\'ll brew, then tell Cupward how you like your coffee.'**
+  String get newRecipeIntro;
+
+  /// Heading of the list of brewing methods on the new recipe screen
+  ///
+  /// In en, this message translates to:
+  /// **'Brewing method'**
+  String get newRecipeMethodTitle;
+
+  /// Heading of the taste preferences section on the new recipe screen
+  ///
+  /// In en, this message translates to:
+  /// **'Your taste'**
+  String get newRecipeTasteTitle;
+
+  /// Label of the text field for taste preferences on the new recipe screen
+  ///
+  /// In en, this message translates to:
+  /// **'How do you like your coffee?'**
+  String get newRecipePreferencesLabel;
+
+  /// Hint text in the empty taste preferences field
+  ///
+  /// In en, this message translates to:
+  /// **'For example: a strong cup from a medium-dark roast, about 350 ml, with more body than brightness.'**
+  String get newRecipePreferencesHint;
+
+  /// Caption above the tappable topics that start a line in the taste preferences field
+  ///
+  /// In en, this message translates to:
+  /// **'Things you might mention'**
+  String get newRecipeTopicsLabel;
+
+  /// A topic chip under the taste preferences field; tapping it starts a line about strength
+  ///
+  /// In en, this message translates to:
+  /// **'Strength'**
+  String get newRecipeTopicStrength;
+
+  /// A topic chip under the taste preferences field; tapping it starts a line about roast
+  ///
+  /// In en, this message translates to:
+  /// **'Roast'**
+  String get newRecipeTopicRoast;
+
+  /// A topic chip under the taste preferences field; tapping it starts a line about cup size
+  ///
+  /// In en, this message translates to:
+  /// **'Cup size'**
+  String get newRecipeTopicCupSize;
+
+  /// A topic chip under the taste preferences field; tapping it starts a line about body or clean
+  ///
+  /// In en, this message translates to:
+  /// **'Body or clean'**
+  String get newRecipeTopicBody;
+
+  /// A topic chip under the taste preferences field; tapping it starts a line about sweetness
+  ///
+  /// In en, this message translates to:
+  /// **'Sweetness'**
+  String get newRecipeTopicSweetness;
+
+  /// A topic chip under the taste preferences field; tapping it starts a line about acidity
+  ///
+  /// In en, this message translates to:
+  /// **'Acidity'**
+  String get newRecipeTopicAcidity;
+
+  /// Label of the button that creates a recipe from the chosen method and taste preferences
+  ///
+  /// In en, this message translates to:
+  /// **'Create recipe'**
+  String get buttonCreateRecipe;
+
+  /// Shown under the disabled create button until the form is filled in
+  ///
+  /// In en, this message translates to:
+  /// **'Pick a brewing method and describe your taste to continue.'**
+  String get newRecipeNeedsInput;
+
+  /// Typical brew time on a brewing method card, such as "About 3 min"
+  ///
+  /// In en, this message translates to:
+  /// **'About {minutes} min'**
+  String brewMethodTime(String minutes);
+
+  /// What screen readers announce for the chosen brewing method
+  ///
+  /// In en, this message translates to:
+  /// **'{method}, selected'**
+  String brewMethodSelectedSemantics(String method);
+
+  /// Name of the V60 brewing method
+  ///
+  /// In en, this message translates to:
+  /// **'V60'**
+  String get brewMethodV60;
+
+  /// One-line description of the V60 brewing method on its card
+  ///
+  /// In en, this message translates to:
+  /// **'Cone dripper for a bright, clean cup.'**
+  String get brewMethodV60Description;
+
+  /// Name of the Kalita Wave brewing method
+  ///
+  /// In en, this message translates to:
+  /// **'Kalita Wave'**
+  String get brewMethodKalitaWave;
+
+  /// One-line description of the Kalita Wave brewing method on its card
+  ///
+  /// In en, this message translates to:
+  /// **'Flat-bottom dripper for an even, sweet cup.'**
+  String get brewMethodKalitaWaveDescription;
+
+  /// Name of the Chemex brewing method
+  ///
+  /// In en, this message translates to:
+  /// **'Chemex'**
+  String get brewMethodChemex;
+
+  /// One-line description of the Chemex brewing method on its card
+  ///
+  /// In en, this message translates to:
+  /// **'Thick filter for a very clean, delicate cup.'**
+  String get brewMethodChemexDescription;
+
+  /// Name of the French press brewing method
+  ///
+  /// In en, this message translates to:
+  /// **'French press'**
+  String get brewMethodFrenchPress;
+
+  /// One-line description of the French press brewing method on its card
+  ///
+  /// In en, this message translates to:
+  /// **'Full immersion for a rich, heavy cup.'**
+  String get brewMethodFrenchPressDescription;
+
+  /// Name of the AeroPress brewing method
+  ///
+  /// In en, this message translates to:
+  /// **'AeroPress'**
+  String get brewMethodAeroPress;
+
+  /// One-line description of the AeroPress brewing method on its card
+  ///
+  /// In en, this message translates to:
+  /// **'A short steep, pressed, for a concentrated cup.'**
+  String get brewMethodAeroPressDescription;
+
+  /// Name of the Clever Dripper brewing method
+  ///
+  /// In en, this message translates to:
+  /// **'Clever Dripper'**
+  String get brewMethodCleverDripper;
+
+  /// One-line description of the Clever Dripper brewing method on its card
+  ///
+  /// In en, this message translates to:
+  /// **'Steep, then drain, for a forgiving, balanced cup.'**
+  String get brewMethodCleverDripperDescription;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {
