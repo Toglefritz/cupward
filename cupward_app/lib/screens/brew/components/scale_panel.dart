@@ -21,6 +21,9 @@ import 'scale_weight_reading.dart';
 ///   poured, in the bloom and the pours, it is the flow rate. While the coffee steeps, and once the brew is complete,
 ///   nothing is shown there.
 ///
+/// In demo mode the scale is simulated, and a "Demo" badge beside the heading says so. Otherwise the panel looks and
+/// behaves as it does with a real scale.
+///
 /// Until a scale is connected, the right side holds a "Find scale" button instead, or a progress indicator while
 /// connecting. The brewing screen leaves the panel out where scales cannot be used, such as in a web browser. If it is
 /// shown there anyway, it says the scale is not available and offers nothing to tap.
@@ -35,6 +38,7 @@ class ScalePanel extends StatelessWidget {
     required this.phaseKind,
     required this.onFindScalePressed,
     required this.onTarePressed,
+    this.isDemo = false,
     super.key,
   });
 
@@ -52,6 +56,9 @@ class ScalePanel extends StatelessWidget {
 
   /// Called when the Tare button is tapped.
   final VoidCallback onTarePressed;
+
+  /// Whether the scale is the simulated one of demo mode.
+  final bool isDemo;
 
   /// The narrowest card at which the three parts fit side by side.
   static const double _rowMinWidth = 360;
@@ -76,7 +83,11 @@ class ScalePanel extends StatelessWidget {
     final bool isConnected = status == ScaleConnectionStatus.connected;
     final BookooScaleReading? latest = isConnected ? reading : null;
 
-    final Widget summary = ScaleStatusSummary(status: status, batteryPercent: latest?.batteryPercent);
+    final Widget summary = ScaleStatusSummary(
+      status: status,
+      batteryPercent: latest?.batteryPercent,
+      isDemo: isDemo && isConnected,
+    );
     final Widget weight = ScaleWeightReading(grams: latest?.weightGrams);
     final Widget? action = _buildAction(context, latest);
 

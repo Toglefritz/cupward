@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:cupward/components/recipe_summary_card.dart';
 import 'package:cupward/l10n/app_localizations.dart';
 import 'package:cupward/models/brews/brew_phase_record.dart';
@@ -545,6 +547,78 @@ void main() {
 
       // Assert
       expect(find.byType(FilledButton), findsOneWidget);
+    });
+  });
+
+  group('demo mode', () {
+    /// Shows the screen with [service], following time on the test's clock so rests and countdowns run as pumped.
+    Future<void> showDemo(WidgetTester tester, ScaleService service) async {
+      addTearDown(service.dispose);
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: ThemeData(extensions: const <ThemeExtension<dynamic>>[CupwardColors.light]),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: BrewRoute(
+            recipe: BuiltInRecipes.defaultRecipe,
+            scaleService: service,
+            now: () => tester.binding.clock.now(),
+          ),
+        ),
+      );
+    }
+
+    /// Chooses [item] in the recipe menu.
+    Future<void> choose(WidgetTester tester, String item) async {
+      // The simulated scale keeps the screen rebuilding, so it never settles, and fixed pumps are used instead.
+      await tester.tap(find.byTooltip('Recipe options'));
+      await tester.pump(const Duration(milliseconds: 500));
+      await tester.tap(find.text(item));
+      await tester.pump(const Duration(milliseconds: 500));
+    }
+
+    /// In a browser there is no scale panel, so starting the demo brings it in, marked as a demo.
+    testWidgets('starts and ends from the recipe menu', (WidgetTester tester) async {
+      // Arrange
+      final ScaleService service = ScaleService(isSupported: false, random: Random(5));
+      await showDemo(tester, service);
+      // Act
+      await choose(tester, 'Start demo');
+      await tester.pump(const Duration(seconds: 1));
+      // Assert
+      expect(service.isDemo, isTrue);
+      expect(find.text('Demo started. The scale readings are simulated.'), findsOneWidget);
+      await tester.scrollUntilVisible(find.byType(ScalePanel), 200);
+      expect(find.text('DEMO'), findsOneWidget);
+      expect(find.text('Connected'), findsOneWidget);
+      // Act
+      await tester.scrollUntilVisible(find.byTooltip('Recipe options'), -200);
+      await choose(tester, 'End demo');
+      await tester.pump(const Duration(seconds: 5));
+      // Assert
+      expect(service.isDemo, isFalse);
+      expect(find.byType(ScalePanel, skipOffstage: false), findsNothing);
+    });
+
+    /// After the user taps Continue, the simulated scale brews every step, and the screen follows it to the end.
+    testWidgets('brews the recipe with simulated readings', (WidgetTester tester) async {
+      // Arrange
+      final ScaleService service = ScaleService(isSupported: true, random: Random(6));
+      await showDemo(tester, service);
+      await choose(tester, 'Start demo');
+      await tester.pump(const Duration(seconds: 3));
+      // Act
+      await tester.tap(find.byType(BrewActionButton));
+      Duration waited = Duration.zero;
+      while (find.text('STEP 6 OF 6').evaluate().isEmpty && waited < const Duration(minutes: 4)) {
+        await tester.pump(const Duration(milliseconds: 200));
+        waited += const Duration(milliseconds: 200);
+      }
+      // Assert
+      expect(find.text('STEP 6 OF 6'), findsOneWidget);
+      expect(service.reading?.weightGrams, closeTo(BuiltInRecipes.defaultRecipe.waterGrams, 1.5));
+      service.stopDemo();
+      await tester.pump();
     });
   });
 }

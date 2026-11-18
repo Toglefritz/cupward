@@ -639,4 +639,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String recipeCreatedMessage(String name) {
     return '$name is ready to brew';
   }
+
+  @override
+  String get recipeMenuStartDemo => 'Start demo';
+
+  @override
+  String get recipeMenuEndDemo => 'End demo';
+
+  @override
+  String get demoStartedMessage => 'Demo started. The scale readings are simulated.';
+
+  @override
+  String get scaleDemoBadge => 'Demo';
+
+  @override
+  String get scaleDemoSemanticLabel => 'Demo mode, simulated scale';
 }

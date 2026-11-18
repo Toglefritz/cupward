@@ -1,8 +1,10 @@
 import 'dart:async';
+import 'dart:math';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bookoo/flutter_bookoo.dart';
 
+import 'demo_scale_simulator.dart';
 import 'scale_connection_status.dart';
 import 'scale_failure.dart';
 
@@ -15,17 +17,51 @@ import 'scale_failure.dart';
 ///
 /// All Bluetooth work goes through `flutter_bookoo`. Its Bluetooth plugin has no web implementation, so in a browser
 /// the status is [ScaleConnectionStatus.unsupported] and the other methods do nothing.
+///
+/// In demo mode, started with [startDemo], the service acts as if a scale were connected, on every platform including
+/// the web, but its readings come from a [DemoScaleSimulator] instead of Bluetooth. [tare] zeroes the simulated scale,
+/// and [simulatePourTo] tells it how much water the brew calls for next, as the person at the kettle would know.
+/// [isDemo] says whether demo mode is on, and [stopDemo] or [disconnect] ends it.
 class ScaleService extends ChangeNotifier {
   /// Creates a service.
   ///
   /// [client] defaults to a real `ThemisUltraClient`. [isSupported] defaults to whether the app is running outside a
   /// browser. Tests supply both, or subclass the service and override its methods.
-  ScaleService({ThemisUltraClient? client, bool? isSupported})
+  ///
+  /// [random] is the source of the small variations in demo readings. Tests supply a seeded one.
+  ScaleService({ThemisUltraClient? client, bool? isSupported, Random? random})
       : _client = client,
+        _isSupported = isSupported ?? !kIsWeb,
+        _random = random,
         _status = (isSupported ?? !kIsWeb) ? ScaleConnectionStatus.disconnected : ScaleConnectionStatus.unsupported;
 
   /// The service that the app's screens share.
   static final ScaleService instance = ScaleService();
+
+  /// How often the simulated scale sends a reading in demo mode, about as often as the real scale does.
+  static const Duration demoReadingInterval = Duration(milliseconds: 100);
+
+  /// Whether the platform can reach a real scale. The status returns to [ScaleConnectionStatus.unsupported] when demo
+  /// mode ends if it cannot.
+  final bool _isSupported;
+
+  /// The source of randomness for demo readings, or null for an unseeded one.
+  final Random? _random;
+
+  /// The simulated scale while demo mode is on, or null when it is off.
+  DemoScaleSimulator? _demo;
+
+  /// Sends the simulated scale's readings while demo mode is on.
+  Timer? _demoTimer;
+
+  /// Whether demo mode is on, so the readings are simulated rather than coming from a real scale.
+  bool get isDemo => _demo != null;
+
+  /// The name recorded with a brew for the simulated scale.
+  static const String demoScaleName = 'Cupward demo scale';
+
+  /// The name of the connected scale, the simulated one's in demo mode, or null when none is connected.
+  String? get scaleName => isDemo ? demoScaleName : connectedDevice?.name;
 
   /// The client that scans and connects, created on first use so that nothing touches Bluetooth until it is needed.
   ThemisUltraClient? _client;
@@ -152,16 +188,66 @@ class ScaleService extends ChangeNotifier {
   /// Zeroes the scale's weight, for example with an empty brewer on it.
   ///
   /// Throws a `ThemisCommandException` if the command cannot be written, and does nothing when no scale is connected.
+  /// In demo mode it zeroes the simulated scale.
   Future<void> tare() async {
+    final DemoScaleSimulator? demo = _demo;
+    if (demo != null) {
+      demo.tare();
+      return;
+    }
     await _scale?.tare();
   }
 
-  /// Disconnects from the connected scale, if there is one.
+  /// Disconnects from the connected scale, if there is one, and ends demo mode if it is on.
   Future<void> disconnect() async {
+    if (isDemo) {
+      stopDemo();
+      return;
+    }
     final ThemisUltra? scale = _scale;
     await _clearConnection();
     await scale?.disconnect();
   }
+
+  /// Starts demo mode: any real scale is disconnected and any scan stopped, and the service reports a connected scale
+  /// whose readings are simulated, with an empty platter on which a brewer is soon set down.
+  ///
+  /// Does nothing if demo mode is already on. This works on every platform, including those where [status] is
+  /// otherwise [ScaleConnectionStatus.unsupported].
+  Future<void> startDemo() async {
+    if (isDemo) {
+      return;
+    }
+    await stopScan();
+    await disconnect();
+    final DemoScaleSimulator demo = DemoScaleSimulator(random: _random)..reset();
+    _demo = demo;
+    _failure = null;
+    _demoTimer = Timer.periodic(demoReadingInterval, (Timer _) {
+      _reading = demo.advance(demoReadingInterval);
+      notifyListeners();
+    });
+    _setStatus(ScaleConnectionStatus.connected);
+  }
+
+  /// Ends demo mode, if it is on, and returns to having no scale connected.
+  void stopDemo() {
+    if (!isDemo) {
+      return;
+    }
+    _demoTimer?.cancel();
+    _demoTimer = null;
+    _demo = null;
+    _reading = null;
+    _setStatus(_isSupported ? ScaleConnectionStatus.disconnected : ScaleConnectionStatus.unsupported);
+  }
+
+  /// In demo mode, empties the simulated scale's platter for a new brew. Does nothing otherwise.
+  void resetDemo() => _demo?.reset();
+
+  /// In demo mode, pours simulated water until the weight since the tare is about [targetGrams], or holds the weight
+  /// if [targetGrams] is null. Does nothing otherwise.
+  void simulatePourTo(double? targetGrams) => _demo?.pourTo(targetGrams);
 
   /// Forgets the connection after its readings end without [disconnect] being called.
   void _onConnectionLost() {
@@ -207,6 +293,7 @@ class ScaleService extends ChangeNotifier {
 
   @override
   void dispose() {
+    _demoTimer?.cancel();
     unawaited(_scanSubscription?.cancel());
     unawaited(_readingSubscription?.cancel());
     super.dispose();

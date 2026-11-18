@@ -1243,6 +1243,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{name} is ready to brew'**
   String recipeCreatedMessage(String name);
+
+  /// Menu item on the brewing screen that starts demo mode, in which scale readings are simulated so the app can be tried without a scale
+  ///
+  /// In en, this message translates to:
+  /// **'Start demo'**
+  String get recipeMenuStartDemo;
+
+  /// Menu item on the brewing screen that ends demo mode
+  ///
+  /// In en, this message translates to:
+  /// **'End demo'**
+  String get recipeMenuEndDemo;
+
+  /// Brief confirmation on the brewing screen after demo mode starts
+  ///
+  /// In en, this message translates to:
+  /// **'Demo started. The scale readings are simulated.'**
+  String get demoStartedMessage;
+
+  /// Short tag beside the scale panel's heading in demo mode. Shown in capitals
+  ///
+  /// In en, this message translates to:
+  /// **'Demo'**
+  String get scaleDemoBadge;
+
+  /// Screen reader label of the demo tag in the scale panel
+  ///
+  /// In en, this message translates to:
+  /// **'Demo mode, simulated scale'**
+  String get scaleDemoSemanticLabel;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

@@ -28,6 +28,10 @@ The app targets Android, iOS, macOS, and the web. Firebase is configured for eac
 
 The scale connects over Bluetooth on Android, iOS, and macOS, which ask for Bluetooth permission the first time the app looks for a scale. Browsers cannot connect to the scale, so on the web the brewing screen leaves out the scale panel. Recipes and AI feedback on a brew work the same way, without scale readings.
 
+### Demo mode
+
+Demo mode lets anyone try the full brewing experience without a scale. Choose **Start demo** from the menu in the corner of the recipe card on the brewing screen. The app then behaves as if a scale were connected, on every platform including the web, and the scale panel carries a **Demo** tag. The simulated scale follows the recipe the way a person would: the brewer is set on the platter, the scale is tared when you continue from preparation, and each bloom and pour is poured at a realistic, slightly uneven rate that stops close to its target. The brewing screen follows these readings exactly as it follows a real scale, and the recorded brew feeds the feedback screen and AI feedback as usual. Choose **End demo** from the same menu to stop.
+
 ## Technology
 
 - **Flutter and Dart** for the cross-platform user interface.

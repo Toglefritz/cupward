@@ -1,5 +1,7 @@
 import 'dart:async';
+import 'dart:math';
 
+import 'package:cupward/services/scale/demo_scale_simulator.dart';
 import 'package:cupward/services/scale/scale_connection_status.dart';
 import 'package:cupward/services/scale/scale_failure.dart';
 import 'package:cupward/services/scale/scale_service.dart';
@@ -202,6 +204,66 @@ void main() {
 
       // Assert
       expect(client.scale!.tareCount, 1);
+    });
+  });
+
+  group('demo mode', () {
+    /// Demo mode is for trying the app without a scale, including in a browser, where no real scale can connect.
+    testWidgets('simulates a connected scale where scales are unsupported', (WidgetTester tester) async {
+      // Arrange
+      final ScaleService service = ScaleService(isSupported: false, random: Random(3));
+      addTearDown(service.dispose);
+      // Act
+      await service.startDemo();
+      await tester.pump(const Duration(seconds: 3));
+      // Assert
+      expect(service.isDemo, isTrue);
+      expect(service.status, ScaleConnectionStatus.connected);
+      expect(service.isConnected, isTrue);
+      expect(service.scaleName, ScaleService.demoScaleName);
+      expect(service.reading?.weightGrams, DemoScaleSimulator.brewerGrams);
+      // Act
+      service.stopDemo();
+      await tester.pump(const Duration(seconds: 1));
+      // Assert
+      expect(service.isDemo, isFalse);
+      expect(service.status, ScaleConnectionStatus.unsupported);
+      expect(service.reading, isNull);
+    });
+
+    /// Tare and the pour targets reach the simulated scale, so the brewing screen drives it like a real one.
+    testWidgets('tares and pours on the simulated scale', (WidgetTester tester) async {
+      // Arrange
+      final ScaleService service = ScaleService(isSupported: true, random: Random(4));
+      addTearDown(service.dispose);
+      await service.startDemo();
+      await tester.pump(const Duration(seconds: 3));
+      // Act
+      await service.tare();
+      service.simulatePourTo(60);
+      await tester.pump(const Duration(seconds: 20));
+      // Assert
+      expect(service.reading?.weightGrams, closeTo(60, 1.5));
+      // Act
+      service.stopDemo();
+      // Assert
+      expect(service.status, ScaleConnectionStatus.disconnected);
+    });
+
+    /// A real scale and the simulated one cannot both be connected.
+    test('replaces a connected scale', () async {
+      // Arrange
+      final _FakeClient client = _FakeClient()..scale = _FakeScale(_device);
+      final ScaleService service = ScaleService(client: client, isSupported: true);
+      addTearDown(service.dispose);
+      await service.connect(_device);
+      // Act
+      await service.startDemo();
+      // Assert
+      expect(service.connectedDevice, isNull);
+      expect(service.isDemo, isTrue);
+      expect(await service.connect(_device), isFalse);
+      service.stopDemo();
     });
   });
 }

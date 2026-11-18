@@ -17,7 +17,7 @@ import 'components/scale_panel.dart';
 ///
 /// The recipe summary card sits at the top of a content column of limited width, with the recipe menu in its corner.
 /// The phase indicator, the current step's heading, its illustration, and the scale panel follow it. The scale panel is
-/// left out on platforms that cannot use a scale, such as the web. The main action button is pinned below the
+/// left out on platforms that cannot use a scale, such as the web, unless demo mode is simulating one. The main action button is pinned below the
 /// scrolling content in the Scaffold's bottom bar slot, so it stays in reach however tall the content is, and floating
 /// messages appear above it.
 class BrewView extends StatelessWidget {
@@ -42,7 +42,11 @@ class BrewView extends StatelessWidget {
               children: <Widget>[
                 RecipeSummaryCard(
                   recipe: state.recipe,
-                  menu: RecipeMenuButton(onNewRecipePressed: state.onNewRecipePressed),
+                  menu: RecipeMenuButton(
+                    onNewRecipePressed: state.onNewRecipePressed,
+                    isDemoRunning: state.scale.isDemo,
+                    onDemoPressed: state.onDemoPressed,
+                  ),
                 ),
                 Padding(
                   padding: const EdgeInsets.only(top: Insets.small),
@@ -67,6 +71,7 @@ class BrewView extends StatelessWidget {
                       phaseKind: state.currentPhaseKind,
                       onFindScalePressed: state.onFindScalePressed,
                       onTarePressed: state.onTarePressed,
+                      isDemo: state.scale.isDemo,
                     ),
                   ),
               ],

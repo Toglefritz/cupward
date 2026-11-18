@@ -939,5 +939,25 @@
         "description": "The new recipe name"
       }
     }
+  },
+  "recipeMenuStartDemo": "Start demo",
+  "@recipeMenuStartDemo": {
+    "description": "Menu item on the brewing screen that starts demo mode, in which scale readings are simulated so the app can be tried without a scale"
+  },
+  "recipeMenuEndDemo": "End demo",
+  "@recipeMenuEndDemo": {
+    "description": "Menu item on the brewing screen that ends demo mode"
+  },
+  "demoStartedMessage": "Demo started. The scale readings are simulated.",
+  "@demoStartedMessage": {
+    "description": "Brief confirmation on the brewing screen after demo mode starts"
+  },
+  "scaleDemoBadge": "Demo",
+  "@scaleDemoBadge": {
+    "description": "Short tag beside the scale panel's heading in demo mode. Shown in capitals"
+  },
+  "scaleDemoSemanticLabel": "Demo mode, simulated scale",
+  "@scaleDemoSemanticLabel": {
+    "description": "Screen reader label of the demo tag in the scale panel"
   }
 }

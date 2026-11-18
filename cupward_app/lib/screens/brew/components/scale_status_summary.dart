@@ -5,19 +5,23 @@ import '../../../services/scale/scale_connection_status.dart';
 import '../../../theme/context_theme_extension.dart';
 import '../../../theme/insets.dart';
 import 'scale_battery_indicator.dart';
+import 'scale_demo_badge.dart';
 import 'scale_status_dot.dart';
 
 /// The left side of the scale panel: a "Scale" heading, a status light with its label, and, once the scale has
-/// reported it, the battery level.
+/// reported it, the battery level. In demo mode a "Demo" badge sits beside the heading.
 class ScaleStatusSummary extends StatelessWidget {
   /// Creates a summary for [status], with the battery at [batteryPercent] when it is known.
-  const ScaleStatusSummary({required this.status, this.batteryPercent, super.key});
+  const ScaleStatusSummary({required this.status, this.batteryPercent, this.isDemo = false, super.key});
 
   /// Where the app stands with the scale.
   final ScaleConnectionStatus status;
 
   /// The scale's remaining charge from 0 to 100, or null when no scale is connected or it has not reported yet.
   final int? batteryPercent;
+
+  /// Whether the scale is the simulated one of demo mode.
+  final bool isDemo;
 
   /// Returns the label for [status], such as "Connected".
   static String labelFor(ScaleConnectionStatus status, AppLocalizations strings) {
@@ -50,9 +54,21 @@ class ScaleStatusSummary extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
-              Text(
-                strings.scaleTitle,
-                style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  Flexible(
+                    child: Text(
+                      strings.scaleTitle,
+                      style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                  if (isDemo)
+                    const Padding(
+                      padding: EdgeInsets.only(left: Insets.xSmall),
+                      child: ScaleDemoBadge(),
+                    ),
+                ],
               ),
               Padding(
                 padding: const EdgeInsets.only(top: Insets.xxSmall),

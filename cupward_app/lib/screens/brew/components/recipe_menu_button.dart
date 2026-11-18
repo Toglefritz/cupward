@@ -7,14 +7,26 @@ import '../../../theme/context_theme_extension.dart';
 ///
 /// The button is a horizontal "more" icon in the secondary ink color, so it sits quietly in the card's corner. The menu
 /// opens below the button and to its left, so it stays inside the card's corner, and matches the app's cards: a cream
-/// surface with a hairline border, rounded corners, and a soft shadow. For now it offers one action,
-/// creating a new recipe.
+/// surface with a hairline border, rounded corners, and a soft shadow. It offers creating a new recipe and, below a
+/// rule, starting or ending demo mode, in which the scale is simulated.
 class RecipeMenuButton extends StatelessWidget {
-  /// Creates the menu, which calls [onNewRecipePressed] when "New recipe" is chosen.
-  const RecipeMenuButton({required this.onNewRecipePressed, super.key});
+  /// Creates the menu, which calls [onNewRecipePressed] when "New recipe" is chosen, and [onDemoPressed] when "Start
+  /// demo" or, while [isDemoRunning], "End demo" is chosen.
+  const RecipeMenuButton({
+    required this.onNewRecipePressed,
+    required this.isDemoRunning,
+    required this.onDemoPressed,
+    super.key,
+  });
 
   /// Called when "New recipe" is chosen.
   final VoidCallback onNewRecipePressed;
+
+  /// Whether demo mode is on, so the menu offers to end it rather than start it.
+  final bool isDemoRunning;
+
+  /// Called when "Start demo" or "End demo" is chosen.
+  final VoidCallback onDemoPressed;
 
   /// The corner radius of the menu, a little tighter than the cards it opens from.
   static const double _menuCornerRadius = 12;
@@ -54,6 +66,21 @@ class RecipeMenuButton extends StatelessWidget {
             leadingIcon: Icon(Icons.add, color: theme.colorScheme.onSurface),
             onPressed: onNewRecipePressed,
             child: Text(strings.recipeMenuNewRecipe, style: theme.textTheme.bodyLarge),
+          ),
+        ),
+        Divider(height: 9, color: context.cupwardColors.cardBorder),
+        SizedBox(
+          width: _menuWidth,
+          child: MenuItemButton(
+            leadingIcon: Icon(
+              isDemoRunning ? Icons.stop_circle_outlined : Icons.play_circle_outline,
+              color: theme.colorScheme.onSurface,
+            ),
+            onPressed: onDemoPressed,
+            child: Text(
+              isDemoRunning ? strings.recipeMenuEndDemo : strings.recipeMenuStartDemo,
+              style: theme.textTheme.bodyLarge,
+            ),
           ),
         ),
       ],

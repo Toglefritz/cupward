@@ -37,6 +37,10 @@ import 'components/scale_picker_sheet.dart';
 /// moment the user leaves preparation. When the user taps Done, the record is handed to the feedback screen, which
 /// replaces this one.
 ///
+/// The recipe menu also starts and ends demo mode, in which [ScaleService] simulates a connected scale. Starting it
+/// starts the brew again, and each phase tells the simulated scale how much water to pour, so the demo brews the recipe
+/// as a person with a real scale would, while the screen follows it exactly as it follows a real scale.
+///
 /// Creating a recipe from the recipe menu switches the screen to it: the brew starts again from the new recipe's first
 /// step, the recipe becomes the chosen one in [RecipeRepository], and a brief message confirms it.
 class BrewController extends State<BrewRoute> {
@@ -53,8 +57,8 @@ class BrewController extends State<BrewRoute> {
   /// The service that connects to and reads from the scale.
   ScaleService get scale => widget.scaleService ?? ScaleService.instance;
 
-  /// Whether this platform can use a scale. Browsers cannot connect to one over Bluetooth, so on the web the brew is
-  /// followed without scale readings.
+  /// Whether a scale can be used here. Browsers cannot connect to one over Bluetooth, so on the web the brew is followed
+  /// without scale readings, unless demo mode simulates a scale.
   bool get isScaleSupported => scale.status != ScaleConnectionStatus.unsupported;
 
   /// How long the screen offers to cancel before the brew moves to the next phase by itself.
@@ -118,6 +122,8 @@ class BrewController extends State<BrewRoute> {
 
   /// Starts brewing [recipe] from its first phase, with a new recording.
   void _startBrew() {
+    // A new brew starts with an empty platter, on which the simulated brewer is soon set down.
+    scale.resetDemo();
     currentPhaseIndex = 0;
     _recorder = BrewRecorder(recipe: recipe);
     _startPhase();
@@ -135,13 +141,15 @@ class BrewController extends State<BrewRoute> {
     }
     final BookooScaleReading? reading = scale.reading;
     if (reading != null && scale.isConnected) {
-      _recorder.addReading(reading, _now(), scaleName: scale.connectedDevice?.name);
+      _recorder.addReading(reading, _now(), scaleName: scale.scaleName);
     }
     setState(() => _evaluate(reading));
   }
 
   /// Begins following the current phase with a new tracker, and forgets the state of the previous phase.
   void _startPhase() {
+    // In demo mode, the simulated person at the kettle pours what the phase calls for, or waits if it calls for none.
+    scale.simulatePourTo(recipe.phases[currentPhaseIndex].targetWeightGrams);
     _resetTracker();
     _windowEndsAt = null;
     _isAutoAdvanceCancelled = false;
@@ -320,6 +328,26 @@ class BrewController extends State<BrewRoute> {
     });
     ScaffoldMessenger.of(context).showSnackBar(
       AppSnackBars.confirmation(context, AppLocalizations.of(context)!.recipeCreatedMessage(created.name)),
+    );
+  }
+
+  /// Handles "Start demo" and "End demo" in the recipe menu.
+  ///
+  /// Starting the demo replaces any real scale with a simulated one and starts the brew again from its first step, so
+  /// the demo shows the whole brew, and a brief message says the readings are simulated. Ending it leaves the brew
+  /// where it is, without a scale, so the user can finish it with the main button.
+  Future<void> onDemoPressed() async {
+    if (scale.isDemo) {
+      scale.stopDemo();
+      return;
+    }
+    await scale.startDemo();
+    if (!mounted) {
+      return;
+    }
+    setState(_startBrew);
+    ScaffoldMessenger.of(context).showSnackBar(
+      AppSnackBars.confirmation(context, AppLocalizations.of(context)!.demoStartedMessage),
     );
   }
 
