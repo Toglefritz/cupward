@@ -890,6 +890,12 @@ abstract class AppLocalizations {
   /// **'Brew time'**
   String get parameterBrewTime;
 
+  /// Name of the brewing variable for how long an immersion brew steeps, shown on a suggested change
+  ///
+  /// In en, this message translates to:
+  /// **'Steep time'**
+  String get parameterSteepTime;
+
   /// Which way a suggested change goes, for more of an amount
   ///
   /// In en, this message translates to:
@@ -1219,6 +1225,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Couldn\'t save the new recipe. Check your connection and try again.'**
   String get newRecipeFailureSave;
+
+  /// Shown when the new recipe's name and every numbered version of it are already used
+  ///
+  /// In en, this message translates to:
+  /// **'You already have recipes with this name. Try again for a different one.'**
+  String get newRecipeFailureNameTaken;
 
   /// Label of the button that returns from a failed recipe request to the form
   ///

@@ -20,6 +20,7 @@ abstract final class BrewFeedbackSchema {
     'pourRate',
     'waterTemperature',
     'brewTime',
+    'steepTime',
   ];
 
   /// The names of the directions a suggestion can take, matching `ChangeDirection`.
@@ -37,8 +38,8 @@ abstract final class BrewFeedbackSchema {
       'change':
           ResponseSchema.string(description: 'How much to change it, in plain words, such as "Add 1 g of coffee".'),
       'suggestedValue': ResponseSchema.number(
-        description: 'The new value: grams for coffeeDose, waterAmount, and bloomWater, or seconds for bloomTime and '
-            'brewTime. Leave it out for other parameters.',
+        description: 'The new value: grams for coffeeDose, waterAmount, and bloomWater, or seconds for bloomTime, '
+            'brewTime, and steepTime. Leave it out for other parameters.',
       ),
       'rationale': ResponseSchema.string(
         description: 'One or two sentences on why, citing the brew data or the tasting notes.',

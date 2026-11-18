@@ -34,7 +34,11 @@ class RecipeRepository {
   static final RecipeRepository instance = RecipeRepository();
 
   /// The version of the stored document's form.
-  static const int schemaVersion = 1;
+  ///
+  /// * 1: the first form, without the brewing method.
+  /// * 2: adds `method`, the name of the recipe's `BrewMethod`. Version 1 documents are still read, with the method
+  ///   worked out from their steps, and are rewritten as version 2 when they are next saved.
+  static const int schemaVersion = 2;
 
   /// The Firestore instance supplied by a test, or null to use the app's.
   final FirebaseFirestore? _firestoreOverride;

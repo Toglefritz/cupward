@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_hybrid_ai/firebase_hybrid_ai.dart';
 import 'package:flutter/foundation.dart';
 
@@ -21,15 +24,25 @@ import 'recipe_generation_schema.dart';
 /// The recipe is then saved with [RecipeRepository.create]. Each of a user's recipes needs a unique name, so if the
 /// name is taken, a number is added, such as "Bold Morning 2".
 ///
+/// Each model request is limited to [requestTimeout] and each save to [saveTimeout], so the screen never waits
+/// forever. A save that times out may still reach Firestore later, in which case the recipe appears without having
+/// been offered to the user, so the save limit is generous.
+///
 /// Hybrid inference runs on Android and in the browser. On other platforms [isSupported] is false, and every request
 /// fails with [RecipeGenerationFailure.unsupported].
 class RecipeGenerationService {
   /// Creates a service.
   ///
   /// [hybridAi] defaults to a real `FirebaseHybridAi`, [recipes] to `RecipeRepository.instance`, and [isSupported] to
-  /// whether the app runs on Android or in a browser. Tests supply their own.
-  RecipeGenerationService({FirebaseHybridAi? hybridAi, RecipeRepository? recipes, bool? isSupported})
-      : _hybridAi = hybridAi ?? FirebaseHybridAi(),
+  /// whether the app runs on Android or in a browser. Tests supply their own, and can shorten [requestTimeout] and
+  /// [saveTimeout].
+  RecipeGenerationService({
+    FirebaseHybridAi? hybridAi,
+    RecipeRepository? recipes,
+    bool? isSupported,
+    this.requestTimeout = const Duration(seconds: 90),
+    this.saveTimeout = const Duration(seconds: 30),
+  })  : _hybridAi = hybridAi ?? FirebaseHybridAi(),
         _recipes = recipes ?? RecipeRepository.instance,
         isSupported = isSupported ?? (kIsWeb || defaultTargetPlatform == TargetPlatform.android);
 
@@ -44,6 +57,13 @@ class RecipeGenerationService {
 
   /// Whether the platform can run hybrid inference.
   final bool isSupported;
+
+  /// The longest one model request may take before it counts as failed. On-device models can be slow to start, so
+  /// this allows for that.
+  final Duration requestTimeout;
+
+  /// The longest saving the recipe may take before it counts as failed.
+  final Duration saveTimeout;
 
   /// Creates and saves a recipe for [request], and returns it as saved.
   ///
@@ -89,22 +109,34 @@ class RecipeGenerationService {
       final String name = attempt == 1 ? recipe.name : '${recipe.name} $attempt';
       final BrewRecipe named = recipe.copyWith(id: RecipeIds.fromName(name), name: name);
       try {
-        await _recipes.create(named);
+        await _recipes.create(named).timeout(saveTimeout);
         return named;
       } on RecipeNameTakenException {
         continue;
+      } on TimeoutException {
+        debugPrint('Saving the new recipe took longer than $saveTimeout.');
+        throw const RecipeGenerationException(RecipeGenerationFailure.saveFailed);
+      } on FirebaseException catch (error) {
+        debugPrint('The new recipe could not be saved (${error.plugin}/${error.code}): ${error.message}');
+        throw const RecipeGenerationException(RecipeGenerationFailure.saveFailed);
       } on Object catch (error) {
         debugPrint('The new recipe could not be saved: $error');
         throw const RecipeGenerationException(RecipeGenerationFailure.saveFailed);
       }
     }
-    throw const RecipeGenerationException(RecipeGenerationFailure.saveFailed);
+    debugPrint('Every name tried for "${recipe.name}" is taken.');
+    throw const RecipeGenerationException(RecipeGenerationFailure.nameTaken);
   }
 
   /// Sends [prompt] with the schema in [mode], and turns plugin failures into [RecipeGenerationException]s.
   Future<StructuredGenerationResult> _generate(String prompt, InferenceMode mode) async {
     try {
-      return await _hybridAi.generateStructured(prompt, schema: RecipeGenerationSchema.schema, mode: mode);
+      return await _hybridAi
+          .generateStructured(prompt, schema: RecipeGenerationSchema.schema, mode: mode)
+          .timeout(requestTimeout);
+    } on TimeoutException {
+      debugPrint('The recipe request in $mode took longer than $requestTimeout.');
+      throw const RecipeGenerationException(RecipeGenerationFailure.requestFailed);
     } on HybridAiNotSupportedException catch (error) {
       debugPrint('Recipe creation is not supported here: $error');
       throw const RecipeGenerationException(RecipeGenerationFailure.unsupported);

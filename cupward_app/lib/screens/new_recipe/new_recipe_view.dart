@@ -20,7 +20,8 @@ import 'new_recipe_controller.dart';
 /// and the preferences are filled in. Dragging the list hides the keyboard.
 ///
 /// While the recipe is created, and if that fails, a status card takes the place of the form below the title card:
-/// first with progress, then with the reason and buttons to try again or edit the request.
+/// first with progress, then with the reason and buttons to try again or edit the request. The screen cannot be left
+/// while the recipe is created, since the recipe is saved before the screen would hand it back.
 class NewRecipeView extends StatelessWidget {
   /// Creates the view for [state].
   const NewRecipeView(this.state, {super.key});
@@ -42,6 +43,8 @@ class NewRecipeView extends StatelessWidget {
         return strings.newRecipeFailureInvalid;
       case RecipeGenerationFailure.saveFailed:
         return strings.newRecipeFailureSave;
+      case RecipeGenerationFailure.nameTaken:
+        return strings.newRecipeFailureNameTaken;
     }
   }
 
@@ -58,63 +61,68 @@ class NewRecipeView extends StatelessWidget {
           ),
         );
 
-    return Scaffold(
-      body: SafeArea(
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: _maxContentWidth),
-            child: ListView(
-              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-              padding: const EdgeInsets.fromLTRB(Insets.small, Insets.xSmall, Insets.small, Insets.small),
-              children: <Widget>[
-                ContentCard(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: <Widget>[
-                      Semantics(
-                        header: true,
-                        child:
-                            Text(strings.newRecipeTitle, style: theme.textTheme.headlineMedium?.copyWith(fontSize: 30)),
+    return PopScope(
+      canPop: state.canLeave,
+      child: Scaffold(
+        body: SafeArea(
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: _maxContentWidth),
+              child: ListView(
+                keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+                padding: const EdgeInsets.fromLTRB(Insets.small, Insets.xSmall, Insets.small, Insets.small),
+                children: <Widget>[
+                  ContentCard(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: <Widget>[
+                        Semantics(
+                          header: true,
+                          child: Text(
+                            strings.newRecipeTitle,
+                            style: theme.textTheme.headlineMedium?.copyWith(fontSize: 30),
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.only(top: Insets.xxSmall),
+                          child: Text(
+                            strings.newRecipeIntro,
+                            style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (state.status != NewRecipeStatus.editing)
+                    Padding(padding: const EdgeInsets.only(top: Insets.small), child: _statusCard(strings))
+                  else ...<Widget>[
+                    sectionTitle(strings.newRecipeMethodTitle),
+                    BrewMethodPicker(selected: state.selectedMethod, onSelected: state.onMethodSelected),
+                    sectionTitle(strings.newRecipeTasteTitle),
+                    TastePreferencesField(
+                      controller: state.preferencesController,
+                      focusNode: state.preferencesFocus,
+                      onTopicPressed: state.onTopicPressed,
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(top: Insets.medium),
+                      child: FilledButton(
+                        onPressed: state.canCreate ? state.onCreatePressed : null,
+                        child: Text(strings.buttonCreateRecipe),
                       ),
+                    ),
+                    if (!state.canCreate)
                       Padding(
-                        padding: const EdgeInsets.only(top: Insets.xxSmall),
+                        padding: const EdgeInsets.only(top: Insets.xSmall),
                         child: Text(
-                          strings.newRecipeIntro,
-                          style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                          strings.newRecipeNeedsInput,
+                          textAlign: TextAlign.center,
+                          style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
                         ),
                       ),
-                    ],
-                  ),
-                ),
-                if (state.status != NewRecipeStatus.editing)
-                  Padding(padding: const EdgeInsets.only(top: Insets.small), child: _statusCard(strings))
-                else ...<Widget>[
-                  sectionTitle(strings.newRecipeMethodTitle),
-                  BrewMethodPicker(selected: state.selectedMethod, onSelected: state.onMethodSelected),
-                  sectionTitle(strings.newRecipeTasteTitle),
-                  TastePreferencesField(
-                    controller: state.preferencesController,
-                    focusNode: state.preferencesFocus,
-                    onTopicPressed: state.onTopicPressed,
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(top: Insets.medium),
-                    child: FilledButton(
-                      onPressed: state.canCreate ? state.onCreatePressed : null,
-                      child: Text(strings.buttonCreateRecipe),
-                    ),
-                  ),
-                  if (!state.canCreate)
-                    Padding(
-                      padding: const EdgeInsets.only(top: Insets.xSmall),
-                      child: Text(
-                        strings.newRecipeNeedsInput,
-                        textAlign: TextAlign.center,
-                        style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
-                      ),
-                    ),
+                  ],
                 ],
-              ],
+              ),
             ),
           ),
         ),

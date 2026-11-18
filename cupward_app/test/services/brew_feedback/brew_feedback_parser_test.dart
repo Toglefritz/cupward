@@ -2,12 +2,28 @@ import 'package:cupward/models/feedback/brew_feedback.dart';
 import 'package:cupward/models/feedback/change_direction.dart';
 import 'package:cupward/models/feedback/recipe_parameter.dart';
 import 'package:cupward/models/feedback/recipe_suggestion.dart';
+import 'package:cupward/models/recipes/brew_method.dart';
+import 'package:cupward/models/recipes/brew_phase.dart';
+import 'package:cupward/models/recipes/brew_phase_kind.dart';
+import 'package:cupward/models/recipes/brew_recipe.dart';
 import 'package:cupward/models/recipes/built_in_recipes.dart';
 import 'package:cupward/services/brew_feedback/brew_feedback_parser.dart';
 import 'package:firebase_hybrid_ai/firebase_hybrid_ai.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'brew_feedback_fixtures.dart';
+
+/// A French press recipe with a four-minute steep.
+final BrewRecipe _press = BuiltInRecipes.v60PourOver.copyWith(
+  method: BrewMethod.frenchPress,
+  brewTime: const Duration(minutes: 5),
+  phases: const <BrewPhase>[
+    BrewPhase(id: 'prepare', kind: BrewPhaseKind.prepare),
+    BrewPhase(id: 'pour-1', kind: BrewPhaseKind.pour, targetWeightGrams: 320),
+    BrewPhase(id: 'steep', kind: BrewPhaseKind.steep, duration: Duration(minutes: 4)),
+    BrewPhase(id: 'complete', kind: BrewPhaseKind.complete),
+  ],
+);
 
 /// Verifies how the AI answer becomes feedback, and the guards that keep suggested changes small.
 void main() {
@@ -107,6 +123,22 @@ void main() {
         throwsFormatException,
       );
       expect(() => parse('not an object'), throwsFormatException);
+    });
+
+    /// An immersion recipe's steep time is read from its steep step.
+    test('reads a steep time against an immersion recipe', () {
+      final BrewFeedback feedback = BrewFeedbackParser.parse(
+        answerWith(BrewFeedbackFixtures.suggestion(parameter: 'steepTime', suggestedValue: 270)),
+        recipe: _press,
+        source: InferenceSource.onDevice,
+      );
+      expect(feedback.primary.currentValue, 240);
+      expect(feedback.primary.suggestedValue, 270);
+    });
+
+    /// A pour over has no steep, so a steep time has nothing to compare with.
+    test('has no steep time for a pour over', () {
+      expect(BrewFeedbackParser.currentValue(RecipeParameter.steepTime, BuiltInRecipes.defaultRecipe), isNull);
     });
   });
 }

@@ -16,7 +16,9 @@ import '../../models/recipes/brew_recipe.dart';
 /// * Bloom water: the bloom's target weight. It must stay below the next phase's target, so the first pour still adds
 ///   water.
 /// * Bloom time: the bloom's rest.
-/// * Brew time: the target brew time.
+/// * Brew time: the target brew time. For a recipe with a steep, the steep changes by the same amount, since the steep
+///   is the part of an immersion brew that the brewing screen times. It must stay longer than zero.
+/// * Steep time: the steep's duration, with the brew time changed by the same amount.
 ///
 /// Grind size, pour rate, and water temperature are not stored in a recipe, so they cannot be applied.
 abstract final class RecipeAdjuster {
@@ -37,7 +39,9 @@ abstract final class RecipeAdjuster {
       case RecipeParameter.bloomTime:
         return _updateBloom(recipe, (BrewPhase bloom) => bloom.copyWith(duration: Duration(seconds: value.round())));
       case RecipeParameter.brewTime:
-        return recipe.copyWith(brewTime: Duration(seconds: value.round()));
+        return _setBrewTime(recipe, Duration(seconds: value.round()));
+      case RecipeParameter.steepTime:
+        return _setSteepTime(recipe, Duration(seconds: value.round()));
       case RecipeParameter.grindSize:
       case RecipeParameter.pourRate:
       case RecipeParameter.waterTemperature:
@@ -47,6 +51,44 @@ abstract final class RecipeAdjuster {
 
   /// Whether [suggestion] can be applied to [recipe].
   static bool canApply(BrewRecipe recipe, RecipeSuggestion suggestion) => apply(recipe, suggestion) != null;
+
+  /// Sets the brew time to [time], and moves the steep, if there is one, by the same amount. Returns null if the steep
+  /// would no longer last longer than zero.
+  static BrewRecipe? _setBrewTime(BrewRecipe recipe, Duration time) {
+    final int steepIndex = recipe.phases.indexWhere((BrewPhase phase) => phase.kind == BrewPhaseKind.steep);
+    final Duration? steepTime = steepIndex < 0 ? null : recipe.phases[steepIndex].duration;
+    if (steepTime == null) {
+      return recipe.copyWith(brewTime: time);
+    }
+    final Duration newSteep = steepTime + (time - recipe.brewTime);
+    if (newSteep <= Duration.zero) {
+      return null;
+    }
+    return _replaceAt(
+      recipe.copyWith(brewTime: time),
+      steepIndex,
+      (BrewPhase steep) => steep.copyWith(duration: newSteep),
+    );
+  }
+
+  /// Sets the steep's duration to [time], and moves the brew time by the same amount. Returns null if the recipe has
+  /// no timed steep, or if the brew time would no longer be longer than zero.
+  static BrewRecipe? _setSteepTime(BrewRecipe recipe, Duration time) {
+    final int steepIndex = recipe.phases.indexWhere((BrewPhase phase) => phase.kind == BrewPhaseKind.steep);
+    final Duration? steepTime = steepIndex < 0 ? null : recipe.phases[steepIndex].duration;
+    if (steepTime == null) {
+      return null;
+    }
+    final Duration brewTime = recipe.brewTime + (time - steepTime);
+    if (brewTime <= Duration.zero) {
+      return null;
+    }
+    return _replaceAt(
+      recipe.copyWith(brewTime: brewTime),
+      steepIndex,
+      (BrewPhase steep) => steep.copyWith(duration: time),
+    );
+  }
 
   /// Sets the total water to [grams], scaling every target weight and the yield by the same ratio.
   static BrewRecipe _scaleWater(BrewRecipe recipe, double grams) {
@@ -85,13 +127,15 @@ abstract final class RecipeAdjuster {
   /// Returns [recipe] with its bloom replaced by [change] applied to it, or null if it has no bloom.
   static BrewRecipe? _updateBloom(BrewRecipe recipe, BrewPhase Function(BrewPhase bloom) change) {
     final int bloomIndex = recipe.phases.indexWhere((BrewPhase phase) => phase.kind == BrewPhaseKind.bloom);
-    if (bloomIndex < 0) {
-      return null;
-    }
+    return bloomIndex < 0 ? null : _replaceAt(recipe, bloomIndex, change);
+  }
+
+  /// Returns [recipe] with the phase at [index] replaced by [change] applied to it.
+  static BrewRecipe _replaceAt(BrewRecipe recipe, int index, BrewPhase Function(BrewPhase phase) change) {
     return recipe.copyWith(
       phases: <BrewPhase>[
-        for (int index = 0; index < recipe.phases.length; index++)
-          if (index == bloomIndex) change(recipe.phases[index]) else recipe.phases[index],
+        for (int i = 0; i < recipe.phases.length; i++)
+          if (i == index) change(recipe.phases[i]) else recipe.phases[i],
       ],
     );
   }

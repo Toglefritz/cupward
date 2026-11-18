@@ -14,14 +14,39 @@ abstract final class RecipeIds {
   /// Characters that are not letters or digits in any script.
   static final RegExp _separators = RegExp(r'[^\p{L}\p{N}]+', unicode: true);
 
+  /// A letter or digit in any script.
+  static final RegExp _letterOrDigit = RegExp(r'[\p{L}\p{N}]', unicode: true);
+
   /// Returns the ID for a recipe named [name].
   static String fromName(String name) {
     String id = name.toLowerCase().replaceAll(_separators, '-');
     id = _trimHyphens(id);
     if (id.length > maxLength) {
-      id = _trimHyphens(id.substring(0, maxLength));
+      id = _trimHyphens(_shorten(id));
     }
     return id.isEmpty ? fallback : id;
+  }
+
+  /// Whether [name] has at least one letter or digit, so that it gives an ID of its own rather than [fallback].
+  ///
+  /// A name of only symbols, such as "☕", would share the fallback ID with every other such name, and a numbered copy
+  /// of it, such as "☕ 2", would get an ID of just the number.
+  static bool hasLettersOrDigits(String name) => _letterOrDigit.hasMatch(name);
+
+  /// Returns the longest start of [id] that fits in [maxLength] UTF-16 code units without splitting a character
+  /// outside the Basic Multilingual Plane, whose two halves would not be valid in a Firestore document ID.
+  static String _shorten(String id) {
+    final StringBuffer buffer = StringBuffer();
+    int length = 0;
+    for (final int rune in id.runes) {
+      final int size = rune > 0xFFFF ? 2 : 1;
+      if (length + size > maxLength) {
+        break;
+      }
+      buffer.writeCharCode(rune);
+      length += size;
+    }
+    return buffer.toString();
   }
 
   /// Removes hyphens from both ends of [value].

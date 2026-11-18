@@ -453,6 +453,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get parameterBrewTime => 'Brew time';
 
   @override
+  String get parameterSteepTime => 'Steep time';
+
+  @override
   String get directionMore => 'More';
 
   @override
@@ -625,6 +628,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get newRecipeFailureSave => 'Couldn\'t save the new recipe. Check your connection and try again.';
+
+  @override
+  String get newRecipeFailureNameTaken => 'You already have recipes with this name. Try again for a different one.';
 
   @override
   String get buttonEditRequest => 'Edit';

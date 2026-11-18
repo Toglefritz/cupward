@@ -18,6 +18,8 @@ Rules:
 - Base the ratio on the taste: about 1:15 to 1:17 for pour-over and 1:12 to 1:16 for immersion. A stronger cup uses less water per gram of coffee.
 - If a cup size is given, choose the water to match it. Otherwise make one cup of about 300 ml.
 - Target weights are the total water on the scale after each step, counted from zero, so they only go up and the last one equals the total water.
+- Only bloom and pour steps have a target weight, and each adds at least 10 g of water.
+- The brew time covers the whole brew, including every step's durationSeconds.
 - The yield is the water less what the grounds hold, about twice the coffee weight.
 - The name is short and distinctive. The profile describes the cup in two to four words.''';
 

@@ -28,7 +28,10 @@ enum RecipeParameter {
   waterTemperature(hasRecipeValue: false),
 
   /// The total brew time, in seconds.
-  brewTime(hasRecipeValue: true);
+  brewTime(hasRecipeValue: true),
+
+  /// How long an immersion brew steeps, in seconds.
+  steepTime(hasRecipeValue: true);
 
   const RecipeParameter({required this.hasRecipeValue});
 

@@ -1,11 +1,13 @@
 import 'package:flutter/foundation.dart';
 
+import 'brew_method.dart';
 import 'brew_phase.dart';
+import 'brew_phase_kind.dart';
 
 /// A brewing recipe: what to brew and the targets that a brew follows.
 ///
-/// A recipe describes a brew by its quantities and timing, not by one brewing method, so the same type serves any
-/// method the app supports. The name says which method it is, for example "V60 Pour Over".
+/// A recipe is made for one brewing [method], such as a V60 or a French press, and describes the brew by its quantities
+/// and timing, so the same type serves any method the app supports.
 ///
 /// All quantities are targets. The brewing screens compare live scale readings against them. The [phases] list the
 /// steps of the brew in order, such as prepare, bloom, three pours, and complete for a pour over.
@@ -16,6 +18,7 @@ import 'brew_phase.dart';
 /// {
 ///   "id": "v60-pour-over",
 ///   "name": "V60 Pour Over",
+///   "method": "v60",
 ///   "profile": "Balanced & Clean",
 ///   "coffeeGrams": 20.0,
 ///   "waterGrams": 320.0,
@@ -29,6 +32,9 @@ import 'brew_phase.dart';
 ///   ]
 /// }
 /// ```
+///
+/// Recipes stored before the method was recorded have no `method` field. [BrewRecipe.fromJson] works the method out
+/// from their steps for those, as [inferMethod] describes.
 @immutable
 class BrewRecipe {
   /// Creates a recipe. Every quantity must be greater than zero, and [phases] must not be empty. The phases cannot be
@@ -36,6 +42,7 @@ class BrewRecipe {
   const BrewRecipe({
     required this.id,
     required this.name,
+    required this.method,
     required this.profile,
     required this.coffeeGrams,
     required this.waterGrams,
@@ -49,18 +56,21 @@ class BrewRecipe {
   /// Creates a recipe from its JSON form, described on the class.
   ///
   /// Throws a [FormatException] if a field is missing or has the wrong type, if a quantity is not greater than zero,
-  /// or if there are no phases.
+  /// or if there are no phases. A missing or unknown `method` is not an error: the method is worked out from the
+  /// phases with [inferMethod], so recipes stored by older or newer versions of the app can still be brewed.
   factory BrewRecipe.fromJson(Map<String, dynamic> json) {
     try {
+      final List<BrewPhase> phases = _phases(json);
       return BrewRecipe(
         id: json['id'] as String? ?? (throw ArgumentError('Missing required field: id')),
         name: json['name'] as String? ?? (throw ArgumentError('Missing required field: name')),
+        method: _method(json['method'], phases),
         profile: json['profile'] as String? ?? (throw ArgumentError('Missing required field: profile')),
         coffeeGrams: _positive(json, 'coffeeGrams'),
         waterGrams: _positive(json, 'waterGrams'),
         brewTime: Duration(seconds: (json['brewTimeSeconds'] as num).toInt()),
         yieldMilliliters: _positive(json, 'yieldMilliliters'),
-        phases: _phases(json),
+        phases: phases,
       );
     } catch (e) {
       throw FormatException('Failed to parse BrewRecipe from JSON: $e');
@@ -70,8 +80,12 @@ class BrewRecipe {
   /// A stable identifier for the recipe, used to store and look it up. It never changes, even if the name does.
   final String id;
 
-  /// The recipe's display name, which usually names the brewing method, such as "V60 Pour Over".
+  /// The recipe's display name, such as "V60 Pour Over". Each of a user's recipes has a unique name.
   final String name;
+
+  /// The brewing method the recipe is made for. Its steps follow the method: a bloom and pours for a pour-over method,
+  /// and one pour and a steep for an immersion method.
+  final BrewMethod method;
 
   /// A short description of the cup the recipe aims for, such as "Balanced & Clean".
   final String profile;
@@ -100,6 +114,7 @@ class BrewRecipe {
   Map<String, dynamic> toJson() => <String, dynamic>{
         'id': id,
         'name': name,
+        'method': method.name,
         'profile': profile,
         'coffeeGrams': coffeeGrams,
         'waterGrams': waterGrams,
@@ -107,6 +122,26 @@ class BrewRecipe {
         'yieldMilliliters': yieldMilliliters,
         'phases': phases.map((BrewPhase phase) => phase.toJson()).toList(),
       };
+
+  /// Returns the method that a recipe with [phases] but no recorded method was most likely made for.
+  ///
+  /// Only the built-in V60 recipe and recipes created by the app existed before the method was recorded. A recipe with
+  /// a steep was created for an immersion method, so it is taken to be a French press, the usual one. Any other recipe
+  /// is taken to be a V60 pour over.
+  static BrewMethod inferMethod(List<BrewPhase> phases) =>
+      phases.any((BrewPhase phase) => phase.kind == BrewPhaseKind.steep) ? BrewMethod.frenchPress : BrewMethod.v60;
+
+  /// Reads the stored method [value], or infers it from [phases] if it is missing or unknown.
+  static BrewMethod _method(Object? value, List<BrewPhase> phases) {
+    if (value is String) {
+      for (final BrewMethod method in BrewMethod.values) {
+        if (method.name == value) {
+          return method;
+        }
+      }
+    }
+    return inferMethod(phases);
+  }
 
   /// Reads the list of phases from [json], and checks that it is not empty.
   ///
@@ -146,6 +181,7 @@ class BrewRecipe {
   BrewRecipe copyWith({
     String? id,
     String? name,
+    BrewMethod? method,
     String? profile,
     double? coffeeGrams,
     double? waterGrams,
@@ -156,6 +192,7 @@ class BrewRecipe {
     return BrewRecipe(
       id: id ?? this.id,
       name: name ?? this.name,
+      method: method ?? this.method,
       profile: profile ?? this.profile,
       coffeeGrams: coffeeGrams ?? this.coffeeGrams,
       waterGrams: waterGrams ?? this.waterGrams,
@@ -170,6 +207,7 @@ class BrewRecipe {
       other is BrewRecipe &&
       other.id == id &&
       other.name == name &&
+      other.method == method &&
       other.profile == profile &&
       other.coffeeGrams == coffeeGrams &&
       other.waterGrams == waterGrams &&
@@ -181,6 +219,7 @@ class BrewRecipe {
   int get hashCode => Object.hash(
         id,
         name,
+        method,
         profile,
         coffeeGrams,
         waterGrams,

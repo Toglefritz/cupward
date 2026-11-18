@@ -259,6 +259,30 @@ void main() {
       // Assert
       expect((await result.future)?.id, 'bold-morning-kalita');
     });
+
+    /// Leaving while the recipe is created would save a recipe the brewing screen never hears about, so back is
+    /// blocked until it is done.
+    testWidgets('cannot be left while the recipe is created', (WidgetTester tester) async {
+      // Arrange
+      hybridAi
+        ..gate = Completer<void>()
+        ..responses.add(BrewFeedbackFixtures.result(RecipeGenerationFixtures.pourOverAnswer()));
+      final Completer<BrewRecipe?> result = await openScreen(tester);
+      await submit(tester);
+      // Act
+      final bool popped = await tester.binding.handlePopRoute();
+      // The progress indicator keeps animating, so the screen never settles while the recipe is created.
+      await tester.pump(const Duration(milliseconds: 300));
+      // Assert
+      expect(popped, isTrue);
+      expect(find.byType(NewRecipeRoute), findsOneWidget);
+      expect(result.isCompleted, isFalse);
+      // Act
+      hybridAi.gate!.complete();
+      await tester.pumpAndSettle();
+      // Assert
+      expect((await result.future)?.name, 'Bold Morning Kalita');
+    });
   });
 
   group('NewRecipeRequest', () {

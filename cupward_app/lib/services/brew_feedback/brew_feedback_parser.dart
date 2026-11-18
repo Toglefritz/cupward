@@ -61,7 +61,7 @@ abstract final class BrewFeedbackParser {
 
   /// Returns the recipe's value for [parameter], in grams or seconds, or null if the recipe does not store one.
   static double? currentValue(RecipeParameter parameter, BrewRecipe recipe) {
-    final BrewPhase? bloom = _bloom(recipe);
+    final BrewPhase? bloom = _firstOf(recipe, BrewPhaseKind.bloom);
     switch (parameter) {
       case RecipeParameter.coffeeDose:
         return recipe.coffeeGrams;
@@ -73,6 +73,8 @@ abstract final class BrewFeedbackParser {
         return bloom?.duration?.inSeconds.toDouble();
       case RecipeParameter.brewTime:
         return recipe.brewTime.inSeconds.toDouble();
+      case RecipeParameter.steepTime:
+        return _firstOf(recipe, BrewPhaseKind.steep)?.duration?.inSeconds.toDouble();
       case RecipeParameter.grindSize:
       case RecipeParameter.pourRate:
       case RecipeParameter.waterTemperature:
@@ -120,10 +122,10 @@ abstract final class BrewFeedbackParser {
     return rightWay && difference.abs() / current <= maxRelativeChange;
   }
 
-  /// Returns the recipe's bloom phase, or null if it has none.
-  static BrewPhase? _bloom(BrewRecipe recipe) {
+  /// Returns the recipe's first phase of [kind], or null if it has none.
+  static BrewPhase? _firstOf(BrewRecipe recipe, BrewPhaseKind kind) {
     for (final BrewPhase phase in recipe.phases) {
-      if (phase.kind == BrewPhaseKind.bloom) {
+      if (phase.kind == kind) {
         return phase;
       }
     }

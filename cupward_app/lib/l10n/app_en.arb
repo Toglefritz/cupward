@@ -670,6 +670,10 @@
   "@parameterBrewTime": {
     "description": "Name of the brewing variable for the total brew time, shown on a suggested change"
   },
+  "parameterSteepTime": "Steep time",
+  "@parameterSteepTime": {
+    "description": "Name of the brewing variable for how long an immersion brew steeps, shown on a suggested change"
+  },
   "directionMore": "More",
   "@directionMore": {
     "description": "Which way a suggested change goes, for more of an amount"
@@ -917,6 +921,10 @@
   "newRecipeFailureSave": "Couldn't save the new recipe. Check your connection and try again.",
   "@newRecipeFailureSave": {
     "description": "Shown when the new recipe could not be saved"
+  },
+  "newRecipeFailureNameTaken": "You already have recipes with this name. Try again for a different one.",
+  "@newRecipeFailureNameTaken": {
+    "description": "Shown when the new recipe's name and every numbered version of it are already used"
   },
   "buttonEditRequest": "Edit",
   "@buttonEditRequest": {

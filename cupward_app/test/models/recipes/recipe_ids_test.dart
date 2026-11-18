@@ -36,5 +36,21 @@ void main() {
     test('falls back for a name without letters or digits', () {
       expect(RecipeIds.fromName('!!!'), RecipeIds.fallback);
     });
+
+    /// Shortening must not split a character made of two UTF-16 units, which Firestore would reject in an ID.
+    test('does not split a character outside the Basic Multilingual Plane', () {
+      // U+20000, a CJK letter, is two UTF-16 units.
+      final String id = RecipeIds.fromName('${'a' * 59}\u{20000}');
+      expect(id, 'a' * 59);
+      expect(id.runes.every((int rune) => rune < 0xD800 || rune > 0xDFFF), isTrue);
+    });
+
+    /// Names of only symbols would all share the fallback ID, so they are recognized.
+    test('tells whether a name has letters or digits', () {
+      expect(RecipeIds.hasLettersOrDigits('☕'), isFalse);
+      expect(RecipeIds.hasLettersOrDigits('!! ??'), isFalse);
+      expect(RecipeIds.hasLettersOrDigits('☕ 2'), isTrue);
+      expect(RecipeIds.hasLettersOrDigits('Café'), isTrue);
+    });
   });
 }

@@ -63,6 +63,10 @@ The user ID comes from Firebase Authentication, where the app signs in anonymous
 recipe's name, so each of a user's recipes has a unique name. The rules also check each recipe's fields and values, and
 that `createdAt` and `updatedAt` are set by the server.
 
+Each recipe document carries a `schemaVersion`. Version 2 adds `method`, the brewing method the recipe is made for,
+such as `v60` or `frenchPress`. The rules accept writes only in the current version, while the app still reads older
+documents and upgrades them when it saves them again.
+
 The emulator loads the rules from this directory. Deploy them to the project after changing them:
 
 ```sh

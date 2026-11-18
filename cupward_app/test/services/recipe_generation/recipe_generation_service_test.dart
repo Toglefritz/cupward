@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:cupward/models/recipes/brew_method.dart';
 import 'package:cupward/models/recipes/brew_phase_kind.dart';
 import 'package:cupward/models/recipes/brew_recipe.dart';
+import 'package:cupward/models/recipes/recipe_ids.dart';
 import 'package:cupward/services/auth/auth_service.dart';
 import 'package:cupward/services/recipe_generation/recipe_generation_exception.dart';
 import 'package:cupward/services/recipe_generation/recipe_generation_failure.dart';
@@ -25,6 +28,12 @@ class _SignedInAuth extends AuthService {
 class _OfflineAuth extends AuthService {
   @override
   Future<String> ensureSignedIn() async => throw Exception('offline');
+}
+
+/// An auth service whose sign-in never finishes, so a save never finishes either.
+class _StuckAuth extends AuthService {
+  @override
+  Future<String> ensureSignedIn() => Completer<String>().future;
 }
 
 /// Verifies how a recipe is requested, retried with the cloud model, saved under a unique name, and how failures are
@@ -154,6 +163,66 @@ void main() {
         RecipeGenerationFailure.unsupported,
       );
       expect(hybridAi.modes, isEmpty);
+    });
+
+    /// The recipe is saved with its method, so the method is there when it is loaded again.
+    test('saves the method with the recipe', () async {
+      // Arrange
+      hybridAi.responses.add(BrewFeedbackFixtures.result(RecipeGenerationFixtures.immersionAnswer()));
+      // Act
+      await service.createRecipe(RecipeGenerationFixtures.immersionRequest);
+      // Assert
+      final BrewRecipe? stored = await recipes.fetch('sweet-press');
+      expect(stored?.method, BrewMethod.frenchPress);
+    });
+
+    /// When every numbered name is taken too, the failure says so, rather than blaming the connection.
+    test('reports a name that is taken in every numbered form', () async {
+      // Arrange
+      for (int attempt = 1; attempt <= RecipeGenerationService.maxNameAttempts + 1; attempt++) {
+        final String name = attempt == 1 ? 'Bold Morning Kalita' : 'Bold Morning Kalita $attempt';
+        await firestore.doc('users/tester/recipes/${RecipeIds.fromName(name)}').set(<String, dynamic>{'name': name});
+      }
+      hybridAi.responses.add(BrewFeedbackFixtures.result(RecipeGenerationFixtures.pourOverAnswer()));
+      // Act and assert
+      expect(
+        await failureOf(service.createRecipe(RecipeGenerationFixtures.pourOverRequest)),
+        RecipeGenerationFailure.nameTaken,
+      );
+    });
+
+    /// A request that never answers is given up on, so the screen does not wait forever.
+    test('gives up on a request that takes too long', () async {
+      // Arrange
+      hybridAi.gate = Completer<void>();
+      final RecipeGenerationService impatient = RecipeGenerationService(
+        hybridAi: hybridAi,
+        recipes: recipes,
+        isSupported: true,
+        requestTimeout: const Duration(milliseconds: 10),
+      );
+      // Act and assert
+      expect(
+        await failureOf(impatient.createRecipe(RecipeGenerationFixtures.pourOverRequest)),
+        RecipeGenerationFailure.requestFailed,
+      );
+    });
+
+    /// A save that never finishes is reported as a failed save.
+    test('gives up on a save that takes too long', () async {
+      // Arrange
+      hybridAi.responses.add(BrewFeedbackFixtures.result(RecipeGenerationFixtures.pourOverAnswer()));
+      final RecipeGenerationService impatient = RecipeGenerationService(
+        hybridAi: hybridAi,
+        recipes: RecipeRepository(firestore: firestore, auth: _StuckAuth()),
+        isSupported: true,
+        saveTimeout: const Duration(milliseconds: 10),
+      );
+      // Act and assert
+      expect(
+        await failureOf(impatient.createRecipe(RecipeGenerationFixtures.pourOverRequest)),
+        RecipeGenerationFailure.saveFailed,
+      );
     });
   });
 

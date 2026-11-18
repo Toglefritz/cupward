@@ -34,6 +34,7 @@ Rules:
 - Offer at most two other ideas for later brews, each a single change to a different variable.
 - Base every rationale on the brew data and tasting notes. Sour, weak, or thin cups usually mean under-extraction. Bitter, harsh, or drying cups usually mean over-extraction.
 - Ratings run from 1 (none or very little) to 5 (a lot). For overall, 1 means disliked and 5 means loved. Unrated attributes are left out.
+- For a recipe with a steep step, change how long it steeps with steepTime. bloomTime and bloomWater apply only to a recipe with a bloom step.
 - If the goal is given, aim for it.
 - Write for a home brewer, in plain and friendly language.''';
 
@@ -55,6 +56,7 @@ Rules:
   static Map<String, Object?> _recipe(BrewRecipe recipe) {
     return <String, Object?>{
       'name': recipe.name,
+      'method': recipe.method.name,
       'coffeeGrams': _round(recipe.coffeeGrams),
       'waterGrams': _round(recipe.waterGrams),
       'ratio': '1:${_formatRatio(recipe.waterGrams / recipe.coffeeGrams)}',

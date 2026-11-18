@@ -21,7 +21,8 @@ abstract final class RecipeGenerationSchema {
             'bloom and pour steps.',
       ),
       'durationSeconds': ResponseSchema.integer(
-        description: 'How long to wait in the step, in seconds. Required for steep steps; optional for the bloom.',
+        description: 'How long to wait in the step, in seconds. Required for steep steps, optional for the bloom, and '
+            'not used for pours.',
       ),
     },
     optionalProperties: <String>['targetWeightGrams', 'durationSeconds'],
@@ -34,7 +35,7 @@ abstract final class RecipeGenerationSchema {
       'profile': ResponseSchema.string(description: 'The cup in two to four words, such as "Bold & Syrupy".'),
       'coffeeGrams': ResponseSchema.number(description: 'The coffee dose, in grams.'),
       'waterGrams': ResponseSchema.number(description: 'The total water, in grams.'),
-      'brewTimeSeconds': ResponseSchema.integer(description: 'The total brew time, in seconds.'),
+      'brewTimeSeconds': ResponseSchema.integer(description: 'The total brew time, in seconds, including every step.'),
       'yieldMilliliters': ResponseSchema.number(description: 'About how much coffee ends up in the cup, in ml.'),
       'phases': ResponseSchema.array(items: phase, description: 'The steps, in order.'),
     },

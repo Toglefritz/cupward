@@ -1,7 +1,9 @@
 import 'package:cupward/models/feedback/change_direction.dart';
 import 'package:cupward/models/feedback/recipe_parameter.dart';
 import 'package:cupward/models/feedback/recipe_suggestion.dart';
+import 'package:cupward/models/recipes/brew_method.dart';
 import 'package:cupward/models/recipes/brew_phase.dart';
+import 'package:cupward/models/recipes/brew_phase_kind.dart';
 import 'package:cupward/models/recipes/brew_recipe.dart';
 import 'package:cupward/models/recipes/built_in_recipes.dart';
 import 'package:cupward/services/recipes/recipe_adjuster.dart';
@@ -18,6 +20,18 @@ RecipeSuggestion _suggestion(RecipeParameter parameter, {double? current, double
       currentValue: current,
       suggestedValue: suggested,
     );
+
+/// A French press recipe with a four-minute steep in a five-minute brew.
+final BrewRecipe _press = BuiltInRecipes.v60PourOver.copyWith(
+  method: BrewMethod.frenchPress,
+  brewTime: const Duration(minutes: 5),
+  phases: const <BrewPhase>[
+    BrewPhase(id: 'prepare', kind: BrewPhaseKind.prepare),
+    BrewPhase(id: 'pour-1', kind: BrewPhaseKind.pour, targetWeightGrams: 320),
+    BrewPhase(id: 'steep', kind: BrewPhaseKind.steep, duration: Duration(minutes: 4)),
+    BrewPhase(id: 'complete', kind: BrewPhaseKind.complete),
+  ],
+);
 
 /// Verifies how each kind of suggestion changes a recipe, and which cannot be applied.
 void main() {
@@ -104,6 +118,34 @@ void main() {
       expect(RecipeAdjuster.canApply(recipe, grind), isFalse);
       expect(RecipeAdjuster.canApply(recipe, withoutValue), isFalse);
       expect(RecipeAdjuster.canApply(recipe, dose), isTrue);
+    });
+
+    /// A steep time change moves the steep, which the brewing screen times, and the brew time with it.
+    test('changes the steep time and the brew time with it', () {
+      final BrewRecipe result = RecipeAdjuster.apply(
+        _press,
+        _suggestion(RecipeParameter.steepTime, current: 240, suggested: 270),
+      )!;
+      expect(result.phases[2].duration, const Duration(seconds: 270));
+      expect(result.brewTime, const Duration(seconds: 330));
+    });
+
+    /// For an immersion brew, a brew time change is a change to the steep, or it would not change the brew at all.
+    test('moves the steep with the brew time of an immersion recipe', () {
+      final BrewRecipe result = RecipeAdjuster.apply(
+        _press,
+        _suggestion(RecipeParameter.brewTime, current: 300, suggested: 280),
+      )!;
+      expect(result.brewTime, const Duration(seconds: 280));
+      expect(result.phases[2].duration, const Duration(seconds: 220));
+    });
+
+    /// A pour over has no steep to change.
+    test('cannot apply a steep time to a pour over', () {
+      expect(
+        RecipeAdjuster.canApply(recipe, _suggestion(RecipeParameter.steepTime, current: 240, suggested: 270)),
+        isFalse,
+      );
     });
   });
 }

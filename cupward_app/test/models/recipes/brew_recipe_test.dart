@@ -1,3 +1,4 @@
+import 'package:cupward/models/recipes/brew_method.dart';
 import 'package:cupward/models/recipes/brew_phase.dart';
 import 'package:cupward/models/recipes/brew_phase_kind.dart';
 import 'package:cupward/models/recipes/brew_recipe.dart';
@@ -76,6 +77,42 @@ void main() {
       final Map<String, dynamic> json = BuiltInRecipes.v60PourOver.toJson()..['waterGrams'] = 0;
 
       expect(() => BrewRecipe.fromJson(json), throwsFormatException);
+    });
+
+    /// The brewing method is stored by name, which is what the security rules accept.
+    test('stores the brewing method by name', () {
+      expect(BuiltInRecipes.v60PourOver.toJson()['method'], 'v60');
+      final BrewRecipe press = BrewRecipe.fromJson(BuiltInRecipes.v60PourOver.toJson()..['method'] = 'frenchPress');
+      expect(press.method, BrewMethod.frenchPress);
+    });
+
+    /// Recipes stored before the method was recorded are still read, with the method worked out from their steps.
+    test('infers the method of a recipe stored without one', () {
+      // Arrange
+      final Map<String, dynamic> pourOver = BuiltInRecipes.v60PourOver.toJson()..remove('method');
+      final Map<String, dynamic> immersion = BuiltInRecipes.v60PourOver.toJson()
+        ..remove('method')
+        ..['phases'] = <Map<String, dynamic>>[
+          <String, dynamic>{'id': 'pour-1', 'kind': 'pour', 'targetWeightGrams': 320},
+          <String, dynamic>{'id': 'steep', 'kind': 'steep', 'durationSeconds': 240},
+        ];
+      // Act and assert
+      expect(BrewRecipe.fromJson(pourOver).method, BrewMethod.v60);
+      expect(BrewRecipe.fromJson(immersion).method, BrewMethod.frenchPress);
+    });
+
+    /// A method added by a newer version of the app must not make the recipe unreadable.
+    test('infers the method when the stored one is unknown', () {
+      final Map<String, dynamic> json = BuiltInRecipes.v60PourOver.toJson()..['method'] = 'siphon';
+      expect(BrewRecipe.fromJson(json).method, BrewMethod.v60);
+    });
+
+    /// The method is part of what makes two recipes the same.
+    test('compares the method', () {
+      const BrewRecipe recipe = BuiltInRecipes.v60PourOver;
+      final BrewRecipe chemex = recipe.copyWith(method: BrewMethod.chemex);
+      expect(chemex, isNot(recipe));
+      expect(chemex.copyWith(method: BrewMethod.v60), recipe);
     });
   });
 

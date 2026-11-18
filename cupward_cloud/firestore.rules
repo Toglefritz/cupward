@@ -30,26 +30,30 @@ service cloud.firestore {
 
     // Whether the recipe being written has the shape of BrewRecipe.toJson plus the stored metadata, and sensible
     // values. The phases are only checked to be a short, non-empty list, because rules cannot look inside each one.
+    //
+    // Writes must use the current form, schema version 2, which records the brewing method. Documents written in
+    // version 1, without a method, can still be read, and the app upgrades them when it next saves them.
     function isValidRecipe(recipeId) {
       let recipe = request.resource.data;
       return recipe.keys().hasOnly([
-          'id', 'name', 'profile', 'coffeeGrams', 'waterGrams', 'brewTimeSeconds', 'yieldMilliliters', 'phases',
+          'id', 'name', 'method', 'profile', 'coffeeGrams', 'waterGrams', 'brewTimeSeconds', 'yieldMilliliters', 'phases',
           'schemaVersion', 'createdAt', 'updatedAt'
         ])
         && recipe.keys().hasAll([
-          'id', 'name', 'profile', 'coffeeGrams', 'waterGrams', 'brewTimeSeconds', 'yieldMilliliters', 'phases',
+          'id', 'name', 'method', 'profile', 'coffeeGrams', 'waterGrams', 'brewTimeSeconds', 'yieldMilliliters', 'phases',
           'schemaVersion', 'createdAt', 'updatedAt'
         ])
         && recipe.id == recipeId
         && recipeId.size() <= 60
         && recipe.name is string && recipe.name.size() > 0 && recipe.name.size() <= 60
+        && recipe.method in ['v60', 'kalitaWave', 'chemex', 'frenchPress', 'aeroPress', 'cleverDripper']
         && recipe.profile is string && recipe.profile.size() <= 80
         && recipe.coffeeGrams is number && recipe.coffeeGrams > 0 && recipe.coffeeGrams <= 200
         && recipe.waterGrams is number && recipe.waterGrams > 0 && recipe.waterGrams <= 5000
         && recipe.brewTimeSeconds is int && recipe.brewTimeSeconds > 0 && recipe.brewTimeSeconds <= 86400
         && recipe.yieldMilliliters is number && recipe.yieldMilliliters > 0 && recipe.yieldMilliliters <= 5000
         && recipe.phases is list && recipe.phases.size() > 0 && recipe.phases.size() <= 30
-        && recipe.schemaVersion == 1
+        && recipe.schemaVersion == 2
         && recipe.updatedAt == request.time;
     }
   }

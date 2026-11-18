@@ -11,4 +11,7 @@ enum RecipeGenerationFailure {
 
   /// The recipe was created but could not be saved.
   saveFailed,
+
+  /// The recipe was created, but its name and every numbered version of it are already used by the user's recipes.
+  nameTaken,
 }

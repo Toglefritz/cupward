@@ -1,3 +1,4 @@
+import 'brew_method.dart';
 import 'brew_phase.dart';
 import 'brew_phase_kind.dart';
 import 'brew_recipe.dart';
@@ -13,6 +14,7 @@ abstract final class BuiltInRecipes {
   static const BrewRecipe v60PourOver = BrewRecipe(
     id: 'v60-pour-over',
     name: 'V60 Pour Over',
+    method: BrewMethod.v60,
     profile: 'Balanced & Clean',
     coffeeGrams: 20,
     waterGrams: 320,

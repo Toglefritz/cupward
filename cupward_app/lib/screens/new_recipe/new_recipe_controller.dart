@@ -19,7 +19,7 @@ import 'new_recipe_view.dart';
 /// "Create recipe" sends the request to the hybrid AI system. While it runs, [status] is [NewRecipeStatus.creating]
 /// and the screen shows progress in place of the form. When the recipe is saved, the screen closes with it as its
 /// result. If it fails, [status] is [NewRecipeStatus.failed] with the reason in [failure], and the form keeps what the
-/// user entered.
+/// user entered. Going back is blocked while the recipe is created, as [canLeave] explains.
 class NewRecipeController extends State<NewRecipeRoute> {
   /// The service that creates and saves the recipe, created once for the life of the screen.
   late final RecipeGenerationService _service = widget.generationService ?? RecipeGenerationService();
@@ -38,6 +38,10 @@ class NewRecipeController extends State<NewRecipeRoute> {
 
   /// The focus of the taste preferences field.
   final FocusNode preferencesFocus = FocusNode();
+
+  /// Whether the user can leave the screen. They cannot while the recipe is created, because the recipe is saved
+  /// before the screen closes with it, so leaving would save a recipe the brewing screen never hears about.
+  bool get canLeave => status != NewRecipeStatus.creating;
 
   /// Whether the form is complete, so a recipe can be created.
   bool get canCreate => selectedMethod != null && preferencesController.text.trim().isNotEmpty;

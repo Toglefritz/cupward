@@ -1,4 +1,7 @@
+import 'dart:io';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cupward/models/recipes/brew_method.dart';
 import 'package:cupward/models/recipes/brew_recipe.dart';
 import 'package:cupward/models/recipes/built_in_recipes.dart';
 import 'package:cupward/services/auth/auth_service.dart';
@@ -32,6 +35,7 @@ class _OfflineAuth extends AuthService {
 BrewRecipe _withCoffee(BrewRecipe recipe, double coffeeGrams) => BrewRecipe(
       id: recipe.id,
       name: recipe.name,
+      method: recipe.method,
       profile: recipe.profile,
       coffeeGrams: coffeeGrams,
       waterGrams: recipe.waterGrams,
@@ -95,6 +99,7 @@ void main() {
       final BrewRecipe mismatched = BrewRecipe(
         id: 'something-else',
         name: recipe.name,
+        method: recipe.method,
         profile: recipe.profile,
         coffeeGrams: recipe.coffeeGrams,
         waterGrams: recipe.waterGrams,
@@ -184,6 +189,42 @@ void main() {
 
       // Assert
       expect(result.id, recipe.id);
+    });
+
+    /// Version 1 documents have no method. They still load, and saving one writes the current version with a method.
+    test('reads and upgrades a recipe stored without a method', () async {
+      // Arrange
+      final Map<String, dynamic> legacy = recipe.toJson()
+        ..remove('method')
+        ..['schemaVersion'] = 1;
+      await firestore.doc('users/alice/recipes/v60-pour-over').set(legacy);
+      // Act
+      final BrewRecipe? fetched = await repository.fetch(recipe.id);
+      await repository.update(fetched!);
+      // Assert
+      expect(fetched.method, BrewMethod.v60);
+      final Map<String, dynamic> stored = (await firestore.doc('users/alice/recipes/v60-pour-over').get()).data()!;
+      expect(stored['method'], 'v60');
+      expect(stored['schemaVersion'], 2);
+    });
+
+    /// The security rules list the exact fields and methods a recipe may have. If the app writes anything else, every
+    /// save fails in production, so the two are compared here.
+    test('writes only the fields and methods the security rules allow', () async {
+      // Arrange
+      final String rules = File('../cupward_cloud/firestore.rules').readAsStringSync();
+      List<String> quoted(String source) =>
+          RegExp("'([^']+)'").allMatches(source).map((RegExpMatch match) => match.group(1)!).toList();
+      final String hasOnly = RegExp(r'hasOnly\(\[([^\]]*)\]').firstMatch(rules)!.group(1)!;
+      final String methods = RegExp(r'recipe\.method in \[([^\]]*)\]').firstMatch(rules)!.group(1)!;
+      final int version = int.parse(RegExp(r'recipe\.schemaVersion == (\d+)').firstMatch(rules)!.group(1)!);
+      // Act
+      await repository.create(recipe.copyWith(method: BrewMethod.cleverDripper));
+      final Map<String, dynamic> stored = (await firestore.doc('users/alice/recipes/v60-pour-over').get()).data()!;
+      // Assert
+      expect(stored.keys.toSet(), quoted(hasOnly).toSet());
+      expect(quoted(methods).toSet(), BrewMethod.values.map((BrewMethod method) => method.name).toSet());
+      expect(version, RecipeRepository.schemaVersion);
     });
   });
 }

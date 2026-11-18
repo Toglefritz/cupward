@@ -28,6 +28,8 @@ abstract final class RecipeParameterLabels {
         return strings.parameterWaterTemperature;
       case RecipeParameter.brewTime:
         return strings.parameterBrewTime;
+      case RecipeParameter.steepTime:
+        return strings.parameterSteepTime;
     }
   }
 
@@ -43,6 +45,7 @@ abstract final class RecipeParameterLabels {
         return up ? strings.directionMore : strings.directionLess;
       case RecipeParameter.bloomTime:
       case RecipeParameter.brewTime:
+      case RecipeParameter.steepTime:
         return up ? strings.directionLonger : strings.directionShorter;
       case RecipeParameter.pourRate:
         return up ? strings.directionFaster : strings.directionSlower;
@@ -64,6 +67,7 @@ abstract final class RecipeParameterLabels {
         return strings.recipeGrams(RecipeStatsRow.formatWaterGrams(value, locale));
       case RecipeParameter.bloomTime:
       case RecipeParameter.brewTime:
+      case RecipeParameter.steepTime:
         return RecipeStatsRow.formatBrewTime(Duration(seconds: value.round()));
       case RecipeParameter.grindSize:
       case RecipeParameter.pourRate:
