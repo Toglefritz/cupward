@@ -506,6 +506,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get recipeMenuNewRecipe => 'New recipe';
 
   @override
+  String get newRecipeMenuTooltip => 'Recipe creation options';
+
+  @override
+  String get newRecipeMenuLocalOnly => 'Local AI only';
+
+  @override
   String get newRecipeTitle => 'New Recipe';
 
   @override

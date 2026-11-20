@@ -992,6 +992,18 @@ abstract class AppLocalizations {
   /// **'New recipe'**
   String get recipeMenuNewRecipe;
 
+  /// Tooltip and screen reader label of the menu button in the corner of the title card on the new recipe screen
+  ///
+  /// In en, this message translates to:
+  /// **'Recipe creation options'**
+  String get newRecipeMenuTooltip;
+
+  /// Label of the switch in the new recipe menu that keeps the request on the device's own AI model, rather than also allowing the cloud model
+  ///
+  /// In en, this message translates to:
+  /// **'Local AI only'**
+  String get newRecipeMenuLocalOnly;
+
   /// Title of the screen for creating a new recipe
   ///
   /// In en, this message translates to:

@@ -748,6 +748,14 @@
   "@recipeMenuNewRecipe": {
     "description": "Menu item that opens the screen for creating a new recipe"
   },
+  "newRecipeMenuTooltip": "Recipe creation options",
+  "@newRecipeMenuTooltip": {
+    "description": "Tooltip and screen reader label of the menu button in the corner of the title card on the new recipe screen"
+  },
+  "newRecipeMenuLocalOnly": "Local AI only",
+  "@newRecipeMenuLocalOnly": {
+    "description": "Label of the switch in the new recipe menu that keeps the request on the device's own AI model, rather than also allowing the cloud model"
+  },
   "newRecipeTitle": "New Recipe",
   "@newRecipeTitle": {
     "description": "Title of the screen for creating a new recipe"

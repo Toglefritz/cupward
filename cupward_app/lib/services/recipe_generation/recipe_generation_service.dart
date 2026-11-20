@@ -67,22 +67,32 @@ class RecipeGenerationService {
 
   /// Creates and saves a recipe for [request], and returns it as saved.
   ///
+  /// If [localOnly] is true, the request only ever uses the on-device model, so the prompt never leaves the device. An
+  /// answer that cannot be used is then asked of the on-device model again, instead of the cloud model.
+  ///
   /// Throws a [RecipeGenerationException] if the recipe cannot be created or saved.
-  Future<BrewRecipe> createRecipe(NewRecipeRequest request) async {
+  Future<BrewRecipe> createRecipe(NewRecipeRequest request, {bool localOnly = false}) async {
     if (!isSupported) {
       throw const RecipeGenerationException(RecipeGenerationFailure.unsupported);
     }
 
     final String prompt = RecipeGenerationPrompt.build(request);
 
-    StructuredGenerationResult result = await _generate(prompt, InferenceMode.preferOnDevice);
+    StructuredGenerationResult result = await _generate(
+      prompt,
+      localOnly ? InferenceMode.onlyOnDevice : InferenceMode.preferOnDevice,
+    );
     final _Reading first = _read(result, request);
     BrewRecipe? recipe = first.recipe;
     if (recipe == null && result.source == InferenceSource.onDevice) {
-      debugPrint('The on-device recipe could not be used, so the cloud model is asked.');
-      // The cloud request says why the first answer was rejected, so that it does not repeat the mistake.
-      final String cloudPrompt = RecipeGenerationPrompt.build(request, rejection: first.problem);
-      result = await _generate(cloudPrompt, InferenceMode.onlyInCloud);
+      debugPrint(
+        localOnly
+            ? 'The on-device recipe could not be used, so the on-device model is asked again.'
+            : 'The on-device recipe could not be used, so the cloud model is asked.',
+      );
+      // The second request says why the first answer was rejected, so that it does not repeat the mistake.
+      final String retryPrompt = RecipeGenerationPrompt.build(request, rejection: first.problem);
+      result = await _generate(retryPrompt, localOnly ? InferenceMode.onlyOnDevice : InferenceMode.onlyInCloud);
       recipe = _read(result, request).recipe;
     }
     if (recipe == null) {

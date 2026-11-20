@@ -8,14 +8,15 @@ import '../../theme/context_theme_extension.dart';
 import '../../theme/insets.dart';
 import 'components/brew_method_labels.dart';
 import 'components/brew_method_picker.dart';
+import 'components/new_recipe_menu_button.dart';
 import 'components/taste_preferences_field.dart';
 import 'models/new_recipe_status.dart';
 import 'new_recipe_controller.dart';
 
 /// Layout for the new recipe screen. Contains no logic.
 ///
-/// The app's scrolling content column of limited width holds, in order: a card with the screen's title and a short
-/// explanation, the brewing methods as a grid of cards under their own heading, the taste preferences card under its
+/// The app's scrolling content column of limited width holds, in order: a card with the screen's title, a menu in its
+/// corner, and a short explanation, the brewing methods as a grid of cards under their own heading, the taste preferences card under its
 /// heading, and the "Create recipe" button. The button is disabled, with a note saying why, until a method is chosen
 /// and the preferences are filled in. Dragging the list hides the keyboard.
 ///
@@ -76,12 +77,25 @@ class NewRecipeView extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: <Widget>[
-                        Semantics(
-                          header: true,
-                          child: Text(
-                            strings.newRecipeTitle,
-                            style: theme.textTheme.headlineMedium?.copyWith(fontSize: 30),
-                          ),
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: <Widget>[
+                            Expanded(
+                              child: Semantics(
+                                header: true,
+                                child: Text(
+                                  strings.newRecipeTitle,
+                                  style: theme.textTheme.headlineMedium?.copyWith(fontSize: 30),
+                                ),
+                              ),
+                            ),
+                            NewRecipeMenuButton(
+                              isLocalOnly: state.localOnly,
+                              // The setting is fixed while a request is under way.
+                              onLocalOnlyChanged:
+                                  state.status == NewRecipeStatus.creating ? null : state.onLocalOnlyChanged,
+                            ),
+                          ],
                         ),
                         Padding(
                           padding: const EdgeInsets.only(top: Insets.xxSmall),

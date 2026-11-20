@@ -14,7 +14,8 @@ import 'new_recipe_view.dart';
 ///
 /// The controller holds the form: the chosen [selectedMethod], and the taste preferences in [preferencesController],
 /// which the text field edits directly. The form is complete once a method is chosen and the preferences are not
-/// blank, and [request] then describes what the user asked for.
+/// blank, and [request] then describes what the user asked for. A menu in the title card sets [localOnly], which keeps
+/// the request on the device's own model.
 ///
 /// "Create recipe" sends the request to the hybrid AI system. While it runs, [status] is [NewRecipeStatus.creating]
 /// and the screen shows progress in place of the form. When the recipe is saved, the screen closes with it as its
@@ -32,6 +33,10 @@ class NewRecipeController extends State<NewRecipeRoute> {
 
   /// The chosen brewing method, or null if none has been chosen.
   BrewMethod? selectedMethod;
+
+  /// Whether the recipe is to be created with the on-device model only, so the request never goes to the cloud. Set
+  /// from the menu in the title card, and off at first.
+  bool localOnly = false;
 
   /// Holds the text of the taste preferences field.
   final TextEditingController preferencesController = TextEditingController();
@@ -70,6 +75,11 @@ class NewRecipeController extends State<NewRecipeRoute> {
     setState(() => selectedMethod = method);
   }
 
+  /// Handles the local-only switch in the menu by setting [localOnly] to [value].
+  void onLocalOnlyChanged(bool value) {
+    setState(() => localOnly = value);
+  }
+
   /// Handles a tap on a topic chip by starting a line about [topic] in the preferences, such as "Roast: ", and putting
   /// the cursor after it.
   ///
@@ -104,7 +114,7 @@ class NewRecipeController extends State<NewRecipeRoute> {
     });
 
     try {
-      final BrewRecipe recipe = await _service.createRecipe(current);
+      final BrewRecipe recipe = await _service.createRecipe(current, localOnly: localOnly);
       if (mounted) {
         Navigator.pop(context, recipe);
       }

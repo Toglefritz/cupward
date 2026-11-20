@@ -118,6 +118,26 @@ void main() {
       expect(hybridAi.prompts.last, contains('were: bloom, bloom.'));
     });
 
+    /// A local-only request never uses the cloud model, even when the first on-device answer cannot be used.
+    test('stays on the device when local only', () async {
+      // Arrange
+      final Map<String, dynamic> unusable = RecipeGenerationFixtures.pourOverAnswer()..['waterGrams'] = 100;
+      hybridAi.responses
+        ..add(BrewFeedbackFixtures.result(unusable))
+        ..add(BrewFeedbackFixtures.result(RecipeGenerationFixtures.pourOverAnswer()));
+
+      // Act
+      final BrewRecipe recipe = await service.createRecipe(
+        RecipeGenerationFixtures.pourOverRequest,
+        localOnly: true,
+      );
+
+      // Assert
+      expect(hybridAi.modes, <InferenceMode>[InferenceMode.onlyOnDevice, InferenceMode.onlyOnDevice]);
+      expect(hybridAi.prompts.last, contains('previous answer was rejected'));
+      expect(recipe.waterGrams, 350);
+    });
+
     /// A cloud answer that still cannot be used is reported rather than retried again.
     test('reports an answer that still cannot be used', () async {
       // Arrange

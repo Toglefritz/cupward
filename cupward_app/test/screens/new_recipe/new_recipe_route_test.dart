@@ -260,6 +260,79 @@ void main() {
       expect((await result.future)?.id, 'bold-morning-kalita');
     });
 
+    /// The menu in the title card has a switch that limits the request to the on-device model.
+    testWidgets('uses only the on-device model when the menu switch is on', (WidgetTester tester) async {
+      // Arrange
+      hybridAi.responses.add(BrewFeedbackFixtures.result(RecipeGenerationFixtures.pourOverAnswer()));
+      final Completer<BrewRecipe?> result = await openScreen(tester);
+      expect(controller(tester).localOnly, isFalse);
+
+      // Act
+      await tester.tap(find.byTooltip('Recipe creation options'));
+      await tester.pumpAndSettle();
+
+      // Assert
+      expect(find.text('Local AI only'), findsOneWidget);
+      expect(tester.widget<Switch>(find.byType(Switch)).value, isFalse);
+
+      // Act
+      await tester.tap(find.byType(Switch));
+      await tester.pumpAndSettle();
+
+      // Assert: the menu stays open and shows the new setting.
+      expect(controller(tester).localOnly, isTrue);
+      expect(find.text('Local AI only'), findsOneWidget);
+      expect(tester.widget<Switch>(find.byType(Switch)).value, isTrue);
+
+      // Act
+      await tester.tapAt(const Offset(5, 5));
+      await tester.pumpAndSettle();
+      await submit(tester);
+      await tester.pumpAndSettle();
+
+      // Assert
+      expect(hybridAi.modes, <InferenceMode>[InferenceMode.onlyOnDevice]);
+      expect((await result.future)?.name, 'Bold Morning Kalita');
+    });
+
+    /// The track is the theme's green, so a selected thumb must not take that color when hovered or pressed.
+    testWidgets('keeps the switch thumb visible against the track', (WidgetTester tester) async {
+      // Arrange
+      await openScreen(tester);
+      await tester.tap(find.byTooltip('Recipe creation options'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byType(Switch));
+      await tester.pumpAndSettle();
+
+      // Act
+      final Switch toggle = tester.widget<Switch>(find.byType(Switch));
+      final Color track = Theme.of(tester.element(find.byType(Switch))).colorScheme.primary;
+
+      // Assert
+      for (final Set<WidgetState> states in <Set<WidgetState>>[
+        <WidgetState>{WidgetState.selected},
+        <WidgetState>{WidgetState.selected, WidgetState.hovered},
+        <WidgetState>{WidgetState.selected, WidgetState.pressed},
+      ]) {
+        expect(toggle.thumbColor!.resolve(states), Colors.white, reason: '$states');
+        expect(toggle.thumbColor!.resolve(states), isNot(track), reason: '$states');
+      }
+    });
+
+    /// Without the switch, the on-device model is preferred and the cloud model is the fallback.
+    testWidgets('prefers the on-device model by default', (WidgetTester tester) async {
+      // Arrange
+      hybridAi.responses.add(BrewFeedbackFixtures.result(RecipeGenerationFixtures.pourOverAnswer()));
+      await openScreen(tester);
+
+      // Act
+      await submit(tester);
+      await tester.pumpAndSettle();
+
+      // Assert
+      expect(hybridAi.modes, <InferenceMode>[InferenceMode.preferOnDevice]);
+    });
+
     /// Leaving while the recipe is created would save a recipe the brewing screen never hears about, so back is
     /// blocked until it is done.
     testWidgets('cannot be left while the recipe is created', (WidgetTester tester) async {
