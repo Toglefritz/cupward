@@ -31,6 +31,7 @@ class BrewPhase {
   factory BrewPhase.fromJson(Map<String, dynamic> json) {
     try {
       final double? durationSeconds = _optionalPositive(json, 'durationSeconds');
+
       return BrewPhase(
         id: json['id'] as String? ?? (throw ArgumentError('Missing required field: id')),
         kind: BrewPhaseKind.fromName(json['kind'] as String? ?? (throw ArgumentError('Missing required field: kind'))),

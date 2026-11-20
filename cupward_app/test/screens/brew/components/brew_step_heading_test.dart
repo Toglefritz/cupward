@@ -50,7 +50,7 @@ void main() {
     expect(BrewPhaseLabels.labelFor(phases, 2, strings), 'Steep');
     expect(BrewPhaseLabels.titleFor(phases, 2, strings), 'Steep');
     expect(BrewPhaseLabels.actionLabelFor(phases, 2, strings), 'Next step');
-    expect(BrewPhaseLabels.imageFor(phases, 2), BrewStepImage.bloom);
+    expect(BrewPhaseLabels.imageFor(phases, 2), BrewStepImage.v60Bloom);
     expect(instructions.length, lessThanOrEqualTo(80));
     expect('.'.allMatches(instructions), hasLength(1));
   });
@@ -96,12 +96,12 @@ void main() {
       ];
 
       expect(images, <BrewStepImage>[
-        BrewStepImage.prepare,
-        BrewStepImage.bloom,
-        BrewStepImage.pour1,
-        BrewStepImage.pour2,
-        BrewStepImage.pour3,
-        BrewStepImage.complete,
+        BrewStepImage.v60Prepare,
+        BrewStepImage.v60Bloom,
+        BrewStepImage.v60Pour1,
+        BrewStepImage.v60Pour2,
+        BrewStepImage.v60Pour3,
+        BrewStepImage.v60Complete,
       ]);
     });
 
@@ -114,7 +114,7 @@ void main() {
         BrewPhase(id: 'pour-4', kind: BrewPhaseKind.pour),
       ];
 
-      expect(BrewPhaseLabels.imageFor(manyPours, 3), BrewStepImage.pour3);
+      expect(BrewPhaseLabels.imageFor(manyPours, 3), BrewStepImage.v60Pour3);
     });
   });
 

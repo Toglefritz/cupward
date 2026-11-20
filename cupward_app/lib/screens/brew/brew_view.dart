@@ -59,7 +59,11 @@ class BrewView extends StatelessWidget {
                 Padding(
                   padding: const EdgeInsets.only(top: Insets.xSmall),
                   child: BrewStepIllustration(
-                    image: BrewPhaseLabels.imageFor(state.recipe.phases, state.currentPhaseIndex),
+                    image: BrewPhaseLabels.imageFor(
+                      method: state.recipe.method,
+                      phases: state.recipe.phases,
+                      index: state.currentPhaseIndex,
+                    ),
                   ),
                 ),
                 if (state.isScaleSupported)

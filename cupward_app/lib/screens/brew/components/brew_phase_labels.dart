@@ -1,4 +1,5 @@
 import '../../../l10n/app_localizations.dart';
+import '../../../models/recipes/brew_method.dart';
 import '../../../models/recipes/brew_phase.dart';
 import '../../../models/recipes/brew_phase_kind.dart';
 import '../../../theme/brew_step_image.dart';
@@ -91,27 +92,120 @@ abstract final class BrewPhaseLabels {
 
   /// Returns the illustration for the phase at [index] in [phases].
   ///
-  /// Pours use the image for their position among the pours. There are images for three pours, so a recipe with more
-  /// pours shows the third pour's image for the rest of them. There is no image of steeping yet, so a steep shows the
-  /// bloom's, which also shows coffee resting in water.
-  static BrewStepImage imageFor(List<BrewPhase> phases, int index) {
+  /// Each bew method has its own set of images, each representing a phase for preparing a bew using that method. This
+  /// method wraps several private helper methods that each return an image for the current phase of the provided
+  /// brew method.
+  static BrewStepImage imageFor({required BrewMethod method, required List<BrewPhase> phases, required int index}) {
+    switch (method) {
+      case BrewMethod.v60:
+        return _imageForV60(phases, index);
+      case BrewMethod.kalitaWave:
+        return _imageForKalitaWave(phases, index);
+      case BrewMethod.chemex:
+        return _imageForChemex(phases, index);
+      case BrewMethod.frenchPress:
+        return _imageForFrenchPress(phases, index);
+      case BrewMethod.aeroPress:
+        return _imageForAeroPress(phases, index);
+      case BrewMethod.cleverDripper:
+        return _imageForCleverDripper(phases, index);
+    }
+  }
+
+  /// Returns the image for the indicated phase of a V60 brew.
+  static BrewStepImage _imageForV60(List<BrewPhase> phases, int index) {
     switch (phases[index].kind) {
       case BrewPhaseKind.prepare:
-        return BrewStepImage.prepare;
+        return BrewStepImage.v60Prepare;
       case BrewPhaseKind.bloom:
       case BrewPhaseKind.steep:
-        return BrewStepImage.bloom;
+        return BrewStepImage.v60Bloom;
       case BrewPhaseKind.pour:
         switch (pourNumber(phases, index)) {
           case 1:
-            return BrewStepImage.pour1;
+            return BrewStepImage.v60Pour1;
           case 2:
-            return BrewStepImage.pour2;
+            return BrewStepImage.v60Pour2;
           default:
-            return BrewStepImage.pour3;
+            return BrewStepImage.v60Pour3;
         }
       case BrewPhaseKind.complete:
-        return BrewStepImage.complete;
+        return BrewStepImage.v60Complete;
+    }
+  }
+
+  /// Returns the image for the indicated phase of a Kalita Wave brew.
+  ///
+  /// The Kalita Wave brewer looks similar enough to a V60 that, for the kind of stylized images used in the app, the
+  /// same images can be used for both types of brewers.
+  static BrewStepImage _imageForKalitaWave(List<BrewPhase> phases, int index) {
+    return _imageForV60(phases, index);
+  }
+
+  /// Returns the image for the indicated phase of a Chemex brew.
+  static BrewStepImage _imageForChemex(List<BrewPhase> phases, int index) {
+    switch (phases[index].kind) {
+      case BrewPhaseKind.prepare:
+        return BrewStepImage.chemexPrepare;
+      case BrewPhaseKind.bloom:
+      case BrewPhaseKind.steep:
+        return BrewStepImage.chemexBloom;
+      case BrewPhaseKind.pour:
+        switch (pourNumber(phases, index)) {
+          case 1:
+            return BrewStepImage.chemexPour1;
+          case 2:
+            return BrewStepImage.chemexPour2;
+          default:
+            return BrewStepImage.chemexPour2;
+        }
+      case BrewPhaseKind.complete:
+        return BrewStepImage.chemexComplete;
+    }
+  }
+
+  /// Returns the image for the indicated phase of a French Press brew.
+  static BrewStepImage _imageForFrenchPress(List<BrewPhase> phases, int index) {
+    switch (phases[index].kind) {
+      case BrewPhaseKind.prepare:
+        return BrewStepImage.frenchPressPrepare;
+      case BrewPhaseKind.bloom:
+      case BrewPhaseKind.steep:
+        return BrewStepImage.frenchPressSteep;
+      case BrewPhaseKind.pour:
+        return BrewStepImage.frenchPressPour1;
+      case BrewPhaseKind.complete:
+        return BrewStepImage.frenchPressComplete;
+    }
+  }
+
+  /// Returns the image for the indicated phase of a Aero Press brew.
+  static BrewStepImage _imageForAeroPress(List<BrewPhase> phases, int index) {
+    switch (phases[index].kind) {
+      case BrewPhaseKind.prepare:
+        return BrewStepImage.aeroPressPrepare;
+      case BrewPhaseKind.bloom:
+      case BrewPhaseKind.steep:
+        return BrewStepImage.aeroPressSteep;
+      case BrewPhaseKind.pour:
+        return BrewStepImage.aeroPressPour1;
+      case BrewPhaseKind.complete:
+        return BrewStepImage.aeroPressComplete;
+    }
+  }
+
+  /// Returns the image for the indicated phase of a Clever Dripper brew.
+  static BrewStepImage _imageForCleverDripper(List<BrewPhase> phases, int index) {
+    switch (phases[index].kind) {
+      case BrewPhaseKind.prepare:
+        return BrewStepImage.cleverDripperPrepare;
+      case BrewPhaseKind.bloom:
+      case BrewPhaseKind.steep:
+        return BrewStepImage.cleverDripperSteep;
+      case BrewPhaseKind.pour:
+        return BrewStepImage.cleverDripperPour1;
+      case BrewPhaseKind.complete:
+        return BrewStepImage.cleverDripperComplete;
     }
   }
 
