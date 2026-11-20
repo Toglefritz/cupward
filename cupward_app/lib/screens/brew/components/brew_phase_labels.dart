@@ -5,7 +5,7 @@ import '../../../models/recipes/brew_phase_kind.dart';
 import '../../../theme/brew_step_image.dart';
 
 /// The display text and illustration for the phases of a brew: short names for the phase indicator, and a title, brief
-/// instructions, and an image for the current step.
+/// instructions, and an image for the current step. The image also depends on the recipe's brewing method.
 ///
 /// The text comes from each phase's kind and is localized, so recipes do not store display text for their phases. A
 /// pour is numbered by its position among the recipe's pours, which is why the whole list of phases is needed.
@@ -90,11 +90,13 @@ abstract final class BrewPhaseLabels {
     }
   }
 
-  /// Returns the illustration for the phase at [index] in [phases].
+  /// Returns the illustration for the phase at [index] in [phases], a recipe for [method].
   ///
-  /// Each bew method has its own set of images, each representing a phase for preparing a bew using that method. This
-  /// method wraps several private helper methods that each return an image for the current phase of the provided
-  /// brew method.
+  /// Each brewing method has its own set of images, and the Kalita Wave uses the V60's. Pours use the image for their
+  /// position among the pours: the V60 has images for three pours and the Chemex for two, so a recipe with more pours
+  /// shows the last pour image for the rest of them. The immersion methods have one pour image. A pour-over method's
+  /// steep, which recipes do not have, shows its bloom, and an immersion method's bloom shows its steep, since both
+  /// show coffee resting in water.
   static BrewStepImage imageFor({required BrewMethod method, required List<BrewPhase> phases, required int index}) {
     switch (method) {
       case BrewMethod.v60:
@@ -154,8 +156,6 @@ abstract final class BrewPhaseLabels {
         switch (pourNumber(phases, index)) {
           case 1:
             return BrewStepImage.chemexPour1;
-          case 2:
-            return BrewStepImage.chemexPour2;
           default:
             return BrewStepImage.chemexPour2;
         }
@@ -164,7 +164,7 @@ abstract final class BrewPhaseLabels {
     }
   }
 
-  /// Returns the image for the indicated phase of a French Press brew.
+  /// Returns the image for the indicated phase of a French press brew.
   static BrewStepImage _imageForFrenchPress(List<BrewPhase> phases, int index) {
     switch (phases[index].kind) {
       case BrewPhaseKind.prepare:
@@ -179,7 +179,7 @@ abstract final class BrewPhaseLabels {
     }
   }
 
-  /// Returns the image for the indicated phase of a Aero Press brew.
+  /// Returns the image for the indicated phase of an AeroPress brew.
   static BrewStepImage _imageForAeroPress(List<BrewPhase> phases, int index) {
     switch (phases[index].kind) {
       case BrewPhaseKind.prepare:

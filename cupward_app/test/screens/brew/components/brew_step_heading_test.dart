@@ -1,5 +1,8 @@
+import 'dart:io';
+
 import 'package:cupward/l10n/app_localizations.dart';
 import 'package:cupward/l10n/app_localizations_en.dart';
+import 'package:cupward/models/recipes/brew_method.dart';
 import 'package:cupward/models/recipes/brew_phase.dart';
 import 'package:cupward/models/recipes/brew_phase_kind.dart';
 import 'package:cupward/models/recipes/built_in_recipes.dart';
@@ -10,8 +13,25 @@ import 'package:cupward/theme/cupward_colors.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// Verifies the title and instructions for each phase, and that the heading shows the step count, title, and
-/// instructions for the current phase. The heading is shown on its own, with English strings.
+/// A pour over with a bloom and two pours.
+const List<BrewPhase> _twoPours = <BrewPhase>[
+  BrewPhase(id: 'prepare', kind: BrewPhaseKind.prepare),
+  BrewPhase(id: 'bloom', kind: BrewPhaseKind.bloom, targetWeightGrams: 50),
+  BrewPhase(id: 'pour-1', kind: BrewPhaseKind.pour, targetWeightGrams: 180),
+  BrewPhase(id: 'pour-2', kind: BrewPhaseKind.pour, targetWeightGrams: 300),
+  BrewPhase(id: 'complete', kind: BrewPhaseKind.complete),
+];
+
+/// An immersion brew: one pour, then a steep.
+const List<BrewPhase> _immersion = <BrewPhase>[
+  BrewPhase(id: 'prepare', kind: BrewPhaseKind.prepare),
+  BrewPhase(id: 'pour-1', kind: BrewPhaseKind.pour, targetWeightGrams: 300),
+  BrewPhase(id: 'steep', kind: BrewPhaseKind.steep, duration: Duration(minutes: 4)),
+  BrewPhase(id: 'complete', kind: BrewPhaseKind.complete),
+];
+
+/// Verifies the title, instructions, and illustration for each phase and brewing method, and that the heading shows the
+/// step count, title, and instructions for the current phase. The heading is shown on its own, with English strings.
 void main() {
   /// The phases of the V60 pour over, which has every kind of phase and more than one pour.
   final List<BrewPhase> phases = BuiltInRecipes.v60PourOver.phases;
@@ -50,7 +70,10 @@ void main() {
     expect(BrewPhaseLabels.labelFor(phases, 2, strings), 'Steep');
     expect(BrewPhaseLabels.titleFor(phases, 2, strings), 'Steep');
     expect(BrewPhaseLabels.actionLabelFor(phases, 2, strings), 'Next step');
-    expect(BrewPhaseLabels.imageFor(phases, 2), BrewStepImage.v60Bloom);
+    expect(
+      BrewPhaseLabels.imageFor(method: BrewMethod.frenchPress, phases: phases, index: 2),
+      BrewStepImage.frenchPressSteep,
+    );
     expect(instructions.length, lessThanOrEqualTo(80));
     expect('.'.allMatches(instructions), hasLength(1));
   });
@@ -92,7 +115,8 @@ void main() {
     /// Each pour over step has its own illustration, and pours use the image for their position.
     test('gives every phase of the pour over its own image', () {
       final List<BrewStepImage> images = <BrewStepImage>[
-        for (int i = 0; i < phases.length; i++) BrewPhaseLabels.imageFor(phases, i),
+        for (int i = 0; i < phases.length; i++)
+          BrewPhaseLabels.imageFor(method: BrewMethod.v60, phases: phases, index: i),
       ];
 
       expect(images, <BrewStepImage>[
@@ -105,8 +129,8 @@ void main() {
       ]);
     });
 
-    /// There are only three pour images, so a recipe with more pours must still show one instead of failing.
-    test('uses the third pour image for later pours', () {
+    /// A method has images for only a few pours, so a recipe with more pours must still show one instead of failing.
+    test('uses the last pour image for later pours', () {
       const List<BrewPhase> manyPours = <BrewPhase>[
         BrewPhase(id: 'pour-1', kind: BrewPhaseKind.pour),
         BrewPhase(id: 'pour-2', kind: BrewPhaseKind.pour),
@@ -114,7 +138,55 @@ void main() {
         BrewPhase(id: 'pour-4', kind: BrewPhaseKind.pour),
       ];
 
-      expect(BrewPhaseLabels.imageFor(manyPours, 3), BrewStepImage.v60Pour3);
+      expect(BrewPhaseLabels.imageFor(method: BrewMethod.v60, phases: manyPours, index: 3), BrewStepImage.v60Pour3);
+      expect(
+        BrewPhaseLabels.imageFor(method: BrewMethod.chemex, phases: manyPours, index: 2),
+        BrewStepImage.chemexPour2,
+      );
+    });
+
+    /// Each method shows its own brewer. The Kalita Wave looks like a V60 in this style, so it shares those images.
+    test("shows the brewer of the recipe's method", () {
+      List<BrewStepImage> imagesFor(BrewMethod method, List<BrewPhase> phases) => <BrewStepImage>[
+            for (int i = 0; i < phases.length; i++) BrewPhaseLabels.imageFor(method: method, phases: phases, index: i),
+          ];
+
+      expect(imagesFor(BrewMethod.kalitaWave, _twoPours), imagesFor(BrewMethod.v60, _twoPours));
+      expect(imagesFor(BrewMethod.chemex, _twoPours), <BrewStepImage>[
+        BrewStepImage.chemexPrepare,
+        BrewStepImage.chemexBloom,
+        BrewStepImage.chemexPour1,
+        BrewStepImage.chemexPour2,
+        BrewStepImage.chemexComplete,
+      ]);
+      expect(imagesFor(BrewMethod.frenchPress, _immersion), <BrewStepImage>[
+        BrewStepImage.frenchPressPrepare,
+        BrewStepImage.frenchPressPour1,
+        BrewStepImage.frenchPressSteep,
+        BrewStepImage.frenchPressComplete,
+      ]);
+      expect(imagesFor(BrewMethod.aeroPress, _immersion), <BrewStepImage>[
+        BrewStepImage.aeroPressPrepare,
+        BrewStepImage.aeroPressPour1,
+        BrewStepImage.aeroPressSteep,
+        BrewStepImage.aeroPressComplete,
+      ]);
+      expect(imagesFor(BrewMethod.cleverDripper, _immersion), <BrewStepImage>[
+        BrewStepImage.cleverDripperPrepare,
+        BrewStepImage.cleverDripperPour1,
+        BrewStepImage.cleverDripperSteep,
+        BrewStepImage.cleverDripperComplete,
+      ]);
+    });
+  });
+
+  group('BrewStepImage', () {
+    /// A wrong path only shows up as a broken image at run time, so every path must name a bundled file.
+    test('names a file in the assets for every image', () {
+      for (final BrewStepImage image in BrewStepImage.values) {
+        expect(image.path, startsWith('assets/brew_steps/'));
+        expect(File(image.path).existsSync(), isTrue, reason: image.path);
+      }
     });
   });
 

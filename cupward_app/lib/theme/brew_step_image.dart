@@ -1,18 +1,19 @@
-/// The illustrations shown in the middle of the brewing screen, one for each step of a pour over, with the path of each
+/// The illustrations shown in the middle of the brewing screen, one for each step of a brew, with the path of each
 /// image in the assets.
 ///
-/// Like `AppIcon`, views refer to these images through the enum instead of using asset paths directly, so an image can
-/// be replaced by changing its path here. The images are 1342 by 1172 pixel PNGs in `assets/brew_steps/`, which
-/// `pubspec.yaml` lists as an asset directory, and are drawn on a transparent background so that the page shows
-/// through.
+/// Each brewing method has its own set, named for the method and the step, such as `chemexBloom`. The V60 set also
+/// serves the Kalita Wave, which looks much the same in this style. `BrewPhaseLabels.imageFor` chooses the image for
+/// a phase of a recipe.
 ///
-/// The images show a pour over, so they suit the phases of a pour over recipe. Other brewing methods will need their
-/// own illustrations.
+/// Like `AppIcon`, views refer to these images through the enum instead of using asset paths directly, so an image can
+/// be replaced by changing its path here. The images are PNGs in `assets/brew_steps/`, which `pubspec.yaml` lists as an
+/// asset directory, and are drawn on a transparent background so that the page shows through. They are about 1300 by
+/// 1200 pixels, and the brewing screen fits each one inside a box of [aspectRatio], so a step change never moves the
+/// layout even where an image's own proportions differ.
 enum BrewStepImage {
-
   // V60 and Kalita Wave
 
-  /// An empty dripper and server on the scale, ready to be tared.
+  /// An empty V60 dripper and server on the scale, ready to be tared.
   v60Prepare('assets/brew_steps/v60_prepare.png'),
 
   /// Grounds wetted for the bloom.
@@ -25,14 +26,14 @@ enum BrewStepImage {
   v60Pour2('assets/brew_steps/v60_pour2.png'),
 
   /// The third of the main pours, which also serves for any later pours.
-  v60Pour3('assets/brew_steps/v60Pour3.png'),
+  v60Pour3('assets/brew_steps/v60_pour3.png'),
 
   /// The finished V60 brew.
   v60Complete('assets/brew_steps/v60_complete.png'),
 
   // Chemex
 
-  /// An empty carafe on the scale, ready to be tared.
+  /// An empty Chemex with its filter on the scale, ready to be tared.
   chemexPrepare('assets/brew_steps/chemex_prepare.png'),
 
   /// Grounds wetted for the bloom.
@@ -41,7 +42,7 @@ enum BrewStepImage {
   /// The first of the main pours.
   chemexPour1('assets/brew_steps/chemex_pour1.png'),
 
-  /// The second of the main pours.
+  /// The second of the main pours, which also serves for any later pours.
   chemexPour2('assets/brew_steps/chemex_pour2.png'),
 
   /// The finished Chemex brew.
@@ -49,44 +50,44 @@ enum BrewStepImage {
 
   // French Press
 
-  /// An empty carafe on the scale, ready to be tared.
+  /// An empty French press on the scale, ready to be tared.
   frenchPressPrepare('assets/brew_steps/french_press_prepare.png'),
 
-  /// The carafe half filled with water.
+  /// The press, with its lid off, filled with water and grounds.
   frenchPressPour1('assets/brew_steps/french_press_pour1.png'),
 
-  /// The carafe filled with a mix of water and coffee grounds.
+  /// The press full of steaming coffee and grounds, steeping.
   frenchPressSteep('assets/brew_steps/french_press_steep.png'),
 
-  /// The finished French Press brew.
+  /// The plunger pressed down on the finished French press brew.
   frenchPressComplete('assets/brew_steps/french_press_complete.png'),
 
-  // Aero Press
+  // AeroPress
 
-  /// An empty carafe on the scale, ready to be tared.
+  /// An empty AeroPress on a mug on the scale, ready to be tared.
   aeroPressPrepare('assets/brew_steps/aeropress_prepare.png'),
 
-  /// The first of the main pours.
+  /// The AeroPress chamber partly filled with water and grounds.
   aeroPressPour1('assets/brew_steps/aeropress_pour1.png'),
 
-  /// The carafe filled with a mix of water and coffee grounds.
+  /// The chamber full of steaming coffee and grounds, steeping.
   aeroPressSteep('assets/brew_steps/aeropress_steep.png'),
 
-  /// The finished Aero Press brew.
+  /// A mug of the finished AeroPress brew.
   aeroPressComplete('assets/brew_steps/aeropress_complete.png'),
 
   // Clever Dripper
 
-  /// An empty mug on the scale, ready to be tared.
+  /// An empty Clever Dripper with its filter, on a mug on the scale, ready to be tared.
   cleverDripperPrepare('assets/brew_steps/clever_dripper_prepare.png'),
 
-  /// The first of the main pours.
+  /// The dripper partly filled with water and grounds.
   cleverDripperPour1('assets/brew_steps/clever_dripper_pour1.png'),
 
-  /// The brewer filled with a mix of water and coffee grounds.
+  /// The dripper full of steaming coffee and grounds, steeping.
   cleverDripperSteep('assets/brew_steps/clever_dripper_steep.png'),
 
-  /// The finished Clever Dripper brew.
+  /// A mug of the finished Clever Dripper brew.
   cleverDripperComplete('assets/brew_steps/clever_dripper_complete.png');
 
   /// Creates an image whose file is at [path].
