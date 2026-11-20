@@ -22,6 +22,24 @@ const String _recaptchaSiteKey = String.fromEnvironment('RECAPTCHA_SITE_KEY');
 /// `--dart-define=USE_FIREBASE_EMULATOR=true`. It is false when the flag is not given.
 const bool _useFirebaseEmulator = bool.fromEnvironment('USE_FIREBASE_EMULATOR');
 
+/// A Firebase App Check debug token to use while running the app in debug mode.
+///
+/// Firebase App Check creates cryptographically-secure JWT tokens that allow backend resources to confirm that
+/// requests and other interactions originate from a genuine, unmodified version of the Cupward app running on
+/// unmodified target devices. However, during debug builds, because debug builds are signed differently that release
+/// builds, the Firebase App Check Flutter plugin generates a debug token. This debug token must be registered in the
+/// Firebase console to allow the App Check system to authenticate the debug builds.
+///
+/// The Firebase App Check debug token can change over time under various conditions. This can create some
+/// inconveniences during development and CI operations. Therefore, this flag allows a stable App Check debug token to
+/// be defined so that every time the app runs, the same token is used. This removes the need to constantly update the
+/// debug tokens stored in the Firebase console.
+///
+/// The App Check debug token specified in this environment variable must be registered in the Firebase console in
+/// advance of running the app. Additionally, it should be kept secret, which is why the app accepts it in an argument
+/// to app builds rather than hard-coding the token into the codebase.
+const String _appCheckDebugToken = String.fromEnvironment('APP_CHECK_DEBUG_TOKEN');
+
 /// The port of the Auth emulator, matching `cupward_cloud/firebase.json`.
 const int _authEmulatorPort = 9099;
 
@@ -56,11 +74,19 @@ Future<void> main() async {
   // Firebase console (the debug token is printed to the console on first launch, and to the browser console on the
   // web). Release builds use the default attestation providers (Play Integrity on Android, DeviceCheck on Apple
   // platforms), and reCAPTCHA Enterprise on the web with the site key given at build time. See FIREBASE_SETUP.md.
+  //
+  // Stable debug tokens can be provided using a `--dart-define` flag, as detailed above.
   if (kDebugMode) {
     await FirebaseAppCheck.instance.activate(
-      providerAndroid: const AndroidDebugProvider(),
-      providerApple: const AppleDebugProvider(),
-      providerWeb: WebDebugProvider(),
+      providerAndroid: const AndroidDebugProvider(
+        debugToken: _appCheckDebugToken,
+      ),
+      providerApple: const AppleDebugProvider(
+        debugToken: _appCheckDebugToken,
+      ),
+      providerWeb: WebDebugProvider(
+        debugToken: _appCheckDebugToken,
+      ),
     );
   } else {
     await FirebaseAppCheck.instance.activate(providerWeb: _releaseWebProvider);
