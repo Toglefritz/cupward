@@ -205,10 +205,13 @@ abstract final class RecipeGenerationParser {
             : kinds;
     final bool endsRight = !method.isImmersion || kinds.last == BrewPhaseKind.steep;
     if (!endsRight || pours.isEmpty || pours.any((BrewPhaseKind kind) => kind != BrewPhaseKind.pour)) {
+      final String received = kinds.map((BrewPhaseKind kind) => kind.name).join(', ');
       throw FormatException(
         method.isImmersion
-            ? 'An immersion recipe for ${method.name} must be one or more pours and then a steep.'
-            : 'A pour-over recipe for ${method.name} must be an optional bloom and then one or more pours.',
+            ? 'An immersion recipe for ${method.name} must be one or more pours and then a steep, but the steps '
+                'between preparation and completion were: $received.'
+            : 'A pour-over recipe for ${method.name} must be an optional bloom and then one or more pours, but the '
+                'steps between preparation and completion were: $received.',
       );
     }
   }

@@ -108,6 +108,22 @@ void main() {
       }
     });
 
+    /// The message names the steps that were received, so a log or a retry can say what went wrong.
+    test('names the steps received when the order is wrong', () {
+      final Map<String, dynamic> answer = RecipeGenerationFixtures.pourOverAnswer()
+        ..['phases'] = <Map<String, dynamic>>[
+          <String, dynamic>{'kind': 'bloom', 'targetWeightGrams': 50, 'durationSeconds': 40},
+          <String, dynamic>{'kind': 'bloom', 'targetWeightGrams': 350},
+        ];
+
+      expect(
+        () => pourOver(answer),
+        throwsA(
+          isA<FormatException>().having((FormatException e) => e.message, 'message', contains('were: bloom, bloom.')),
+        ),
+      );
+    });
+
     /// An immersion brew is guided through its steep, so it must have one, with a duration.
     test('rejects an immersion recipe without a timed steep', () {
       final Map<String, dynamic> noSteep = RecipeGenerationFixtures.immersionAnswer()

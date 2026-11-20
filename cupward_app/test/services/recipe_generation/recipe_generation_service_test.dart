@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:cupward/models/recipes/brew_method.dart';
 import 'package:cupward/models/recipes/brew_phase_kind.dart';
@@ -7,6 +8,7 @@ import 'package:cupward/models/recipes/recipe_ids.dart';
 import 'package:cupward/services/auth/auth_service.dart';
 import 'package:cupward/services/recipe_generation/recipe_generation_exception.dart';
 import 'package:cupward/services/recipe_generation/recipe_generation_failure.dart';
+import 'package:cupward/services/recipe_generation/recipe_generation_parser.dart';
 import 'package:cupward/services/recipe_generation/recipe_generation_prompt.dart';
 import 'package:cupward/services/recipe_generation/recipe_generation_schema.dart';
 import 'package:cupward/services/recipe_generation/recipe_generation_service.dart';
@@ -91,6 +93,29 @@ void main() {
       // Assert
       expect(hybridAi.modes, <InferenceMode>[InferenceMode.preferOnDevice, InferenceMode.onlyInCloud]);
       expect(recipe.waterGrams, 350);
+    });
+
+    /// The cloud request tells the model why the on-device answer was rejected, and the first request does not.
+    test('tells the cloud model why the on-device recipe was rejected', () async {
+      // Arrange
+      final Map<String, dynamic> noPours = RecipeGenerationFixtures.pourOverAnswer()
+        ..['phases'] = <Map<String, dynamic>>[
+          <String, dynamic>{'kind': 'prepare'},
+          <String, dynamic>{'kind': 'bloom', 'targetWeightGrams': 50, 'durationSeconds': 40},
+          <String, dynamic>{'kind': 'bloom', 'targetWeightGrams': 350},
+          <String, dynamic>{'kind': 'complete'},
+        ];
+      hybridAi.responses
+        ..add(BrewFeedbackFixtures.result(noPours))
+        ..add(BrewFeedbackFixtures.result(RecipeGenerationFixtures.pourOverAnswer(), source: InferenceSource.inCloud));
+
+      // Act
+      await service.createRecipe(RecipeGenerationFixtures.pourOverRequest);
+
+      // Assert
+      expect(hybridAi.prompts.first, isNot(contains('previous answer was rejected')));
+      expect(hybridAi.prompts.last, contains('previous answer was rejected'));
+      expect(hybridAi.prompts.last, contains('were: bloom, bloom.'));
     });
 
     /// A cloud answer that still cannot be used is reported rather than retried again.
@@ -237,6 +262,52 @@ void main() {
       expect(immersion, contains(RecipeGenerationPrompt.immersionSteps));
       expect(immersion, contains('"method":"frenchPress"'));
       expect(immersion.length, lessThan(3000));
+      expect(pourOver.length, lessThan(3000));
+    });
+
+    /// The required steps are spelled out, with the steps that must not appear, and with an example.
+    test('lists the required and forbidden steps and gives an example', () {
+      expect(RecipeGenerationPrompt.pourOverSteps, contains('Never use a steep step'));
+      expect(RecipeGenerationPrompt.pourOverSteps, contains('Always include the bloom'));
+      expect(RecipeGenerationPrompt.pourOverSteps, contains('"kind":"bloom"'));
+      expect(RecipeGenerationPrompt.immersionSteps, contains('Never use a bloom step'));
+      expect(RecipeGenerationPrompt.immersionSteps, contains('"kind":"steep"'));
+    });
+
+    /// The examples in the prompt must be answers that the parser would accept.
+    test('gives examples the parser accepts', () {
+      final RegExp example = RegExp(r'^\[\{.*\}\]$', multiLine: true);
+      for (final (String steps, BrewMethod method, double water) in <(String, BrewMethod, double)>[
+        (RecipeGenerationPrompt.pourOverSteps, BrewMethod.v60, 320),
+        (RecipeGenerationPrompt.immersionSteps, BrewMethod.frenchPress, 450),
+      ]) {
+        final List<dynamic> phases = jsonDecode(example.firstMatch(steps)!.group(0)!) as List<dynamic>;
+        final BrewRecipe recipe = RecipeGenerationParser.parse(
+          <String, dynamic>{
+            'name': 'Example',
+            'profile': 'Balanced',
+            'coffeeGrams': water / 15,
+            'waterGrams': water,
+            'brewTimeSeconds': 240,
+            'yieldMilliliters': water - 40,
+            'phases': phases,
+          },
+          method: method,
+        );
+        expect(recipe.waterGrams, water);
+      }
+    });
+
+    /// A rejection reason is added to the prompt only when there is one.
+    test('adds the reason for a rejection', () {
+      final String plain = RecipeGenerationPrompt.build(RecipeGenerationFixtures.pourOverRequest);
+      final String corrected = RecipeGenerationPrompt.build(
+        RecipeGenerationFixtures.pourOverRequest,
+        rejection: 'Too many blooms.',
+      );
+
+      expect(plain, isNot(contains('rejected')));
+      expect(corrected, contains('previous answer was rejected: Too many blooms.'));
     });
   });
 

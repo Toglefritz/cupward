@@ -76,11 +76,14 @@ class RecipeGenerationService {
     final String prompt = RecipeGenerationPrompt.build(request);
 
     StructuredGenerationResult result = await _generate(prompt, InferenceMode.preferOnDevice);
-    BrewRecipe? recipe = _read(result, request);
+    final _Reading first = _read(result, request);
+    BrewRecipe? recipe = first.recipe;
     if (recipe == null && result.source == InferenceSource.onDevice) {
       debugPrint('The on-device recipe could not be used, so the cloud model is asked.');
-      result = await _generate(prompt, InferenceMode.onlyInCloud);
-      recipe = _read(result, request);
+      // The cloud request says why the first answer was rejected, so that it does not repeat the mistake.
+      final String cloudPrompt = RecipeGenerationPrompt.build(request, rejection: first.problem);
+      result = await _generate(cloudPrompt, InferenceMode.onlyInCloud);
+      recipe = _read(result, request).recipe;
     }
     if (recipe == null) {
       throw const RecipeGenerationException(RecipeGenerationFailure.invalidResponse);
@@ -89,17 +92,17 @@ class RecipeGenerationService {
     return await _save(recipe);
   }
 
-  /// Returns the recipe in [result], or null if the answer does not match the schema or is not brewable.
-  BrewRecipe? _read(StructuredGenerationResult result, NewRecipeRequest request) {
+  /// Reads the recipe in [result], or says why the answer does not match the schema or is not brewable.
+  _Reading _read(StructuredGenerationResult result, NewRecipeRequest request) {
     if (!result.conformsToSchema) {
       debugPrint('The recipe did not match the schema: ${result.violations}');
-      return null;
+      return const _Reading.rejected('It did not match the required JSON format.');
     }
     try {
-      return RecipeGenerationParser.parse(result.data, method: request.method);
+      return _Reading.accepted(RecipeGenerationParser.parse(result.data, method: request.method));
     } on FormatException catch (error) {
       debugPrint('The recipe could not be used: ${error.message}');
-      return null;
+      return _Reading.rejected(error.message);
     }
   }
 
@@ -145,4 +148,17 @@ class RecipeGenerationService {
       throw const RecipeGenerationException(RecipeGenerationFailure.requestFailed);
     }
   }
+}
+
+/// The outcome of reading one model answer: a [recipe], or the [problem] that made it unusable.
+class _Reading {
+  const _Reading.accepted(BrewRecipe this.recipe) : problem = null;
+
+  const _Reading.rejected(String this.problem) : recipe = null;
+
+  /// The recipe, or null if the answer could not be used.
+  final BrewRecipe? recipe;
+
+  /// Why the answer could not be used, or null if it could.
+  final String? problem;
 }
