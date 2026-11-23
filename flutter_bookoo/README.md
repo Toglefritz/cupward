@@ -10,13 +10,14 @@ The package currently targets the **BOOKOO Themis Ultra**. Its scale abstraction
 
 ## Features
 
-- Scan for nearby Themis scales and connect to one.
-- Stream real-time weight readings.
-- Stream flow rate, so you can track how quickly water is being poured.
-- Stream the scale's timer state and elapsed time.
-- Read battery level and connection state.
-- Send commands to the scale, such as tare and timer start, stop, and reset.
-- Typed models and streams, with no BLE knowledge required.
+- Scan for nearby Themis Ultra scales, recognized by their advertised name.
+- Connect to a scale and check that it exposes the expected Bluetooth service and characteristics, so an unrelated device is rejected with a clear error.
+- Stream live readings about ten times per second. Each reading has the weight in grams, the flow rate in grams per second, the scale's timer, the battery percentage, the standby time, the beeper level, and whether flow smoothing is on.
+- Stream the raw notification frames, for diagnostics and for capturing test fixtures.
+- Zero the scale with `tare()`.
+- Typed models and exceptions, with no BLE knowledge required. Malformed frames are dropped, and the readings stream keeps going.
+
+Controlling the scale's timer, and reading the connection state as a stream, are not available yet.
 
 ## Why a package and not a plugin
 

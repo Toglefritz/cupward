@@ -1,4 +1,4 @@
-## [0.0.1] 2026/11/14
+## 0.0.1
 
 * Initial release with support for the BOOKOO Themis Ultra coffee scale.
 * Scan for nearby Themis Ultra scales over Bluetooth Low Energy.
