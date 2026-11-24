@@ -55,6 +55,14 @@ Which on-device model an app receives depends on the platform. These guides expl
 - [iOS](doc/ios-on-device-models.md): how the plugin uses Apple's on-device model and a Gemini model together, and what the device and the build need.
 - [Web (Chrome)](doc/web-on-device-models.md): how Chrome chooses and stores its model, how to see which model is installed, and how Chrome's Gemma 4 flag fits in.
 
+## Early release and preview dependencies
+This plugin is an early release, and its API can change between versions. A version constraint such as `^0.0.2` allows only that exact version, so update on purpose and read the CHANGELOG first.
+The features underneath it are also still changing:
+- Firebase describes hybrid inference as experimental on [Android](https://firebase.google.com/docs/ai-logic/hybrid/android/get-started) and on [Apple platforms](https://firebase.google.com/docs/ai-logic/hybrid/ios/get-started). It has no SLA or deprecation policy, and it can change in ways that break existing code.
+- **Android:** on-device inference uses the ML Kit Prompt API, which Firebase describes as beta, through a pre-release `firebase-ai-ondevice` artifact. The preview model categories also need the AICore Developer Preview. See [Choosing the on-device model on Android](doc/android-on-device-models.md).
+- **iOS:** the cloud model needs iOS 27 and an app built with Xcode 27 or later, and Firebase describes its Gemini integration with Apple's Foundation Models framework as a preview. See [On-device and cloud models on iOS](doc/ios-on-device-models.md).
+- **Web:** on-device inference depends on the built-in AI that Chrome provides, and Chrome decides which model a browser gets. See [Choosing the on-device model in Chrome](doc/web-on-device-models.md).
+
 ## Additional information
 
 `firebase_hybrid_ai` is an independent, community-developed plugin. It is not affiliated with, endorsed by, or sponsored by Google, Firebase, or Apple. Firebase, Gemini, Gemini Nano, Chrome, and Apple Foundation Models are trademarks of their respective owners.
