@@ -12,12 +12,18 @@ let package = Package(
         .library(name: "firebase-hybrid-ai", targets: ["firebase_hybrid_ai"])
     ],
     dependencies: [
+        // Firebase AI Logic provides the Gemini model for Apple's Foundation Models framework. The range starts at the
+        // version this plugin was written against and ends before the next major version. The app's other Firebase
+        // plugins, such as firebase_core, pin an exact version inside it.
+        .package(url: "https://github.com/firebase/firebase-ios-sdk", from: "13.1.0"),
         .package(name: "FlutterFramework", path: "../FlutterFramework")
     ],
     targets: [
         .target(
             name: "firebase_hybrid_ai",
             dependencies: [
+                .product(name: "FirebaseAILogic", package: "firebase-ios-sdk"),
+                .product(name: "FirebaseCore", package: "firebase-ios-sdk"),
                 .product(name: "FlutterFramework", package: "FlutterFramework")
             ],
             resources: [

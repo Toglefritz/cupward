@@ -4,14 +4,14 @@
 #
 Pod::Spec.new do |s|
   s.name             = 'firebase_hybrid_ai'
-  s.version          = '0.0.1'
-  s.summary          = 'A new Flutter plugin project.'
+  s.version          = '0.1.0'
+  s.summary          = 'Bridges Flutter to on-device and cloud models, chosen by inference mode.'
   s.description      = <<-DESC
-A new Flutter plugin project.
+Runs prompts on Apple's on-device model or on a Gemini model through Firebase AI Logic, and falls back from one to the other.
                        DESC
-  s.homepage         = 'http://example.com'
+  s.homepage         = 'https://github.com/Toglefritz/cupward/tree/main/firebase_hybrid_ai'
   s.license          = { :file => '../LICENSE' }
-  s.author           = { 'Your Company' => 'email@example.com' }
+  s.author           = 'Splendid Endeavors LLC'
   s.source           = { :path => '.' }
   s.source_files = 'firebase_hybrid_ai/Sources/firebase_hybrid_ai/**/*'
   s.dependency 'Flutter'

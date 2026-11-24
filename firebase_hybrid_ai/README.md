@@ -42,8 +42,9 @@ Anything the underlying SDKs do not support is not available through this plugin
 
 Which on-device model an app receives depends on the platform. These guides explain what the plugin controls and what it does not:
 
-- [Android](docs/android-on-device-models.md): choose between the stable model and the preview models, and enroll a device in the AICore Developer Preview.
-- [Web (Chrome)](docs/web-on-device-models.md): how Chrome chooses and stores its model, how to see which model is installed, and how Chrome's Gemma 4 flag fits in.
+- [Android](doc/android-on-device-models.md): choose between the stable model and the preview models, and enroll a device in the AICore Developer Preview.
+- [iOS](doc/ios-on-device-models.md): how the plugin uses Apple's on-device model and a Gemini model together, and what the device and the build need.
+- [Web (Chrome)](doc/web-on-device-models.md): how Chrome chooses and stores its model, how to see which model is installed, and how Chrome's Gemma 4 flag fits in.
 
 ## Additional information
 
