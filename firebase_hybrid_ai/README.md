@@ -38,6 +38,15 @@ Anything the underlying SDKs do not support is not available through this plugin
 - Firebase initialized in your app with `firebase_core`. Firebase AI Logic is protected by Firebase App Check, so your app also needs `firebase_app_check`.
 - For on-device inference, a device that supports the platform's on-device model. Devices without support use the cloud model, or receive an error if you chose an on-device-only mode.
 
+## Usage
+After Firebase is initialized, create a `FirebaseHybridAi` and send a prompt. The result says which model answered:
+```dart
+final FirebaseHybridAi ai = FirebaseHybridAi();
+final TextGenerationResult result = await ai.generateText('Why is the sky blue?');
+print('${result.text} (${result.source.name})');
+```
+Choose where the prompt runs with `mode`, for example `InferenceMode.onlyOnDevice` to keep it on the device. `generateTextStream` returns the response in chunks, and `generateStructured` takes a `ResponseSchema` and returns JSON that is checked against it. Every method, argument, and exception is documented in the package's API reference, and the [example app](example) uses each of them.
+
 ## Choosing the on-device model
 
 Which on-device model an app receives depends on the platform. These guides explain what the plugin controls and what it does not:
