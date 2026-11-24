@@ -1,6 +1,6 @@
 name: firebase_hybrid_ai
 description: "A community-developed bridge between Flutter and the Firebase AI Logic hybrid inference SDKs, which run prompts on-device when a local model is available and fall back to the cloud when it is not."
-version: 0.1.0
+version: 0.0.2
 repository: https://github.com/Toglefritz/cupward/tree/main/firebase_hybrid_ai
 
 environment:

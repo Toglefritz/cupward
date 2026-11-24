@@ -4,7 +4,7 @@
 #
 Pod::Spec.new do |s|
   s.name             = 'firebase_hybrid_ai'
-  s.version          = '0.1.0'
+  s.version          = '0.0.2'
   s.summary          = 'Bridges Flutter to on-device and cloud models, chosen by inference mode.'
   s.description      = <<-DESC
 Runs prompts on Apple's on-device model or on a Gemini model through Firebase AI Logic, and falls back from one to the other.
