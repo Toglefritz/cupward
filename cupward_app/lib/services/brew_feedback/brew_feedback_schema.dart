@@ -4,8 +4,9 @@ import 'package:firebase_hybrid_ai/firebase_hybrid_ai.dart';
 ///
 /// The answer is a short summary of the cup, one primary suggestion, and up to two other ideas for later brews.
 /// Each suggestion names one `RecipeParameter` and one `ChangeDirection` from fixed lists, so the app can build its
-/// screen from them, and explains itself in short fields of plain text. A new value is given only for parameters the
-/// recipe stores.
+/// screen from them, and explains itself in short fields of plain text. The new value is required, because a model that
+/// may leave it out often does, and then the change cannot be saved to the recipe. It is 0 for parameters the recipe
+/// does not store, which the parser ignores.
 ///
 /// The field descriptions are part of what the model reads, so they also carry instructions, such as how long each
 /// field should be. They are kept short, because on-device models accept only a few thousand tokens per request.
@@ -38,15 +39,16 @@ abstract final class BrewFeedbackSchema {
       'change':
           ResponseSchema.string(description: 'How much to change it, in plain words, such as "Add 1 g of coffee".'),
       'suggestedValue': ResponseSchema.number(
-        description: 'The new value: grams for coffeeDose, waterAmount, and bloomWater, or seconds for bloomTime, '
-            'brewTime, and steepTime. Leave it out for other parameters.',
+        description:
+            'The new value of the variable as one number, matching the number in change: grams for coffeeDose, '
+            'waterAmount, and bloomWater, or seconds for bloomTime, brewTime, and steepTime. For example, 310 to '
+            'lower the water from 320 g to 310 g. Use 0 for grindSize, pourRate, and waterTemperature.',
       ),
       'rationale': ResponseSchema.string(
         description: 'One or two sentences on why, citing the brew data or the tasting notes.',
       ),
       'expectedEffect': ResponseSchema.string(description: 'One sentence on how the next cup should taste different.'),
     },
-    optionalProperties: <String>['suggestedValue'],
   );
 
   /// The whole answer.

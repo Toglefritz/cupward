@@ -35,6 +35,7 @@ Rules:
 - Base every rationale on the brew data and tasting notes. Sour, weak, or thin cups usually mean under-extraction. Bitter, harsh, or drying cups usually mean over-extraction.
 - Ratings run from 1 (none or very little) to 5 (a lot). For overall, 1 means disliked and 5 means loved. Unrated attributes are left out.
 - For a recipe with a steep step, change how long it steeps with steepTime. bloomTime and bloomWater apply only to a recipe with a bloom step.
+- Always give suggestedValue as the new value of the variable, not the size of the change. If the recipe has 320 g of water and you say to use 310 g, suggestedValue is 310. Use 0 for grindSize, pourRate, and waterTemperature.
 - If the goal is given, aim for it.
 - Write for a home brewer, in plain and friendly language.''';
 

@@ -89,5 +89,13 @@ void main() {
     test('accepts a well-formed answer', () {
       expect(BrewFeedbackSchema.schema.validate(BrewFeedbackFixtures.answer()), isEmpty);
     });
+
+    /// Models that may leave the value out often do, and then the change cannot be saved to the recipe.
+    test('requires a suggested value', () {
+      final Map<String, dynamic> answer = BrewFeedbackFixtures.answer();
+      (answer['primarySuggestion'] as Map<String, dynamic>).remove('suggestedValue');
+
+      expect(BrewFeedbackSchema.schema.validate(answer), isNotEmpty);
+    });
   });
 }

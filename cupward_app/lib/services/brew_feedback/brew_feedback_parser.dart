@@ -1,4 +1,5 @@
 import 'package:firebase_hybrid_ai/firebase_hybrid_ai.dart';
+import 'package:flutter/foundation.dart';
 
 import '../../models/feedback/brew_feedback.dart';
 import '../../models/feedback/change_direction.dart';
@@ -94,6 +95,17 @@ abstract final class BrewFeedbackParser {
           (throw const FormatException('Unknown direction.'));
       final double? current = parameter.hasRecipeValue ? currentValue(parameter, recipe) : null;
       final Object? suggested = value['suggestedValue'];
+      final double? suggestedValue =
+          current != null && suggested is num && _isSmallStep(current, suggested.toDouble(), direction)
+              ? suggested.toDouble()
+              : null;
+      if (current != null && suggestedValue == null) {
+        // Without a value the change is shown in words only and cannot be saved to the recipe, so say why.
+        debugPrint(
+          'The ${parameter.name} suggestion has no usable value, so it cannot be saved to the recipe: '
+          'suggestedValue is $suggested, the recipe has $current, and the direction is ${direction.name}.',
+        );
+      }
 
       return RecipeSuggestion(
         parameter: parameter,
@@ -103,9 +115,7 @@ abstract final class BrewFeedbackParser {
         rationale: _requiredText(value, 'rationale'),
         expectedEffect: _requiredText(value, 'expectedEffect'),
         currentValue: current,
-        suggestedValue: current != null && suggested is num && _isSmallStep(current, suggested.toDouble(), direction)
-            ? suggested.toDouble()
-            : null,
+        suggestedValue: suggestedValue,
       );
     } on FormatException {
       return null;

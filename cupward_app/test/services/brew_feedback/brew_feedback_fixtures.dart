@@ -76,7 +76,7 @@ abstract final class BrewFeedbackFixtures {
       'direction': direction,
       'title': 'Add a gram of coffee',
       'change': 'Use 21 g of coffee',
-      if (suggestedValue != null) 'suggestedValue': suggestedValue,
+      'suggestedValue': suggestedValue ?? 0,
       'rationale': 'The cup was weak and sour, which points to under-extraction.',
       'expectedEffect': 'A fuller, sweeter cup.',
     };

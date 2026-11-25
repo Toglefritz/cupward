@@ -65,6 +65,15 @@ void main() {
       expect(feedback.primary.change, 'Use 21 g of coffee');
     });
 
+    /// The schema asks for 0 when the recipe does not store the variable, which must not become a recipe value.
+    test('ignores the zero given for a variable the recipe does not store', () {
+      final BrewFeedback feedback = parse(
+        answerWith(BrewFeedbackFixtures.suggestion(parameter: 'grindSize', suggestedValue: null)),
+      );
+
+      expect(feedback.primary.suggestedValue, isNull);
+    });
+
     /// A value that contradicts the stated direction is not trusted.
     test('drops a suggested value that goes the wrong way', () {
       final BrewFeedback feedback = parse(answerWith(BrewFeedbackFixtures.suggestion(suggestedValue: 19)));
