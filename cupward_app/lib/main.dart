@@ -11,6 +11,8 @@ import 'app.dart';
 import 'firebase_options.dart';
 import 'services/auth/auth_service.dart';
 import 'services/firebase_emulator/dev_machine_ip.dart';
+import 'services/scale/demo_launch.dart';
+import 'services/scale/scale_service.dart';
 
 /// The reCAPTCHA Enterprise site key used by App Check in release builds on the web.
 ///
@@ -111,6 +113,10 @@ Future<void> main() async {
         ),
   );
 
+  // A web address with `?demo=true` starts the app with the simulated scale, so visitors need not find the demo menu.
+  if (kIsWeb && DemoLaunch.isRequested(Uri.base)) {
+    await ScaleService.instance.startDemo();
+  }
   // Run the app.
   runApp(
     const Cupward(),

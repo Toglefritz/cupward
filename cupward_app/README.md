@@ -32,6 +32,8 @@ The scale connects over Bluetooth on Android, iOS, and macOS, which ask for Blue
 
 Demo mode lets anyone try the full brewing experience without a scale. Choose **Start demo** from the menu in the corner of the recipe card on the brewing screen. The app then behaves as if a scale were connected, on every platform including the web, and the scale panel carries a **Demo** tag. The simulated scale follows the recipe the way a person would: the brewer is set on the platter, the scale is tared when you continue from preparation, and each bloom and pour is poured at a realistic, slightly uneven rate that stops close to its target. The brewing screen follows these readings exactly as it follows a real scale, and the recorded brew feeds the feedback screen and AI feedback as usual. Choose **End demo** from the same menu to stop.
 
+On the web, the app can start in demo mode without the menu. Open it with `?demo=true` on the address, for example `https://cupward-2b4bc.web.app/?demo=true`, and the simulated scale is already connected when the brewing screen opens. **End demo** still stops it.
+
 ## Technology
 
 - **Flutter and Dart** for the cross-platform user interface.
