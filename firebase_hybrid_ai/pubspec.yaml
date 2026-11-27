@@ -2,10 +2,16 @@ name: firebase_hybrid_ai
 description: "A community-developed bridge between Flutter and the Firebase AI Logic hybrid inference SDKs, which run prompts on-device when a local model is available and fall back to the cloud when it is not."
 version: 0.0.2
 repository: https://github.com/Toglefritz/cupward/tree/main/firebase_hybrid_ai
+topics:
+  - firebase
+  - gemini
+  - on-device-ai
+  - llm
+  - generative-ai
 
 environment:
   sdk: ^3.14.0
-  flutter: ">=3.3.0"
+  flutter: ">=3.50.0"
 
 dependencies:
   firebase_core: ^5.1.0
