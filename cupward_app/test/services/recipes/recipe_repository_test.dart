@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cupward/models/recipes/brew_method.dart';
 import 'package:cupward/models/recipes/brew_recipe.dart';
 import 'package:cupward/models/recipes/built_in_recipes.dart';
+import 'package:cupward/models/recipes/recipe_ids.dart';
 import 'package:cupward/services/auth/auth_service.dart';
 import 'package:cupward/services/recipes/recipe_name_taken_exception.dart';
 import 'package:cupward/services/recipes/recipe_repository.dart';
@@ -206,6 +207,40 @@ void main() {
       final Map<String, dynamic> stored = (await firestore.doc('users/alice/recipes/v60-pour-over').get()).data()!;
       expect(stored['method'], 'v60');
       expect(stored['schemaVersion'], 2);
+    });
+
+    /// The recipe list screen shows the newest recipe first, so the one just created is easy to find.
+    test('lists all of the user\'s recipes, the newest first', () async {
+      // Arrange
+      for (final (String name, int day) in <(String, int)>[('Old One', 1), ('New One', 3), ('Middle One', 2)]) {
+        final BrewRecipe stored = recipe.copyWith(id: RecipeIds.fromName(name), name: name);
+        await firestore.doc('users/alice/recipes/${stored.id}').set(<String, dynamic>{
+          ...stored.toJson(),
+          'createdAt': Timestamp.fromDate(DateTime.utc(2025, 1, day)),
+        });
+      }
+      // Another user's recipe must not appear.
+      await firestore.doc('users/bob/recipes/v60-pour-over').set(recipe.toJson());
+      // Act
+      final List<BrewRecipe> recipes = await repository.fetchAll();
+      // Assert
+      expect(recipes.map((BrewRecipe item) => item.name), <String>['New One', 'Middle One', 'Old One']);
+    });
+
+    /// A user with nothing stored has an empty list.
+    test('lists nothing for a user without recipes', () async {
+      expect(await repository.fetchAll(), isEmpty);
+    });
+
+    /// One document that cannot be read must not hide the user's other recipes.
+    test('leaves out a stored recipe that cannot be read', () async {
+      // Arrange
+      await repository.create(recipe);
+      await firestore.doc('users/alice/recipes/broken').set(<String, dynamic>{'name': 'Broken'});
+      // Act
+      final List<BrewRecipe> recipes = await repository.fetchAll();
+      // Assert
+      expect(recipes.map((BrewRecipe item) => item.id), <String>[recipe.id]);
     });
 
     /// The security rules list the exact fields and methods a recipe may have. If the app writes anything else, every

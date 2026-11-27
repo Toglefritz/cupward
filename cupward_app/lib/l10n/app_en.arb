@@ -948,6 +948,52 @@
       }
     }
   },
+  "buttonChangeRecipe": "Change recipe",
+  "@buttonChangeRecipe": {
+    "description": "Menu item on the brewing screen that opens the list of the user's recipes, offered only before the brew starts"
+  },
+  "recipePickerTitle": "Choose a recipe",
+  "@recipePickerTitle": {
+    "description": "Title of the screen that lists the user's recipes so they can choose the one to brew"
+  },
+  "recipePickerIntro": "Pick the recipe you want to brew. You can't change it once the brew has started.",
+  "@recipePickerIntro": {
+    "description": "Short explanation under the title of the recipe list screen"
+  },
+  "recipePickerCloseTooltip": "Close without changing the recipe",
+  "@recipePickerCloseTooltip": {
+    "description": "Tooltip and screen reader label of the button that closes the recipe list screen without choosing a recipe"
+  },
+  "recipePickerCurrent": "Current recipe",
+  "@recipePickerCurrent": {
+    "description": "Screen reader label of the check mark on the recipe that is already on the brewing screen"
+  },
+  "recipePickerLoadingTitle": "Finding your recipes",
+  "@recipePickerLoadingTitle": {
+    "description": "Heading of the card shown while the user's recipes load"
+  },
+  "recipePickerLoadingMessage": "This only takes a moment.",
+  "@recipePickerLoadingMessage": {
+    "description": "Message of the card shown while the user's recipes load"
+  },
+  "recipePickerErrorTitle": "Couldn't load your recipes",
+  "@recipePickerErrorTitle": {
+    "description": "Heading of the card shown when the user's recipes could not be loaded"
+  },
+  "recipePickerErrorMessage": "Check your connection and try again.",
+  "@recipePickerErrorMessage": {
+    "description": "Message of the card shown when the user's recipes could not be loaded"
+  },
+  "recipeSelectedMessage": "Now brewing {name}",
+  "@recipeSelectedMessage": {
+    "description": "Brief confirmation on the brewing screen after the user chose a different recipe, such as \"Now brewing Sweet Press\"",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "description": "The name of the recipe that was chosen"
+      }
+    }
+  },
   "recipeMenuStartDemo": "Start demo",
   "@recipeMenuStartDemo": {
     "description": "Menu item on the brewing screen that starts demo mode, in which scale readings are simulated so the app can be tried without a scale"

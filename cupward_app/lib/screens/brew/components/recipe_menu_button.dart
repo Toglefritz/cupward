@@ -8,12 +8,14 @@ import '../../../theme/context_theme_extension.dart';
 /// The button is a horizontal "more" icon in the secondary ink color, so it sits quietly in the card's corner. The menu
 /// opens below the button and to its left, so it stays inside the card's corner, and matches the app's cards: a cream
 /// surface with a hairline border, rounded corners, and a soft shadow. It offers creating a new recipe and, below a
-/// rule, starting or ending demo mode, in which the scale is simulated.
+/// rule, starting or ending demo mode, in which the scale is simulated. While the brew has not started and the user has
+/// other recipes, it also offers changing the recipe, between the two.
 class RecipeMenuButton extends StatelessWidget {
-  /// Creates the menu, which calls [onNewRecipePressed] when "New recipe" is chosen, and [onDemoPressed] when "Start
-  /// demo" or, while [isDemoRunning], "End demo" is chosen.
+  /// Creates the menu, which calls [onNewRecipePressed] when "New recipe" is chosen, [onChangeRecipePressed] when
+  /// "Change recipe" is chosen, and [onDemoPressed] when "Start demo" or, while [isDemoRunning], "End demo" is chosen.
   const RecipeMenuButton({
     required this.onNewRecipePressed,
+    required this.onChangeRecipePressed,
     required this.isDemoRunning,
     required this.onDemoPressed,
     super.key,
@@ -21,6 +23,9 @@ class RecipeMenuButton extends StatelessWidget {
 
   /// Called when "New recipe" is chosen.
   final VoidCallback onNewRecipePressed;
+
+  /// Called when "Change recipe" is chosen, or null when the recipe cannot be changed now, which leaves the item out.
+  final VoidCallback? onChangeRecipePressed;
 
   /// Whether demo mode is on, so the menu offers to end it rather than start it.
   final bool isDemoRunning;
@@ -68,6 +73,15 @@ class RecipeMenuButton extends StatelessWidget {
             child: Text(strings.recipeMenuNewRecipe, style: theme.textTheme.bodyLarge),
           ),
         ),
+        if (onChangeRecipePressed != null)
+          SizedBox(
+            width: _menuWidth,
+            child: MenuItemButton(
+              leadingIcon: Icon(Icons.swap_horiz, color: theme.colorScheme.onSurface),
+              onPressed: onChangeRecipePressed,
+              child: Text(strings.buttonChangeRecipe, style: theme.textTheme.bodyLarge),
+            ),
+          ),
         Divider(height: 9, color: context.cupwardColors.cardBorder),
         SizedBox(
           width: _menuWidth,

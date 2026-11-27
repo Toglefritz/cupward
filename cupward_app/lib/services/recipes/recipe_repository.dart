@@ -84,6 +84,40 @@ class RecipeRepository {
     return data == null ? null : BrewRecipe.fromJson(data);
   }
 
+  /// Returns all of the user's recipes, the newest first.
+  ///
+  /// A recipe that was just saved on this device and not yet confirmed by the server counts as the newest. A stored
+  /// document that cannot be read as a recipe is left out and logged, so one bad document does not hide the others.
+  /// Offline, this returns the recipes that Firestore has kept on the device.
+  ///
+  /// Rethrows Firestore and sign-in failures.
+  Future<List<BrewRecipe>> fetchAll() async {
+    final String userId = await _auth.ensureSignedIn();
+    final QuerySnapshot<Map<String, dynamic>> snapshot =
+        await _firestore.collection('users').doc(userId).collection('recipes').get();
+    final List<({BrewRecipe recipe, DateTime? createdAt})> found = <({BrewRecipe recipe, DateTime? createdAt})>[];
+    for (final QueryDocumentSnapshot<Map<String, dynamic>> document in snapshot.docs) {
+      try {
+        final Object? createdAt = document.data()['createdAt'];
+        final BrewRecipe recipe = BrewRecipe.fromJson(document.data());
+        found.add((recipe: recipe, createdAt: createdAt is Timestamp ? createdAt.toDate() : null));
+      } on FormatException catch (error) {
+        debugPrint('Skipping the stored recipe ${document.id}, which cannot be read: $error');
+      }
+    }
+    found.sort((a, b) {
+      final DateTime? first = a.createdAt;
+      final DateTime? second = b.createdAt;
+      if (first == null || second == null) {
+        // A missing time is a recipe waiting for the server's, which is the newest.
+        return first == second ? a.recipe.name.compareTo(b.recipe.name) : (first == null ? -1 : 1);
+      }
+      final int byTime = second.compareTo(first);
+      return byTime != 0 ? byTime : a.recipe.name.compareTo(b.recipe.name);
+    });
+    return <BrewRecipe>[for (final ({BrewRecipe recipe, DateTime? createdAt}) item in found) item.recipe];
+  }
+
   /// Returns the user's copy of [recipe], saving [recipe] as their copy first if they have none.
   ///
   /// This is how a built-in recipe becomes the user's own, so that later changes to it are kept. If the request fails,

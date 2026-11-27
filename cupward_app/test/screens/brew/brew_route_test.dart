@@ -5,6 +5,7 @@ import 'package:cupward/l10n/app_localizations.dart';
 import 'package:cupward/models/brews/brew_phase_record.dart';
 import 'package:cupward/models/brews/brew_record.dart';
 import 'package:cupward/models/brews/brew_sample.dart';
+import 'package:cupward/models/recipes/brew_recipe.dart';
 import 'package:cupward/models/recipes/built_in_recipes.dart';
 import 'package:cupward/screens/brew/brew_controller.dart';
 import 'package:cupward/screens/brew/brew_route.dart';
@@ -12,6 +13,7 @@ import 'package:cupward/screens/brew/components/brew_action_button.dart';
 import 'package:cupward/screens/brew/components/scale_panel.dart';
 import 'package:cupward/screens/feedback/feedback_route.dart';
 import 'package:cupward/screens/new_recipe/new_recipe_route.dart';
+import 'package:cupward/screens/recipe_picker/recipe_picker_route.dart';
 import 'package:cupward/services/auth/auth_service.dart';
 import 'package:cupward/services/recipe_generation/recipe_generation_service.dart';
 import 'package:cupward/services/recipes/recipe_repository.dart';
@@ -220,6 +222,112 @@ void main() {
       expect(find.text('STEP 1 OF 4'), findsOneWidget);
       expect(find.text('Sweet Press is ready to brew'), findsOneWidget);
       expect(recipes.selectedRecipeId, 'sweet-press');
+    });
+  });
+
+  group('change recipe', () {
+    final BrewRecipe bold = BuiltInRecipes.defaultRecipe.copyWith(id: 'bold-v60', name: 'Bold V60');
+
+    /// Shows the screen with the recipes in [stored] saved for the user, and returns the repository.
+    Future<RecipeRepository> showWithStored(WidgetTester tester, List<BrewRecipe> stored) async {
+      final RecipeRepository recipes = RecipeRepository(firestore: FakeFirebaseFirestore(), auth: _SignedInAuth());
+      for (final BrewRecipe recipe in stored) {
+        await recipes.create(recipe);
+      }
+      final ScaleService scale = ScaleService(isSupported: false);
+      addTearDown(scale.dispose);
+      tester.view.physicalSize = const Size(412, 1400);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: ThemeData(extensions: const <ThemeExtension<dynamic>>[CupwardColors.light]),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: BrewRoute(recipe: BuiltInRecipes.defaultRecipe, scaleService: scale, recipeRepository: recipes),
+        ),
+      );
+      await tester.pumpAndSettle();
+      return recipes;
+    }
+
+    /// Opens the recipe menu.
+    Future<void> openMenu(WidgetTester tester) async {
+      await tester.tap(find.byTooltip('Recipe options'));
+      await tester.pumpAndSettle();
+    }
+
+    /// With one recipe there is nothing to choose, so the menu offers no change.
+    testWidgets('is not offered when the user has one recipe', (WidgetTester tester) async {
+      // Act
+      await showWithStored(tester, <BrewRecipe>[BuiltInRecipes.defaultRecipe]);
+      await openMenu(tester);
+      // Assert
+      expect(find.text('New recipe'), findsOneWidget);
+      expect(find.text('Change recipe'), findsNothing);
+    });
+
+    /// With several recipes the menu offers the change before the brew starts, between a new recipe and the demo, and
+    /// stops offering it once the user continues from preparation.
+    testWidgets('is offered only before the brew starts', (WidgetTester tester) async {
+      // Arrange
+      await showWithStored(tester, <BrewRecipe>[BuiltInRecipes.defaultRecipe, bold]);
+      // Assert
+      expect(find.text('STEP 1 OF 6'), findsOneWidget);
+      await openMenu(tester);
+      // Assert
+      final double newY = tester.getTopLeft(find.text('New recipe')).dy;
+      final double changeY = tester.getTopLeft(find.text('Change recipe')).dy;
+      final double demoY = tester.getTopLeft(find.text('Start demo')).dy;
+      expect(newY, lessThan(changeY));
+      expect(changeY, lessThan(demoY));
+      // Act
+      await tester.tap(find.text('Change recipe'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byTooltip('Close without changing the recipe'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Continue'));
+      await tester.pumpAndSettle();
+      await openMenu(tester);
+      // Assert
+      expect(find.text('STEP 2 OF 6'), findsOneWidget);
+      expect(find.text('New recipe'), findsOneWidget);
+      expect(find.text('Change recipe'), findsNothing);
+    });
+
+    /// Choosing another recipe switches the brew to it, from its first step, and makes it the chosen one.
+    testWidgets('switches to the recipe that is chosen', (WidgetTester tester) async {
+      // Arrange
+      final RecipeRepository recipes = await showWithStored(tester, <BrewRecipe>[BuiltInRecipes.defaultRecipe, bold]);
+      // Act
+      await openMenu(tester);
+      await tester.tap(find.text('Change recipe'));
+      await tester.pumpAndSettle();
+      expect(find.byType(RecipePickerRoute), findsOneWidget);
+      await tester.tap(find.text('Bold V60'), warnIfMissed: false);
+      await tester.pumpAndSettle();
+      // Assert
+      expect(find.byType(RecipePickerRoute), findsNothing);
+      expect(find.text('Bold V60'), findsOneWidget);
+      expect(find.text('Now brewing Bold V60'), findsOneWidget);
+      expect(find.text('STEP 1 OF 6'), findsOneWidget);
+      expect(recipes.selectedRecipeId, 'bold-v60');
+    });
+
+    /// Leaving the list without a choice keeps the recipe and the brew as they were.
+    testWidgets('keeps the recipe when the list is closed', (WidgetTester tester) async {
+      // Arrange
+      final RecipeRepository recipes = await showWithStored(tester, <BrewRecipe>[BuiltInRecipes.defaultRecipe, bold]);
+      // Act
+      await openMenu(tester);
+      await tester.tap(find.text('Change recipe'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byTooltip('Close without changing the recipe'));
+      await tester.pumpAndSettle();
+      // Assert
+      expect(find.text('V60 Pour Over'), findsOneWidget);
+      expect(find.text('Now brewing Bold V60'), findsNothing);
+      expect(recipes.selectedRecipeId, isNull);
     });
   });
 

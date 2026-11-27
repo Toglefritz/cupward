@@ -15,7 +15,8 @@ import 'components/scale_panel.dart';
 
 /// Layout for the brewing screen. Contains no logic.
 ///
-/// The recipe summary card sits at the top of a content column of limited width, with the recipe menu in its corner.
+/// The recipe summary card sits at the top of a content column of limited width, with the recipe menu in its corner. The
+/// menu offers "Change recipe" while the brew has not started and the user has other recipes to choose from.
 /// The phase indicator, the current step's heading, its illustration, and the scale panel follow it. The scale panel is
 /// left out on platforms that cannot use a scale, such as the web, unless demo mode is simulating one. The main action button is pinned below the
 /// scrolling content in the Scaffold's bottom bar slot, so it stays in reach however tall the content is, and floating
@@ -44,6 +45,7 @@ class BrewView extends StatelessWidget {
                   recipe: state.recipe,
                   menu: RecipeMenuButton(
                     onNewRecipePressed: state.onNewRecipePressed,
+                    onChangeRecipePressed: state.canChangeRecipe ? state.onChangeRecipePressed : null,
                     isDemoRunning: state.scale.isDemo,
                     onDemoPressed: state.onDemoPressed,
                   ),

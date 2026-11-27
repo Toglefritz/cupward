@@ -647,6 +647,38 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get buttonChangeRecipe => 'Change recipe';
+
+  @override
+  String get recipePickerTitle => 'Choose a recipe';
+
+  @override
+  String get recipePickerIntro => 'Pick the recipe you want to brew. You can\'t change it once the brew has started.';
+
+  @override
+  String get recipePickerCloseTooltip => 'Close without changing the recipe';
+
+  @override
+  String get recipePickerCurrent => 'Current recipe';
+
+  @override
+  String get recipePickerLoadingTitle => 'Finding your recipes';
+
+  @override
+  String get recipePickerLoadingMessage => 'This only takes a moment.';
+
+  @override
+  String get recipePickerErrorTitle => 'Couldn\'t load your recipes';
+
+  @override
+  String get recipePickerErrorMessage => 'Check your connection and try again.';
+
+  @override
+  String recipeSelectedMessage(String name) {
+    return 'Now brewing $name';
+  }
+
+  @override
   String get recipeMenuStartDemo => 'Start demo';
 
   @override

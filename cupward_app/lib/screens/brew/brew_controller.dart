@@ -17,6 +17,7 @@ import '../../services/scale/scale_connection_status.dart';
 import '../../services/scale/scale_service.dart';
 import '../feedback/feedback_route.dart';
 import '../new_recipe/new_recipe_route.dart';
+import '../recipe_picker/recipe_picker_route.dart';
 import 'brew_route.dart';
 import 'brew_view.dart';
 import 'components/scale_picker_sheet.dart';
@@ -41,12 +42,26 @@ import 'components/scale_picker_sheet.dart';
 /// starts the brew again, and each phase tells the simulated scale how much water to pour, so the demo brews the recipe
 /// as a person with a real scale would, while the screen follows it exactly as it follows a real scale.
 ///
+/// While the brew is still in its preparation step, and the user has more than one recipe, the screen offers to change
+/// the recipe. That opens the recipe list screen, and the recipe the user chooses there replaces the one on screen in the
+/// same way as a new recipe does. Once the user continues from preparation the offer goes away, because the brew is
+/// under way.
+///
 /// Creating a recipe from the recipe menu switches the screen to it: the brew starts again from the new recipe's first
 /// step, the recipe becomes the chosen one in [RecipeRepository], and a brief message confirms it.
 class BrewController extends State<BrewRoute> {
   /// The recipe being brewed. It starts as the route's recipe and changes when the user creates a new one.
   BrewRecipe get recipe => _recipe;
   late BrewRecipe _recipe = widget.recipe;
+
+  /// How many recipes the user has, or zero until they have loaded or if they could not be loaded.
+  int _recipeCount = 0;
+
+  /// Whether the screen offers to change the recipe: the user has more than one, and the brew has not started.
+  ///
+  /// The brew starts when the user continues from the preparation step, so the offer is only there during it. A recipe
+  /// with no preparation step starts at once, and never offers a change.
+  bool get canChangeRecipe => _recipeCount > 1 && currentPhaseKind == BrewPhaseKind.prepare;
 
   /// The position of the current phase in the recipe's phases. A brew starts at its first phase.
   int currentPhaseIndex = 0;
@@ -118,6 +133,23 @@ class BrewController extends State<BrewRoute> {
     super.initState();
     scale.addListener(_onScaleChanged);
     _startBrew();
+    unawaited(_loadRecipeCount());
+  }
+
+  /// The repository that lists and chooses the user's recipes.
+  RecipeRepository get _recipes => widget.recipeRepository ?? RecipeRepository.instance;
+
+  /// Counts the user's recipes, to know whether there is a choice to offer. If they cannot be loaded, the offer is
+  /// left out, because a list that cannot be shown is no use.
+  Future<void> _loadRecipeCount() async {
+    try {
+      final int count = (await _recipes.fetchAll()).length;
+      if (mounted) {
+        setState(() => _recipeCount = count);
+      }
+    } on Object catch (error) {
+      debugPrint('Could not count the recipes, so changing the recipe is not offered: $error');
+    }
   }
 
   /// Starts brewing [recipe] from its first phase, with a new recording.
@@ -321,13 +353,41 @@ class BrewController extends State<BrewRoute> {
       return;
     }
 
-    (widget.recipeRepository ?? RecipeRepository.instance).select(created);
+    _recipes.select(created);
     setState(() {
       _recipe = created;
       _startBrew();
     });
+    unawaited(_loadRecipeCount());
     ScaffoldMessenger.of(context).showSnackBar(
       AppSnackBars.confirmation(context, AppLocalizations.of(context)!.recipeCreatedMessage(created.name)),
+    );
+  }
+
+  /// Handles a tap on "Change recipe" by opening the list of the user's recipes. The brew stays as it is underneath, so
+  /// going back returns to it.
+  ///
+  /// If the user chose a different recipe, the screen switches to it: the brew starts again from its first step, the
+  /// recipe becomes the chosen one in [RecipeRepository], and a brief message confirms it.
+  Future<void> onChangeRecipePressed() async {
+    final BrewRecipe? chosen = await Navigator.push<BrewRecipe>(
+      context,
+      MaterialPageRoute<BrewRecipe>(
+        builder: (BuildContext context) =>
+            RecipePickerRoute(currentRecipe: recipe, recipeRepository: widget.recipeRepository),
+      ),
+    );
+    // The brew may have started while the list was open, such as by a scale that finished the step by itself.
+    if (chosen == null || chosen.id == recipe.id || !mounted || !canChangeRecipe) {
+      return;
+    }
+    _recipes.select(chosen);
+    setState(() {
+      _recipe = chosen;
+      _startBrew();
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      AppSnackBars.confirmation(context, AppLocalizations.of(context)!.recipeSelectedMessage(chosen.name)),
     );
   }
 

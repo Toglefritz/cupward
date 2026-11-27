@@ -1256,6 +1256,66 @@ abstract class AppLocalizations {
   /// **'{name} is ready to brew'**
   String recipeCreatedMessage(String name);
 
+  /// Menu item on the brewing screen that opens the list of the user's recipes, offered only before the brew starts
+  ///
+  /// In en, this message translates to:
+  /// **'Change recipe'**
+  String get buttonChangeRecipe;
+
+  /// Title of the screen that lists the user's recipes so they can choose the one to brew
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a recipe'**
+  String get recipePickerTitle;
+
+  /// Short explanation under the title of the recipe list screen
+  ///
+  /// In en, this message translates to:
+  /// **'Pick the recipe you want to brew. You can\'t change it once the brew has started.'**
+  String get recipePickerIntro;
+
+  /// Tooltip and screen reader label of the button that closes the recipe list screen without choosing a recipe
+  ///
+  /// In en, this message translates to:
+  /// **'Close without changing the recipe'**
+  String get recipePickerCloseTooltip;
+
+  /// Screen reader label of the check mark on the recipe that is already on the brewing screen
+  ///
+  /// In en, this message translates to:
+  /// **'Current recipe'**
+  String get recipePickerCurrent;
+
+  /// Heading of the card shown while the user's recipes load
+  ///
+  /// In en, this message translates to:
+  /// **'Finding your recipes'**
+  String get recipePickerLoadingTitle;
+
+  /// Message of the card shown while the user's recipes load
+  ///
+  /// In en, this message translates to:
+  /// **'This only takes a moment.'**
+  String get recipePickerLoadingMessage;
+
+  /// Heading of the card shown when the user's recipes could not be loaded
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t load your recipes'**
+  String get recipePickerErrorTitle;
+
+  /// Message of the card shown when the user's recipes could not be loaded
+  ///
+  /// In en, this message translates to:
+  /// **'Check your connection and try again.'**
+  String get recipePickerErrorMessage;
+
+  /// Brief confirmation on the brewing screen after the user chose a different recipe, such as "Now brewing Sweet Press"
+  ///
+  /// In en, this message translates to:
+  /// **'Now brewing {name}'**
+  String recipeSelectedMessage(String name);
+
   /// Menu item on the brewing screen that starts demo mode, in which scale readings are simulated so the app can be tried without a scale
   ///
   /// In en, this message translates to:
