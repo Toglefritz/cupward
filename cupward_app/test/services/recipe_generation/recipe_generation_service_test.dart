@@ -6,6 +6,7 @@ import 'package:cupward/models/recipes/brew_phase_kind.dart';
 import 'package:cupward/models/recipes/brew_recipe.dart';
 import 'package:cupward/models/recipes/recipe_ids.dart';
 import 'package:cupward/services/auth/auth_service.dart';
+import 'package:cupward/services/on_device_model/on_device_model_service.dart';
 import 'package:cupward/services/recipe_generation/recipe_generation_exception.dart';
 import 'package:cupward/services/recipe_generation/recipe_generation_failure.dart';
 import 'package:cupward/services/recipe_generation/recipe_generation_parser.dart';
@@ -170,10 +171,66 @@ void main() {
       expect(await recipes.fetch('bold-morning-kalita-2'), isNotNull);
     });
 
+    /// An iPad that cannot run Apple Intelligence has no on-device model, so the request goes straight to the cloud.
+    test('asks only the cloud model on a device without an on-device model', () async {
+      // Arrange
+      final OnDeviceModelService noModel = OnDeviceModelService(isSupported: false);
+      addTearDown(noModel.dispose);
+      await noModel.checkStatus();
+      final RecipeGenerationService cloudOnly =
+          RecipeGenerationService(hybridAi: hybridAi, recipes: recipes, isSupported: true, modelService: noModel);
+      hybridAi.responses.add(
+        BrewFeedbackFixtures.result(RecipeGenerationFixtures.pourOverAnswer(), source: InferenceSource.inCloud),
+      );
+      // Act
+      await cloudOnly.createRecipe(RecipeGenerationFixtures.pourOverRequest);
+      // Assert
+      expect(hybridAi.modes, <InferenceMode>[InferenceMode.onlyInCloud]);
+    });
+
+    /// An on-device request that fails outright, such as one that times out, is repeated once with the cloud model.
+    test('asks the cloud model when the on-device request fails', () async {
+      // Arrange
+      hybridAi.responses
+        ..add(const FirebaseHybridAiException(code: 'generation-failed'))
+        ..add(BrewFeedbackFixtures.result(RecipeGenerationFixtures.pourOverAnswer(), source: InferenceSource.inCloud));
+      // Act
+      final BrewRecipe recipe = await service.createRecipe(RecipeGenerationFixtures.pourOverRequest);
+      // Assert
+      expect(hybridAi.modes, <InferenceMode>[InferenceMode.preferOnDevice, InferenceMode.onlyInCloud]);
+      expect(recipe.name, 'Bold Morning Kalita');
+    });
+
+    /// A request that must stay on the device is never sent to the cloud, even when the on-device model fails.
+    test('does not ask the cloud model for a local-only request that fails', () async {
+      // Arrange
+      hybridAi.responses.add(const FirebaseHybridAiException(code: 'generation-failed'));
+      // Act and assert
+      expect(
+        await failureOf(service.createRecipe(RecipeGenerationFixtures.pourOverRequest, localOnly: true)),
+        RecipeGenerationFailure.requestFailed,
+      );
+      expect(hybridAi.modes, <InferenceMode>[InferenceMode.onlyOnDevice]);
+    });
+
+    /// A device the plugin cannot serve has nothing to fall back to, so the failure is reported at once.
+    test('does not repeat a request that the device does not support', () async {
+      // Arrange
+      hybridAi.responses.add(const HybridAiNotSupportedException(message: 'needs iOS 26'));
+      // Act and assert
+      expect(
+        await failureOf(service.createRecipe(RecipeGenerationFixtures.pourOverRequest)),
+        RecipeGenerationFailure.unsupported,
+      );
+      expect(hybridAi.modes, hasLength(1));
+    });
+
     /// Failures are reported in terms the screen can explain.
     test('reports failed, unsupported, and unsaved requests', () async {
       // Arrange
       hybridAi.responses
+        // The on-device request and the cloud request that follows it both fail.
+        ..add(const FirebaseHybridAiException(code: 'network'))
         ..add(const FirebaseHybridAiException(code: 'network'))
         ..add(const HybridAiNotSupportedException(message: 'not here'))
         ..add(BrewFeedbackFixtures.result(RecipeGenerationFixtures.pourOverAnswer()));
@@ -198,7 +255,7 @@ void main() {
       );
     });
 
-    /// iOS and macOS cannot run hybrid inference, so the plugin is not called there.
+    /// macOS and the other desktop platforms cannot run hybrid inference, so the plugin is not called there.
     test('does not call the plugin where hybrid inference is unsupported', () async {
       final RecipeGenerationService unsupported =
           RecipeGenerationService(hybridAi: hybridAi, recipes: recipes, isSupported: false);

@@ -227,7 +227,10 @@ void main() {
     /// A failure can be retried, or the request edited, without losing what the user entered.
     testWidgets('offers to try again or edit after a failure', (WidgetTester tester) async {
       // Arrange
+      // Each failed attempt is two failed requests, the on-device one and the cloud one that follows it.
       hybridAi.responses
+        ..add(const FirebaseHybridAiException(code: 'network'))
+        ..add(const FirebaseHybridAiException(code: 'network'))
         ..add(const FirebaseHybridAiException(code: 'network'))
         ..add(const FirebaseHybridAiException(code: 'network'))
         ..add(BrewFeedbackFixtures.result(RecipeGenerationFixtures.pourOverAnswer()));

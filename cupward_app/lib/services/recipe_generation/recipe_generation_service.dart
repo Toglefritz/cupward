@@ -7,6 +7,8 @@ import 'package:flutter/foundation.dart';
 import '../../models/recipes/brew_recipe.dart';
 import '../../models/recipes/new_recipe_request.dart';
 import '../../models/recipes/recipe_ids.dart';
+import '../hybrid_ai/hybrid_ai_support.dart';
+import '../on_device_model/on_device_model_service.dart';
 import '../recipes/recipe_name_taken_exception.dart';
 import '../recipes/recipe_repository.dart';
 import 'recipe_generation_exception.dart';
@@ -19,7 +21,9 @@ import 'recipe_generation_schema.dart';
 ///
 /// The request prefers the on-device model and falls back to the cloud model, as brew feedback does. If an on-device
 /// answer does not match the schema, or does not make a brewable recipe, the request is repeated once with the cloud
-/// model, which is held to the schema.
+/// model, which is held to the schema. A device that is known to have no on-device model goes straight to the cloud
+/// model, and if the on-device request fails outright the request is repeated once with the cloud model. A request
+/// that must stay on the device is never sent to the cloud.
 ///
 /// The recipe is then saved with [RecipeRepository.create]. Each of a user's recipes needs a unique name, so if the
 /// name is taken, a number is added, such as "Bold Morning 2".
@@ -28,23 +32,27 @@ import 'recipe_generation_schema.dart';
 /// forever. A save that times out may still reach Firestore later, in which case the recipe appears without having
 /// been offered to the user, so the save limit is generous.
 ///
-/// Hybrid inference runs on Android and in the browser. On other platforms [isSupported] is false, and every request
-/// fails with [RecipeGenerationFailure.unsupported].
+/// Hybrid inference runs on Android, iOS, and in the browser. On other platforms [isSupported] is false, and every
+/// request fails with [RecipeGenerationFailure.unsupported]. A device that is too old for the plugin, such as an iPad
+/// before iOS 26, fails the same way.
 class RecipeGenerationService {
   /// Creates a service.
   ///
-  /// [hybridAi] defaults to a real `FirebaseHybridAi`, [recipes] to `RecipeRepository.instance`, and [isSupported] to
-  /// whether the app runs on Android or in a browser. Tests supply their own, and can shorten [requestTimeout] and
+  /// [hybridAi] defaults to a real `FirebaseHybridAi`, [recipes] to `RecipeRepository.instance`, [isSupported] to
+  /// whether the plugin runs on this platform, and [modelService] to the app's shared `OnDeviceModelService`, which
+  /// says whether the device has an on-device model. Tests supply their own, and can shorten [requestTimeout] and
   /// [saveTimeout].
   RecipeGenerationService({
     FirebaseHybridAi? hybridAi,
     RecipeRepository? recipes,
     bool? isSupported,
+    OnDeviceModelService? modelService,
     this.requestTimeout = const Duration(seconds: 90),
     this.saveTimeout = const Duration(seconds: 30),
   })  : _hybridAi = hybridAi ?? FirebaseHybridAi(),
         _recipes = recipes ?? RecipeRepository.instance,
-        isSupported = isSupported ?? (kIsWeb || defaultTargetPlatform == TargetPlatform.android);
+        _modelService = modelService,
+        isSupported = isSupported ?? HybridAiSupport.isPlatformSupported;
 
   /// How many numbered names are tried after the first when names are taken.
   static const int maxNameAttempts = 9;
@@ -54,6 +62,9 @@ class RecipeGenerationService {
 
   /// Saves the new recipe.
   final RecipeRepository _recipes;
+
+  /// Tells whether the device has an on-device model, or null to use the app's shared service.
+  final OnDeviceModelService? _modelService;
 
   /// Whether the platform can run hybrid inference.
   final bool isSupported;
@@ -78,10 +89,8 @@ class RecipeGenerationService {
 
     final String prompt = RecipeGenerationPrompt.build(request);
 
-    StructuredGenerationResult result = await _generate(
-      prompt,
-      localOnly ? InferenceMode.onlyOnDevice : InferenceMode.preferOnDevice,
-    );
+    StructuredGenerationResult result =
+        localOnly ? await _generate(prompt, InferenceMode.onlyOnDevice) : await _generateWithCloudFallback(prompt);
     final _Reading first = _read(result, request);
     BrewRecipe? recipe = first.recipe;
     if (recipe == null && result.source == InferenceSource.onDevice) {
@@ -139,6 +148,23 @@ class RecipeGenerationService {
     }
     debugPrint('Every name tried for "${recipe.name}" is taken.');
     throw const RecipeGenerationException(RecipeGenerationFailure.nameTaken);
+  }
+
+  /// Sends [prompt] in the mode that suits this device, and asks the cloud model once if the on-device request fails.
+  ///
+  /// Only a request that was allowed to use the on-device model is repeated. A failure on a device without one, or an
+  /// unsupported device, is reported as it is.
+  Future<StructuredGenerationResult> _generateWithCloudFallback(String prompt) async {
+    final InferenceMode mode = HybridAiSupport.modeFor(_modelService ?? OnDeviceModelService.instance);
+    try {
+      return await _generate(prompt, mode);
+    } on RecipeGenerationException catch (error) {
+      if (mode != InferenceMode.preferOnDevice || error.failure != RecipeGenerationFailure.requestFailed) {
+        rethrow;
+      }
+      debugPrint('The on-device recipe request failed, so the cloud model is asked.');
+      return await _generate(prompt, InferenceMode.onlyInCloud);
+    }
   }
 
   /// Sends [prompt] with the schema in [mode], and turns plugin failures into [RecipeGenerationException]s.

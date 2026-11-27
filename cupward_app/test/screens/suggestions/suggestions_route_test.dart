@@ -127,6 +127,8 @@ void main() {
     testWidgets('offers to try again after a failure', (WidgetTester tester) async {
       // Arrange
       hybridAi.responses
+        // The on-device request fails, and so does the cloud request that follows it.
+        ..add(const FirebaseHybridAiException(code: 'network'))
         ..add(const FirebaseHybridAiException(code: 'network'))
         ..add(BrewFeedbackFixtures.result(BrewFeedbackFixtures.answer()));
 

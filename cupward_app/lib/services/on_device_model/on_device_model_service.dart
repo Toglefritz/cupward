@@ -11,9 +11,11 @@ import 'on_device_model_state.dart';
 /// keeps reporting progress, while the user brews. Screens use the shared [instance], listen to it, and rebuild when it
 /// notifies.
 ///
-/// All AI work goes through `firebase_hybrid_ai`, which reports the model on Android and in desktop Chrome. On iOS the
-/// plugin reports that hybrid inference is not supported, and on macOS it has no implementation, so on those
-/// platforms the state is [OnDeviceModelState.unavailable] and feedback comes from the cloud.
+/// All AI work goes through `firebase_hybrid_ai`, which reports the model on Android, on iOS, and in desktop Chrome.
+/// On iOS it is Apple's system model, which the user turns on with Apple Intelligence, so the app cannot download it.
+/// Where there is no model, such as an iPad that cannot run Apple Intelligence, or macOS, where the plugin has no
+/// implementation, the state is [OnDeviceModelState.unavailable]. On platforms where the plugin runs, requests then go
+/// straight to the cloud.
 class OnDeviceModelService extends ChangeNotifier {
   /// Creates a service.
   ///
